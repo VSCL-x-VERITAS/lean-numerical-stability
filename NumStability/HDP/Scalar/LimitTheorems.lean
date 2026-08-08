@@ -123,12 +123,12 @@ private theorem bernoulliTrialWeight_sum_eq_one
         exact add_tsub_cancel_of_le hp
       simp [hsub]
 
-private def bernoulliTrialVectorPMF
+def bernoulliTrialVectorPMF
     (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) : PMF (Fin N → Bool) :=
   PMF.ofFintype (bernoulliTrialWeight p N)
     (bernoulliTrialWeight_sum_eq_one p hp N)
 
-private def bernoulliSuccessCount (N : ℕ) (f : Fin N → Bool) : ℕ :=
+def bernoulliSuccessCount (N : ℕ) (f : Fin N → Bool) : ℕ :=
   (Finset.univ.filter fun i => f i).card
 
 private def bernoulliSuccessCountFin (N : ℕ) (f : Fin N → Bool) :
@@ -266,10 +266,6 @@ private theorem bernoulliTrialVectorPMF_map_successCountFin_eq_binomial
   ext x
   simp
 
-/-- A Bernoulli-sum model packages the two canonical source laws. -/
-def bernoulliBinomialModel (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) : PMF ℕ × PMF ℕ :=
-  (bernoulliNatPMF p hp, binomialNatPMF p hp N)
-
 /-- The natural-valued sum of `N` iid Bernoulli trials has the binomial law.
 
 The `iIndepFun` and marginal-law theorem below is the source-facing bridge
@@ -287,5 +283,26 @@ theorem bernoulliSumPMF_eq_binomialNatPMF
   rw [← hcomp]
   rw [← PMF.map_comp]
   rw [bernoulliTrialVectorPMF_map_successCountFin_eq_binomial]
+
+/-- The source-facing Bernoulli/binomial package, including its defining facts. -/
+structure BernoulliBinomialModelData (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) where
+  bernoulli : PMF ℕ
+  binomial : PMF ℕ
+  mean : ∫ x : ℝ, x ∂(bernoulliRealPMF p hp).toMeasure = p.toReal
+  variance :
+    ∫ x : ℝ, (x - p.toReal) ^ 2 ∂(bernoulliRealPMF p hp).toMeasure =
+      p.toReal * (1 - p.toReal)
+  sum_law :
+    (bernoulliTrialVectorPMF p hp N).map (bernoulliSuccessCount N) =
+      binomialNatPMF p hp N
+
+/-- A Bernoulli-sum model packages the two canonical source laws and their facts. -/
+def bernoulliBinomialModel (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) :
+    BernoulliBinomialModelData p hp N :=
+  { bernoulli := bernoulliNatPMF p hp
+    binomial := binomialNatPMF p hp N
+    mean := bernoulliRealPMF_mean p hp
+    variance := bernoulliRealPMF_variance p hp
+    sum_law := bernoulliSumPMF_eq_binomialNatPMF p hp N }
 
 end NumStability.HDP.Scalar.LimitTheorems
