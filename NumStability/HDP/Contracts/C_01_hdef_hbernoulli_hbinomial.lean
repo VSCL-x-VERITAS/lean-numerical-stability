@@ -14,7 +14,8 @@ open scoped NNReal
 
 /-- Stable source-facing bundle of the Bernoulli and binomial laws. -/
 noncomputable def hdp_01_hdef_hbernoulli_hbinomial
-    (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) : PMF ℕ × PMF ℕ :=
+    (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) :
+    NumStability.HDP.Scalar.LimitTheorems.BernoulliBinomialModelData p hp N :=
   NumStability.HDP.Scalar.LimitTheorems.bernoulliBinomialModel p hp N
 
 end NumStability.HDP.Contract
