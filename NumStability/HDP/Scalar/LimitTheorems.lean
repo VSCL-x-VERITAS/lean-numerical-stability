@@ -1,6 +1,7 @@
 import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.Probability.Distributions.Poisson
 import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 import Mathlib.Tactic
 
@@ -70,6 +71,35 @@ theorem standardNormalLaw_pdf :
   · congr 1
     ring
   · ring
+
+/-! ## The Poisson law -/
+
+/--
+The Poisson law from Chapter 1, equation (1.8).  The nonnegative rate is
+represented by Mathlib's `NNReal` parameter, and the law is supported on
+`ℕ`.
+-/
+noncomputable def poissonLaw (rate : ℝ≥0) : Measure ℕ :=
+  ProbabilityTheory.poissonMeasure rate
+
+/-- A random variable has the Chapter 1 Poisson law with rate `λ`. -/
+def HasPoissonLaw {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℕ) (rate : ℝ≥0) : Prop :=
+  ProbabilityTheory.HasLaw X (poissonLaw rate) μ
+
+/-- The Poisson law is a probability measure. -/
+instance poissonLaw.isProbabilityMeasure (rate : ℝ≥0) :
+    IsProbabilityMeasure (poissonLaw rate) := by
+  dsimp [poissonLaw]
+  infer_instance
+
+/-- The point mass of `poissonLaw` is the mass printed in (1.8). -/
+theorem poissonLaw_mass (rate : ℝ≥0) (k : ℕ) :
+    poissonLaw rate {k} =
+      ENNReal.ofReal (Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k / Nat.factorial k) := by
+  rw [poissonLaw, ProbabilityTheory.poissonMeasure,
+    PMF.toMeasure_apply_singleton _ k (measurableSet_singleton k)]
+  rfl
 
 /-! ## Canonical laws -/
 
