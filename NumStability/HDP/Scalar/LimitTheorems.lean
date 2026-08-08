@@ -82,6 +82,14 @@ represented by Mathlib's `NNReal` parameter, and the law is supported on
 noncomputable def poissonLaw (rate : ℝ≥0) : Measure ℕ :=
   ProbabilityTheory.poissonMeasure rate
 
+namespace NumStability.HDP.Contract
+
+/-- Stable source-facing alias for the local Poisson law interface. -/
+noncomputable def hdp_01_hdef_hpoisson (rate : ℝ≥0) : Measure ℕ :=
+  NumStability.HDP.Scalar.LimitTheorems.poissonLaw rate
+
+end NumStability.HDP.Contract
+
 /-- A random variable has the Chapter 1 Poisson law with rate `λ`. -/
 def HasPoissonLaw {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℕ) (rate : ℝ≥0) : Prop :=
