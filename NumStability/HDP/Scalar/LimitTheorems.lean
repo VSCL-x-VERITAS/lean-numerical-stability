@@ -1,6 +1,7 @@
 import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 import Mathlib.Tactic
 
 /-!
@@ -19,6 +20,23 @@ open MeasureTheory
 open scoped BigOperators ENNReal NNReal
 
 namespace NumStability.HDP.Scalar.LimitTheorems
+
+/-- The probability law of an almost-everywhere measurable real random variable. -/
+noncomputable def probabilityLaw
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : Ω → ℝ) (hX : AEMeasurable X μ) :
+    MeasureTheory.ProbabilityMeasure ℝ :=
+  ⟨Measure.map X μ, Measure.isProbabilityMeasure_map hX⟩
+
+/-- Convergence in distribution as weak convergence of pushforward probability laws. -/
+noncomputable def convergenceInDistribution
+    {Ω ι : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (l : Filter ι) (Z : Ω → ℝ)
+    (hX : ∀ i, AEMeasurable (X i) μ) (hZ : AEMeasurable Z μ) : Prop :=
+  Filter.Tendsto (fun i => probabilityLaw (X i) (hX i)) l
+    (nhds (probabilityLaw Z hZ))
 
 /-! ## The standard normal law -/
 
