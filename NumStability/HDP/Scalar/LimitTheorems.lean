@@ -1,5 +1,6 @@
 import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
+import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Tactic
 
 /-!
@@ -18,6 +19,39 @@ open MeasureTheory
 open scoped BigOperators ENNReal NNReal
 
 namespace NumStability.HDP.Scalar.LimitTheorems
+
+/-! ## The standard normal law -/
+
+/--
+The standard normal law from Chapter 1, equation (1.6).  Mathlib's
+`gaussianReal` is parameterized by mean and variance, so the source law is the
+specialization `(μ, v) = (0, 1)`.
+-/
+noncomputable def standardNormalLaw : Measure ℝ :=
+  ProbabilityTheory.gaussianReal 0 1
+
+/-- A random variable has the Chapter 1 standard-normal law. -/
+def HasStandardNormalLaw {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
+  ProbabilityTheory.HasLaw X standardNormalLaw μ
+
+/-- The standard normal law is a probability measure. -/
+instance standardNormalLaw.isProbabilityMeasure :
+    IsProbabilityMeasure standardNormalLaw := by
+  dsimp [standardNormalLaw]
+  infer_instance
+
+/-- The real density of `standardNormalLaw` is the density printed in (1.6). -/
+theorem standardNormalLaw_pdf :
+    ProbabilityTheory.gaussianPDFReal 0 1 =
+      fun x : ℝ => (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-(x ^ 2) / 2) := by
+  funext x
+  simp only [ProbabilityTheory.gaussianPDFReal, NNReal.coe_one, sub_zero,
+    one_mul, Nat.cast_ofNat]
+  congr 1
+  · congr 1
+    ring
+  · ring
 
 /-! ## Canonical laws -/
 
