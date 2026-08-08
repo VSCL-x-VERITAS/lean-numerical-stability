@@ -1,4 +1,5 @@
 import Mathlib.Probability.Moments.Variance
+import Mathlib.Probability.CDF
 import Mathlib.Tactic
 
 /-!
@@ -15,6 +16,72 @@ noncomputable section
 open MeasureTheory
 
 namespace NumStability.HDP.Scalar.Preliminaries
+
+/-- The distribution (pushforward law) of `X` under `μ`. -/
+noncomputable def distribution {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : Measure ℝ :=
+  Measure.map X μ
+
+/-- The extended-real CDF of `X`, evaluated at `t`. -/
+noncomputable def cdf {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ) : ENNReal :=
+  distribution μ X (Set.Iic t)
+
+/-- The extended-real upper tail probability of `X` at `t`. -/
+noncomputable def upperTail {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ) : ENNReal :=
+  distribution μ X (Set.Ioi t)
+
+/-- The source-facing distribution, CDF, and upper-tail interface. -/
+structure CDFTailModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) where
+  distribution : Measure ℝ
+  cdf : ℝ → ENNReal
+  upperTail : ℝ → ENNReal
+
+/-- Package the distribution, CDF, and upper-tail definitions for `X`. -/
+noncomputable def cdfTailModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : CDFTailModelData μ X :=
+  { distribution := distribution μ X
+    cdf := cdf μ X
+    upperTail := upperTail μ X }
+
+/-- A measurable random variable pushes a probability measure to a probability law. -/
+theorem distribution_isProbabilityMeasure
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : AEMeasurable X μ) :
+    IsProbabilityMeasure (distribution μ X) := by
+  exact Measure.isProbabilityMeasure_map hX
+
+/-- The CDF is the probability of the corresponding lower half-line. -/
+theorem cdf_eq_measure_preimage
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : AEMeasurable X μ) (t : ℝ) :
+    cdf μ X t = μ (X ⁻¹' Set.Iic t) := by
+  rw [cdf, distribution, Measure.map_apply_of_aemeasurable hX measurableSet_Iic]
+
+/-- The upper tail is one minus the CDF under a probability measure. -/
+theorem upperTail_eq_one_sub_cdf
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : AEMeasurable X μ) (t : ℝ) :
+    upperTail μ X t = 1 - cdf μ X t := by
+  letI : IsProbabilityMeasure (distribution μ X) :=
+    distribution_isProbabilityMeasure hX
+  unfold upperTail cdf
+  rw [← Set.compl_Iic]
+  exact prob_compl_eq_one_sub measurableSet_Iic
+
+/-- The CDF is monotone in its threshold. -/
+theorem monotone_cdf
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) :
+    Monotone (cdf μ X) := by
+  intro s t hst
+  exact measure_mono (Set.Iic_subset_Iic.2 hst)
 
 /-- The book's mean notation, represented by the Bochner integral. -/
 def expectation {Ω : Type*} [MeasurableSpace Ω]
