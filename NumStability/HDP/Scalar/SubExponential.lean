@@ -41,6 +41,8 @@ theorem OrliczFunction.tendsto_scale_separation
     simpa [div_eq_mul_inv, mul_comm] using hmul
   exact ψ.tendsto_atTop.comp hscale
 
+end NumStability.HDP.Scalar.SubExponential
+
 namespace NumStability.HDP.Contract
 
 /-- Stable source-facing alias for the local Orlicz-function interface. -/
@@ -48,5 +50,3 @@ def hdp_02_hdef_horlicz_hfunction : Type :=
   NumStability.HDP.Scalar.SubExponential.OrliczFunction
 
 end NumStability.HDP.Contract
-
-end NumStability.HDP.Scalar.SubExponential
