@@ -107,7 +107,7 @@ private def bernoulliTrialWeight (p : ℝ≥0) (N : ℕ) (f : Fin N → Bool) :
     ℝ≥0∞ :=
   ∏ i : Fin N, if f i then (p : ℝ≥0∞) else (1 - p : ℝ≥0∞)
 
-private theorem bernoulliTrialWeight_sum_eq_one
+theorem bernoulliTrialWeight_sum_eq_one
     (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) :
     (∑ f : Fin N → Bool, bernoulliTrialWeight p N f) = 1 := by
   classical
@@ -158,7 +158,7 @@ private theorem bernoulliTrialWeight_eq_successCount
     omega
   simp [hcard]
 
-private theorem bernoulliSuccessCount_fiber_card (N k : ℕ) :
+theorem bernoulliSuccessCount_fiber_card (N k : ℕ) :
     Fintype.card {f : Fin N → Bool // bernoulliSuccessCount N f = k} =
       N.choose k := by
   classical
@@ -192,7 +192,7 @@ private theorem bernoulliSuccessCount_fiber_card (N k : ℕ) :
       rw [Fintype.card_finset_len]
       simp
 
-private theorem bernoulliTrialVectorPMF_map_successCountFin_eq_binomial
+theorem bernoulliTrialVectorPMF_map_successCountFin_eq_binomial
     (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) :
     (bernoulliTrialVectorPMF p hp N).map (bernoulliSuccessCountFin N) =
       PMF.binomial p hp N := by
