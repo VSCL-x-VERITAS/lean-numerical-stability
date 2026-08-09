@@ -22,7 +22,8 @@ theorem standardNormalMGF (lam : ℝ) :
       Real.exp (lam ^ 2 / 2) := by
   rw [integral_gaussianReal_eq_integral_smul (μ := (0 : ℝ)) (v := (1 : NNReal))
     (f := fun x : ℝ => Real.exp (lam * x)) (by norm_num)]
-  simp only [smul_eq_mul]
+  change (∫ x : ℝ, gaussianPDFReal 0 1 x * Real.exp (lam * x)) =
+    Real.exp (lam ^ 2 / 2)
   have hpdf (x : ℝ) :
       gaussianPDFReal 0 1 x =
         (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) := by
@@ -64,7 +65,13 @@ theorem standardNormalMGF (lam : ℝ) :
                         ring
   have hgauss :
       ∫ x : ℝ, Real.exp (-x ^ 2 / 2) = Real.sqrt (Real.pi / (1 / 2)) := by
-    convert integral_gaussian (1 / 2) using 1 <;> ring
+    have hnorm := ProbabilityTheory.integral_gaussianPDFReal_eq_one (0 : ℝ)
+      (v := (1 : NNReal)) (by norm_num)
+    simp_rw [hpdf] at hnorm
+    rw [integral_const_mul] at hnorm
+    norm_num [Real.sqrt_eq_rpow] at hnorm ⊢
+    field_simp at hnorm ⊢
+    nlinarith
   rw [hpoint, integral_const_mul, integral_const_mul, hshift, hgauss]
   norm_num [Real.sqrt_eq_rpow]
   field_simp
