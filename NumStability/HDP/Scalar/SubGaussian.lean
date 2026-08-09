@@ -89,23 +89,23 @@ def LpMomentGrowth {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       Integrable (fun ω => |X ω| ^ p) μ ∧
         (∫ ω, |X ω| ^ p ∂μ) ≤ (K * Real.sqrt p) ^ p
 
-private def EvenMomentBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+def EvenMomentBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → ℝ) (K : ℝ) : Prop :=
   ∀ n : ℕ, 1 ≤ n →
     Integrable (fun ω => |X ω| ^ (2 * n)) μ ∧
       (∫ ω, |X ω| ^ (2 * n) ∂μ) ≤ K ^ (2 * n) * (2 * n : ℝ) ^ n
 
-private def squareMGFTerm {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) : ENNReal :=
+def squareMGFTerm {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) : ENNReal :=
   ENNReal.ofReal (((lam ^ 2 * X ω ^ 2) ^ n) / (n.factorial : ℝ))
 
-private lemma squareMGFTerm_aemeasurable
+lemma squareMGFTerm_aemeasurable
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ}
     (hX : AEMeasurable X μ) (lam : ℝ) (n : ℕ) :
     AEMeasurable (squareMGFTerm X lam n) μ := by
   unfold squareMGFTerm
   fun_prop
 
-private lemma exp_series_pointwise (x : ℝ) (hx : 0 ≤ x) :
+lemma exp_series_pointwise (x : ℝ) (hx : 0 ≤ x) :
     ENNReal.ofReal (Real.exp x) =
       ∑' n : ℕ, ENNReal.ofReal (x ^ n / (n.factorial : ℝ)) := by
   rw [← ENNReal.ofReal_tsum_of_nonneg (fun n => by positivity)
@@ -113,7 +113,7 @@ private lemma exp_series_pointwise (x : ℝ) (hx : 0 ≤ x) :
   rw [NormedSpace.expSeries_div_hasSum_exp x |>.tsum_eq]
   rw [← Real.exp_eq_exp_ℝ]
 
-private lemma geom_bound (q : ℝ) (hq0 : 0 ≤ q) (hq : q ≤ 1 / 2) :
+lemma geom_bound (q : ℝ) (hq0 : 0 ≤ q) (hq : q ≤ 1 / 2) :
     (∑' n : ℕ, q ^ n) ≤ Real.exp (2 * q) := by
   have hqlt : q < 1 := lt_of_le_of_lt hq (by norm_num)
   have hsum := (hasSum_geometric_of_lt_one hq0 hqlt).tsum_eq
@@ -125,7 +125,7 @@ private lemma geom_bound (q : ℝ) (hq0 : 0 ≤ q) (hq : q ≤ 1 / 2) :
     nlinarith [mul_nonneg hq0 (sub_nonneg.mpr (by linarith : q ≤ 1 / 2))]
   exact hrat.trans (by simpa [add_comm] using Real.add_one_le_exp (2 * q))
 
-private lemma factorial_ratio_bound (n : ℕ) (hn : 1 ≤ n) :
+lemma factorial_ratio_bound (n : ℕ) (hn : 1 ≤ n) :
     ((2 * n : ℝ) ^ n) / (n.factorial : ℝ) ≤ (2 * Real.exp 1) ^ n := by
   have hfac := Stirling.le_factorial_stirling n
   have hroot : 1 ≤ Real.sqrt (2 * Real.pi * (n : ℝ)) := by
@@ -161,7 +161,7 @@ private lemma factorial_ratio_bound (n : ℕ) (hn : 1 ≤ n) :
   exact (div_le_iff₀ (by positivity : (0 : ℝ) < (n.factorial : ℝ))).2
     (by simpa [mul_comm] using hmul')
 
-private lemma squareMGFTerm_eq_mul
+lemma squareMGFTerm_eq_mul
     {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) :
     squareMGFTerm X lam n ω =
       ENNReal.ofReal ((lam ^ 2) ^ n / (n.factorial : ℝ)) *
@@ -175,7 +175,7 @@ private lemma squareMGFTerm_eq_mul
   rw [hXsq, ← pow_mul]
   ring
 
-private lemma evenMomentBound_of_lpMomentGrowth
+lemma evenMomentBound_of_lpMomentGrowth
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ} {K : ℝ}
     (hLp : LpMomentGrowth μ X K) : EvenMomentBound μ X K := by
   intro n hn
@@ -201,7 +201,7 @@ private lemma evenMomentBound_of_lpMomentGrowth
         rw [hpn, Real.rpow_natCast]
       _ = K ^ (2 * n) * (2 * (n : ℝ)) ^ n := heq
 
-private lemma squareMGFTerm_lintegral_le_geom
+lemma squareMGFTerm_lintegral_le_geom
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ} {K lam : ℝ}
     (hMom : EvenMomentBound μ X K) {n : ℕ} (hn : 1 ≤ n) :
     (∫⁻ ω, squareMGFTerm X lam n ω ∂μ) ≤
@@ -245,7 +245,7 @@ private lemma squareMGFTerm_lintegral_le_geom
                       rw [← mul_pow]
                       ring
 
-private lemma squareMGF_lintegral_le
+lemma squareMGF_lintegral_le
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : Ω → ℝ} {K lam : ℝ}
     (hX : AEMeasurable X μ) (hK : 0 ≤ K)
@@ -300,7 +300,7 @@ private lemma squareMGF_lintegral_le
           dsimp [q]
           ring
 
-private lemma squareMGF_real_le
+lemma squareMGF_real_le
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : Ω → ℝ} {K lam : ℝ}
     (hX : AEMeasurable X μ) (hK : 0 ≤ K)
