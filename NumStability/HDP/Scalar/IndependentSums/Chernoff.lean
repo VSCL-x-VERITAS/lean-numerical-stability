@@ -1138,6 +1138,95 @@ theorem erdosRenyiDegreeUpperBound
   rw [hpre]
   simpa [hsub] using (binomialUpperTailBound (n - 1) p (t := t))
 
+theorem binomialUpperTailMgfBound (m : ℕ) (p : Set.Icc (0 : ℝ) 1)
+    {t lam : ℝ} (hlam : 0 < lam) :
+    let μ : Measure (Fin (m + 1)) :=
+      (PMF.binomial (unitInterval.toNNReal p)
+        (by change (p : ℝ) ≤ 1; exact p.2.2) m).toMeasure
+    μ.real {k | t ≤ (k : ℝ)} ≤
+      Real.exp (-lam * t + (Real.exp lam - 1) * (m * (p : ℝ))) := by
+  dsimp
+  let μ : Measure (Fin (m + 1)) :=
+    (PMF.binomial (unitInterval.toNNReal p)
+      (by change (p : ℝ) ≤ 1; exact p.2.2) m).toMeasure
+  let S : Fin (m + 1) → ℝ := fun k => (k : ℝ)
+  have hS : Measurable S := by
+    dsimp [S]
+    exact measurable_of_finite _
+  have hmgf :
+      (∫ k, Real.exp (lam * S k) ∂μ) ≤
+        Real.exp ((Real.exp lam - 1) * (m * (p : ℝ))) := by
+    simpa [S, μ] using binomialMgfBound m p lam
+  have hmarkov :=
+    NumStability.HDP.Scalar.IndependentSums.Hoeffding.exponentialMarkovUpper
+      (μ := μ) (S := S) (lam := lam) (t := t) hS hlam
+      (by exact Integrable.of_finite)
+  calc
+    μ.real {k | t ≤ (k : ℝ)} = μ.real (S ⁻¹' Set.Ici t) := by rfl
+    _ ≤ Real.exp (-lam * t) * (∫ k, Real.exp (lam * S k) ∂μ) := by
+      simpa [S] using hmarkov
+    _ ≤ Real.exp (-lam * t) *
+        Real.exp ((Real.exp lam - 1) * (m * (p : ℝ))) :=
+      mul_le_mul_of_nonneg_left hmgf (Real.exp_nonneg _)
+    _ = Real.exp (-lam * t + (Real.exp lam - 1) * (m * (p : ℝ))) := by
+      rw [← Real.exp_add]
+
+theorem erdosRenyiDegreeUpperBoundAt
+    (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (v : Fin n)
+    {t lam : ℝ} (hlam : 0 < lam) :
+    (erdosRenyiModel n p).graphLaw.real {G |
+        t ≤ ((erdosRenyiModel n p).degree v G : ℝ)} ≤
+      Real.exp (-lam * t + (Real.exp lam - 1) * ((n - 1) * (p : ℝ))) := by
+  let A : Set ℕ := {k | t ≤ (k : ℝ)}
+  have hA : MeasurableSet A := by
+    exact (Set.to_countable A).measurableSet
+  have hLaw := erdosRenyiDegreeLaw n p v
+  have hn0 : n ≠ 0 := by
+    intro hn0
+    subst n
+    exact Nat.not_lt_zero _ v.isLt
+  have hn1 : 1 ≤ n := Nat.one_le_iff_ne_zero.mpr hn0
+  have hsub : ((n - 1 : ℕ) : ℝ) = (n : ℝ) - 1 := by
+    rw [Nat.cast_sub hn1]
+    norm_num
+  have hgraph :
+      (erdosRenyiModel n p).graphLaw.real
+          ((erdosRenyiModel n p).degree v ⁻¹' A) =
+        (graphBinomialLaw n p).real A := by
+    rw [Measure.real_def, Measure.real_def, ← hLaw.map_eq,
+      Measure.map_apply_of_aemeasurable hLaw.aemeasurable hA]
+  rw [show {G |
+      t ≤ ((erdosRenyiModel n p).degree v G : ℝ)} =
+      ((erdosRenyiModel n p).degree v ⁻¹' A) by
+        ext G
+        rfl]
+  rw [hgraph, graphBinomialLaw]
+  have hpmf :
+      ((PMF.map (fun i : Fin (n - 1 + 1) => (i : ℕ))
+          (PMF.binomial (unitInterval.toNNReal p)
+            (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))).toMeasure).real A =
+        (PMF.binomial (unitInterval.toNNReal p)
+          (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1)).toMeasure.real
+          ((fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A) := by
+    change (((PMF.map (fun i : Fin (n - 1 + 1) => (i : ℕ))
+        (PMF.binomial (unitInterval.toNNReal p)
+          (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))).toMeasure A).toReal) =
+      ((PMF.binomial (unitInterval.toNNReal p)
+        (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1)).toMeasure
+        ((fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A)).toReal
+    rw [PMF.toMeasure_map_apply (p := PMF.binomial (unitInterval.toNNReal p)
+      (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))
+      (f := fun i : Fin (n - 1 + 1) => (i : ℕ))
+      A (measurable_of_countable _) hA]
+  rw [hpmf]
+  have hpre :
+      (fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A =
+        {i : Fin (n - 1 + 1) | t ≤ ((i : ℕ) : ℝ)} := by
+    ext i
+    rfl
+  rw [hpre]
+  simpa [hsub] using (binomialUpperTailMgfBound (n - 1) p (t := t) hlam)
+
 set_option maxHeartbeats 4000000 in
 theorem erdosRenyiAlmostRegular
     (n : ℕ) (hn : 2 ≤ n) (p : Set.Icc (0 : ℝ) 1)
@@ -1370,6 +1459,159 @@ theorem erdosRenyiSparseMaxDegreeLogBound
     linarith
   simpa [P, Good, T] using hgoodprob
 
+theorem erdosRenyiVerySparseMaxDegreeLogLogBound
+    (p : ℕ → Set.Icc (0 : ℝ) 1) (C : ℝ) (hC : 0 ≤ C)
+    (hbound : ∀ᶠ n in Filter.atTop,
+      ((n - 1 : ℕ) : ℝ) * (p n : ℝ) ≤ C) :
+    ∀ᶠ n in Filter.atTop,
+      (erdosRenyiModel n (p n)).graphLaw.real {G |
+        ∀ v : Fin n,
+          ((erdosRenyiModel n (p n)).degree v G : ℝ) <
+            (C + 5) * Real.log (n : ℝ) / Real.log (Real.log (n : ℝ))} ≥
+      (9 : ℝ) / 10 := by
+  filter_upwards [hbound,
+    Filter.eventually_atTop.2 ⟨16, fun n hn => hn⟩] with n hdn hn16
+  let d : ℝ := ((n - 1 : ℕ) : ℝ) * (p n : ℝ)
+  let L : ℝ := Real.log (n : ℝ)
+  let LL : ℝ := Real.log L
+  let T : ℝ := (C + 5) * L / LL
+  let lambda : ℝ := LL
+  let P : Measure (SimpleGraph (Fin n)) := (erdosRenyiModel n (p n)).graphLaw
+  let Bad : Fin n → Set (SimpleGraph (Fin n)) := fun v =>
+    {G | T ≤ ((erdosRenyiModel n (p n)).degree v G : ℝ)}
+  let Good : Set (SimpleGraph (Fin n)) := {G |
+    ∀ v : Fin n,
+      ((erdosRenyiModel n (p n)).degree v G : ℝ) < T}
+  have hnpos : 0 < (n : ℝ) := by
+    exact_mod_cast (Nat.zero_lt_of_lt hn16)
+  have hn2 : (2 : ℝ) ≤ (n : ℝ) := by
+    exact_mod_cast (show 2 ≤ n by omega)
+  have hn3 : (3 : ℝ) ≤ (n : ℝ) := by
+    exact_mod_cast (show 3 ≤ n by omega)
+  have hn1 : 1 ≤ n := by omega
+  have hsub : ((n - 1 : ℕ) : ℝ) = (n : ℝ) - 1 := by
+    rw [Nat.cast_sub hn1]
+    norm_num
+  have hLpos : 0 < L := by
+    dsimp [L]
+    exact Real.log_pos (by exact_mod_cast (show 1 < n by omega))
+  have hL1 : 1 < L := by
+    dsimp [L]
+    apply (Real.lt_log_iff_exp_lt hnpos).2
+    exact lt_of_lt_of_le Real.exp_one_lt_three hn3
+  have hLLpos : 0 < LL := by
+    dsimp [LL]
+    exact Real.log_pos hL1
+  have hLLne : LL ≠ 0 := ne_of_gt hLLpos
+  have hlam : 0 < lambda := by simpa [lambda] using hLLpos
+  have hdn' : d ≤ C := by
+    simpa [d] using hdn
+  have hexpLambda : Real.exp lambda = L := by
+    dsimp [lambda]
+    rw [Real.exp_log hLpos]
+  have hLLne' : Real.log (Real.log (n : ℝ)) ≠ 0 := by
+    simpa [LL, L] using hLLne
+  have hlambdaT : lambda * T = (C + 5) * L := by
+    dsimp [lambda, T]
+    field_simp [hLLne']
+  have hdnonneg : 0 ≤ d := by
+    dsimp [d]
+    exact mul_nonneg (Nat.cast_nonneg _) (p n).2.1
+  have hmul : (L - 1) * d ≤ (L - 1) * C := by
+    apply mul_le_mul_of_nonneg_left hdn'
+    linarith
+  have hstep : (L - 1) * C ≤ L * C := by
+    nlinarith [hC]
+  have htail : -lambda * T + (Real.exp lambda - 1) * d ≤ -5 * L := by
+    rw [show -lambda * T = -(lambda * T) by ring, hlambdaT, hexpLambda]
+    nlinarith [hmul, hstep]
+  have hbad_meas : ∀ v : Fin n, MeasurableSet (Bad v) := by
+    intro v
+    have heq : Bad v = {G |
+        T ≤ (graphDegreeSum v G : ℝ)} := by
+      ext G
+      simp only [Bad, Set.mem_setOf_eq]
+      rw [erdosRenyiModel_degree_eq_graphDegreeSum]
+    rw [heq]
+    have hcast : Measurable (fun k : ℕ => (k : ℝ)) := measurable_of_countable _
+    have hmeas : Measurable (fun G : SimpleGraph (Fin n) =>
+        (graphDegreeSum v G : ℝ)) := by
+      exact hcast.comp (measurable_graphDegreeSum v)
+    exact hmeas (measurableSet_Ici)
+  have hbad_each : ∀ v : Fin n, P.real (Bad v) ≤
+      Real.exp (-lambda * T + (Real.exp lambda - 1) * d) := by
+    intro v
+    dsimp [P, Bad, T, lambda, d, L, LL]
+    simpa [hsub] using (erdosRenyiDegreeUpperBoundAt n (p n) v
+      (t := (C + 5) * Real.log (n : ℝ) / Real.log (Real.log (n : ℝ)))
+      (lam := Real.log (Real.log (n : ℝ))) hlam)
+  have hbad_union : P.real (⋃ v, Bad v) ≤
+      (n : ℝ) * Real.exp (-lambda * T + (Real.exp lambda - 1) * d) := by
+    calc
+      P.real (⋃ v, Bad v) ≤ ∑ v, P.real (Bad v) :=
+        measureReal_iUnion_fintype_le (μ := P) Bad
+      _ ≤ ∑ _v : Fin n,
+          Real.exp (-lambda * T + (Real.exp lambda - 1) * d) := by
+        exact Finset.sum_le_sum (fun v _ => hbad_each v)
+      _ = (n : ℝ) * Real.exp (-lambda * T +
+          (Real.exp lambda - 1) * d) := by
+        simp
+  have hexp_tail : Real.exp (-lambda * T + (Real.exp lambda - 1) * d) ≤
+      Real.exp (-5 * L) := by
+    exact Real.exp_le_exp.2 htail
+  have hpow : Real.exp (5 * L) = (n : ℝ) ^ 5 := by
+    dsimp [L]
+    calc
+      Real.exp (5 * Real.log (n : ℝ)) =
+          Real.exp (Real.log (n : ℝ)) ^ 5 := by
+        convert Real.exp_nat_mul (Real.log (n : ℝ)) 5 using 1 <;> norm_num
+      _ = (n : ℝ) ^ 5 := by rw [Real.exp_log hnpos]
+  have hexp5 : Real.exp (-5 * L) = ((n : ℝ) ^ 5)⁻¹ := by
+    rw [show -5 * L = -(5 * L) by ring, Real.exp_neg, hpow]
+  have hpow4 : (2 : ℝ) ^ 4 ≤ (n : ℝ) ^ 4 :=
+    pow_le_pow_left₀ (by norm_num) hn2 4
+  have hpow4' : (16 : ℝ) ≤ (n : ℝ) ^ 4 := by
+    norm_num at hpow4 ⊢
+    exact hpow4
+  have hten : 10 * (n : ℝ) ≤ (n : ℝ) ^ 5 := by
+    have hmul' := mul_le_mul_of_nonneg_left hpow4' hnpos.le
+    calc
+      10 * (n : ℝ) ≤ 16 * (n : ℝ) := by nlinarith
+      _ ≤ (n : ℝ) * (n : ℝ) ^ 4 := by simpa [mul_comm] using hmul'
+      _ = (n : ℝ) ^ 5 := by ring
+  have hsmall : (n : ℝ) * Real.exp (-5 * L) ≤ (1 : ℝ) / 10 := by
+    have hpowpos : 0 < (n : ℝ) ^ 5 := by positivity
+    have hdiv : (n : ℝ) / (n : ℝ) ^ 5 ≤ (1 : ℝ) / 10 := by
+      rw [div_le_iff₀ hpowpos]
+      nlinarith [hten]
+    rw [hexp5]
+    simpa [div_eq_mul_inv] using hdiv
+  have hbad_small : P.real (⋃ v, Bad v) ≤ (1 : ℝ) / 10 :=
+    hbad_union.trans <| by
+      calc
+        (n : ℝ) * Real.exp (-lambda * T + (Real.exp lambda - 1) * d) ≤
+            (n : ℝ) * Real.exp (-5 * L) :=
+          mul_le_mul_of_nonneg_left hexp_tail hnpos.le
+        _ ≤ (1 : ℝ) / 10 := hsmall
+  have hgood_eq : Good = (⋃ v, Bad v)ᶜ := by
+    ext G
+    simp only [Good, Bad, Set.mem_compl_iff, Set.mem_iUnion, Set.mem_setOf_eq]
+    constructor
+    · intro hG hbad
+      rcases hbad with ⟨v, hv⟩
+      exact (not_le_of_gt (hG v)) hv
+    · intro hG v
+      exact lt_of_not_ge (fun hv => hG ⟨v, hv⟩)
+  have hUmeas : MeasurableSet (⋃ v, Bad v) := by
+    exact MeasurableSet.iUnion hbad_meas
+  have hgoodprob : P.real Good ≥ (9 : ℝ) / 10 := by
+    rw [hgood_eq, measureReal_compl hUmeas]
+    have hP : P.real Set.univ = 1 := by
+      simp [P]
+    rw [hP]
+    linarith
+  simpa [P, Good, T, L, LL] using hgoodprob
+
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
 
 namespace NumStability.HDP.Contract
@@ -1480,6 +1722,20 @@ theorem hdp_02_hex_h2_d4_d2
             ((NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n (p n)).degree v G : ℝ) <
               (2 * C + 5) * Real.log (n : ℝ)} ≥ (9 : ℝ) / 10 :=
   NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiSparseMaxDegreeLogBound
+    p C hC hbound
+
+theorem hdp_02_hex_h2_d4_d3
+    (p : ℕ → Set.Icc (0 : ℝ) 1) (C : ℝ) (hC : 0 ≤ C)
+    (hbound : ∀ᶠ n in Filter.atTop,
+      ((n - 1 : ℕ) : ℝ) * (p n : ℝ) ≤ C) :
+    ∀ᶠ n in Filter.atTop,
+      (NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n (p n)).graphLaw.real
+        {G |
+          ∀ v : Fin n,
+            ((NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n (p n)).degree v G : ℝ) <
+              (C + 5) * Real.log (n : ℝ) / Real.log (Real.log (n : ℝ))} ≥
+        (9 : ℝ) / 10 :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiVerySparseMaxDegreeLogLogBound
     p C hC hbound
 
 end NumStability.HDP.Contract
