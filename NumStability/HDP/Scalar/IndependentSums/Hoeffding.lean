@@ -1,6 +1,7 @@
 import Mathlib.Probability.Independence.Integration
 import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Tactic
 
 /-!
@@ -94,6 +95,45 @@ theorem coshLeExpHalfSq (x : ℝ) :
     Real.cosh x ≤ Real.exp (x ^ 2 / 2) :=
   Real.cosh_le_exp_half_sq x
 
+/-- A probability density supported on the nonnegative half-line and bounded by one. -/
+structure BoundedDensityOnNonnegative (f : ℝ → ℝ) : Prop where
+  nonnegative : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ f x
+  supported : ∀ᵐ x ∂(volume : Measure ℝ), x < 0 → f x = 0
+  bounded : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ x → f x ≤ 1
+  integrable : Integrable f volume
+  normalized : ∫ x, f x ∂volume = 1
+
+/-- The Laplace transform of a nonnegative density bounded by one is at most `1 / t`. -/
+theorem laplaceTransformLeInv {f : ℝ → ℝ}
+    (hf : BoundedDensityOnNonnegative f) {t : ℝ} (ht : 0 < t) :
+    ∫ x, Real.exp (-t * x) * f x ∂(volume : Measure ℝ) ≤ 1 / t := by
+  let g : ℝ → ℝ := Set.indicator (Set.Ioi 0) (fun x => Real.exp (-t * x))
+  have hg_on : IntegrableOn (fun x : ℝ => Real.exp (-t * x)) (Set.Ioi 0) := by
+    simpa [mul_comm] using
+      (integrableOn_exp_mul_Ioi (a := -t) (by linarith) (0 : ℝ))
+  have hg : Integrable g (volume : Measure ℝ) :=
+    hg_on.integrable_indicator measurableSet_Ioi
+  have hnonneg : 0 ≤ᵐ[(volume : Measure ℝ)] fun x => Real.exp (-t * x) * f x := by
+    filter_upwards [hf.nonnegative] with x hfx
+    exact mul_nonneg (Real.exp_nonneg _) hfx
+  have hle : (fun x => Real.exp (-t * x) * f x) ≤ᵐ[(volume : Measure ℝ)] g := by
+    filter_upwards [hf.supported, hf.bounded, (volume : Measure ℝ).ae_ne 0] with x hs hb hx0
+    by_cases hx : 0 ≤ x
+    · have hx' : 0 < x := lt_of_le_of_ne hx (Ne.symm hx0)
+      rw [show g x = Real.exp (-t * x) by simp [g, Set.mem_Ioi.mpr hx']]
+      simpa using mul_le_mul_of_nonneg_left (hb hx) (Real.exp_nonneg (-t * x))
+    · have hx' : x < 0 := lt_of_not_ge hx
+      rw [show g x = 0 by simp [g, Set.mem_Ioi, not_lt.mpr (le_of_lt hx')], hs hx', mul_zero]
+  calc
+    ∫ x, Real.exp (-t * x) * f x ∂(volume : Measure ℝ)
+        ≤ ∫ x, g x ∂(volume : Measure ℝ) :=
+      integral_mono_of_nonneg hnonneg hg hle
+    _ = ∫ x in Set.Ioi 0, Real.exp (-t * x) ∂(volume : Measure ℝ) := by
+      simp [g, integral_indicator measurableSet_Ioi]
+    _ = -Real.exp ((-t) * 0) / (-t) :=
+      integral_exp_mul_Ioi (by linarith) 0
+    _ = 1 / t := by simp
+
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
 namespace NumStability.HDP.Contract
@@ -121,5 +161,12 @@ theorem hdp_02_hlem_hhoeffding_hoptimization {v t : ℝ} (hv : 0 < v)
 theorem hdp_02_hex_h2_d2_d3 (x : ℝ) :
     Real.cosh x ≤ Real.exp (x ^ 2 / 2) :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.coshLeExpHalfSq x
+
+/-- Stable Chapter 2 alias for Exercise 2.2.10(a). -/
+theorem hdp_02_hex_h2_d2_d10a {f : ℝ → ℝ}
+    (hf : NumStability.HDP.Scalar.IndependentSums.Hoeffding.BoundedDensityOnNonnegative f)
+    {t : ℝ} (ht : 0 < t) :
+    ∫ x, Real.exp (-t * x) * f x ∂(volume : Measure ℝ) ≤ 1 / t :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.laplaceTransformLeInv hf ht
 
 end NumStability.HDP.Contract
