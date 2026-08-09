@@ -529,6 +529,86 @@ theorem minkowskiEpnorm
     eLpNorm (X + Y) p μ ≤ eLpNorm X p μ + eLpNorm Y p μ := by
   exact eLpNorm_add_le hX hY hp
 
+/-! The source-facing Hölder inequality and its two endpoint branches. -/
+theorem holderIntegralBound
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} {p q : ℝ}
+    (hpq : p.HolderConjugate q)
+    (hX : MemLp X (ENNReal.ofReal p) μ)
+    (hY : MemLp Y (ENNReal.ofReal q) μ) :
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (∫ ω, ‖X ω‖ ^ p ∂μ) ^ (1 / p) *
+        (∫ ω, ‖Y ω‖ ^ q ∂μ) ^ (1 / q) := by
+  calc
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+        ∫ ω, ‖X ω * Y ω‖ ∂μ := by
+      exact norm_integral_le_integral_norm _
+    _ = ∫ ω, ‖X ω‖ * ‖Y ω‖ ∂μ := by
+      apply integral_congr_ae
+      filter_upwards with ω
+      rw [norm_mul]
+    _ ≤ (∫ ω, ‖X ω‖ ^ p ∂μ) ^ (1 / p) *
+        (∫ ω, ‖Y ω‖ ^ q ∂μ) ^ (1 / q) :=
+      integral_mul_norm_le_Lp_mul_Lq hpq hX hY
+
+theorem holderEndpointOneTop
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ}
+    (hX : MemLp X 1 μ) (hY : MemLp Y (⊤ : ENNReal) μ) :
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (eLpNorm X 1 μ).toReal * (eLpNorm Y (⊤ : ENNReal) μ).toReal := by
+  letI : ENNReal.HolderConjugate 1 (⊤ : ENNReal) := inferInstance
+  have hprod : MemLp (fun ω => X ω * Y ω) 1 μ := by
+    exact hY.mul' hX
+  calc
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+        ∫ ω, ‖X ω * Y ω‖ ∂μ := by
+      exact norm_integral_le_integral_norm _
+    _ = (eLpNorm (fun ω => X ω * Y ω) 1 μ).toReal := by
+      rw [eLpNorm_one_eq_lintegral_enorm]
+      rw [integral_eq_lintegral_of_nonneg_ae]
+      · simp only [ofReal_norm_eq_enorm]
+      · exact Filter.Eventually.of_forall (fun ω => norm_nonneg _)
+      · exact hprod.1.norm
+    _ ≤ (eLpNorm X 1 μ * eLpNorm Y (⊤ : ENNReal) μ).toReal := by
+      exact ENNReal.toReal_mono (ENNReal.mul_ne_top hX.eLpNorm_ne_top hY.eLpNorm_ne_top)
+        (by
+          simpa using
+            (eLpNorm_le_eLpNorm_mul_eLpNorm_top 1 hX.1 Y (fun x y => x * y) 1
+              (.of_forall fun _ => by simp [enorm_eq_nnnorm])))
+    _ = (eLpNorm X 1 μ).toReal * (eLpNorm Y (⊤ : ENNReal) μ).toReal := by
+      simp only [ENNReal.toReal_mul]
+
+theorem holderEndpointTopOne
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ}
+    (hX : MemLp X (⊤ : ENNReal) μ) (hY : MemLp Y 1 μ) :
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (eLpNorm X (⊤ : ENNReal) μ).toReal * (eLpNorm Y 1 μ).toReal := by
+  simpa [mul_comm] using holderEndpointOneTop (μ := μ) (X := Y) (Y := X) hY hX
+
+structure HolderModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) where
+  interior : ∀ {p q : ℝ}, p.HolderConjugate q →
+    MemLp X (ENNReal.ofReal p) μ → MemLp Y (ENNReal.ofReal q) μ →
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (∫ ω, ‖X ω‖ ^ p ∂μ) ^ (1 / p) *
+        (∫ ω, ‖Y ω‖ ^ q ∂μ) ^ (1 / q)
+  one_top : MemLp X 1 μ → MemLp Y (⊤ : ENNReal) μ →
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (eLpNorm X 1 μ).toReal * (eLpNorm Y (⊤ : ENNReal) μ).toReal
+  top_one : MemLp X (⊤ : ENNReal) μ → MemLp Y 1 μ →
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (eLpNorm X (⊤ : ENNReal) μ).toReal * (eLpNorm Y 1 μ).toReal
+
+def holderModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) : HolderModelData μ X Y :=
+  { interior := fun hpq hX hY => holderIntegralBound hpq hX hY
+    one_top := holderEndpointOneTop
+    top_one := holderEndpointTopOne }
+
 /-! A concrete two-point witness that the displayed `Lᵖ` functional need not
 be subadditive below one. -/
 theorem twoPointLpTriangleFailure :
@@ -739,6 +819,12 @@ theorem hdp_01_hthm_hminkowski
     MeasureTheory.eLpNorm (X + Y) p μ ≤
       MeasureTheory.eLpNorm X p μ + MeasureTheory.eLpNorm Y p μ :=
   NumStability.HDP.Scalar.Preliminaries.minkowskiEpnorm hX hY hp
+
+theorem hdp_01_hthm_hholder
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) :
+    NumStability.HDP.Scalar.Preliminaries.HolderModelData μ X Y :=
+  NumStability.HDP.Scalar.Preliminaries.holderModel μ X Y
 
 theorem hdp_01_hthm_hcdf_hdetermines_hlaw
     {μ ν : Measure ℝ} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
