@@ -1,4 +1,5 @@
 import Mathlib.Probability.Independence.Integration
+import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Tactic
 
 /-!
@@ -49,5 +50,40 @@ theorem mgfIndependentSum
         hY.integral_prod_eq_prod_integral hY_meas
     _ = ∏ i, ∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ := by
       rfl
+
+/-- The centered bounded-variable Hoeffding lemma, with all real MGF
+parameters bundled by Mathlib's sub-Gaussian interface. -/
+theorem hoeffdingBoundedMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {a b : ℝ}
+    (hX : AEMeasurable X μ)
+    (hbound : ∀ᵐ ω ∂μ, X ω ∈ Set.Icc a b)
+    (hmean : ∫ ω, X ω ∂μ = 0) :
+    HasSubgaussianMGF X ((‖b - a‖₊ / 2) ^ 2) μ :=
+  ProbabilityTheory.hasSubgaussianMGF_of_mem_Icc_of_integral_eq_zero
+    hX hbound hmean
+
+/-- The noncentered bounded-variable form, obtained by subtracting the mean. -/
+theorem hoeffdingCenteredMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {a b : ℝ}
+    (hX : AEMeasurable X μ)
+    (hbound : ∀ᵐ ω ∂μ, X ω ∈ Set.Icc a b) :
+    HasSubgaussianMGF (fun ω => X ω - ∫ y, X y ∂μ)
+      ((‖b - a‖₊ / 2) ^ 2) μ :=
+  ProbabilityTheory.hasSubgaussianMGF_of_mem_Icc hX hbound
+
+/-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
+theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {a b : ℝ}
+    (hX : AEMeasurable X μ)
+    (hbound : ∀ᵐ ω ∂μ, X ω ∈ Set.Icc a b)
+    (hmean : ∫ ω, X ω ∂μ = 0) :
+    HasSubgaussianMGF X ((‖b - a‖₊ / 2) ^ 2) μ :=
+  hoeffdingBoundedMGF hX hbound hmean
 
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
