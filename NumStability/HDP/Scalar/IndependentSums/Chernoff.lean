@@ -704,6 +704,38 @@ noncomputable def erdosRenyiModel (n : ℕ) (p : Set.Icc (0 : ℝ) 1) :
     degree := fun v G =>
       @SimpleGraph.degree (Fin n) G v (Fintype.ofFinite (G.neighborSet v)) }
 
+/-- The fixed set of possible edges incident to a vertex.  This is the finite
+edge-coordinate index set used when reducing a random-graph degree to a
+Bernoulli product observable. -/
+def potentialIncidentEdges {V : Type*} (v : V) : Set (Sym2 V) :=
+  (⊤ : SimpleGraph V).incidenceSet v
+
+/-- Count the selected edges in the fixed potential incidence set. -/
+def incidentEdgeCount {V : Type*} [Fintype V] (v : V) (G : SimpleGraph V) : ℕ :=
+  (potentialIncidentEdges v ∩ G.edgeSet).ncard
+
+theorem potentialIncidentEdges_inter_edgeSet {V : Type*} [Fintype V]
+    (v : V) (G : SimpleGraph V) :
+    potentialIncidentEdges v ∩ G.edgeSet = G.incidenceSet v := by
+  classical
+  ext e
+  constructor
+  · rintro ⟨⟨_, hv⟩, he⟩
+    exact ⟨he, hv⟩
+  · rintro ⟨he, hv⟩
+    have heTop : e ∈ (⊤ : SimpleGraph V).edgeSet := by
+      simpa [SimpleGraph.edgeSet] using G.not_isDiag_of_mem_edgeSet he
+    exact ⟨⟨heTop, hv⟩, he⟩
+
+theorem incidentEdgeCount_eq_degree {V : Type*} [Fintype V]
+    (v : V) (G : SimpleGraph V) :
+    incidentEdgeCount v G = @SimpleGraph.degree V G v (Fintype.ofFinite (G.neighborSet v)) := by
+  classical
+  letI : Fintype (G.neighborSet v) := Fintype.ofFinite _
+  rw [incidentEdgeCount, potentialIncidentEdges_inter_edgeSet]
+  simpa [Set.ncard_eq_toFinset_card'] using
+    (SimpleGraph.card_incidenceSet_eq_degree G v).symm
+
 /-- The canonical Erdős--Rényi law is a probability measure. -/
 instance erdosRenyiModel.isProbabilityMeasure
     (n : ℕ) (p : Set.Icc (0 : ℝ) 1) :
