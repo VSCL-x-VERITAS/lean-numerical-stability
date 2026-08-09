@@ -1,11 +1,17 @@
 import Mathlib.Analysis.Convex.Function
+import Mathlib.Analysis.Calculus.Taylor
 import Mathlib.Topology.Algebra.Order.Field
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import Mathlib.MeasureTheory.Function.L1Space.Integrable
+import Mathlib.Probability.Distributions.Exponential
 import Mathlib.Probability.Moments.IntegrableExpMul
+import NumStability.HDP.ContractSignatures.C_02_hrem_h2_d7_d9
 import Mathlib.Tactic
 
 /-!
@@ -20,6 +26,7 @@ noncomputable section
 
 open Filter Set TopologicalSpace
 open MeasureTheory
+open ProbabilityTheory
 open scoped Topology
 
 namespace NumStability.HDP.Scalar.SubExponential
@@ -611,6 +618,193 @@ theorem mgfToMoment
       rw [← Real.mul_rpow (by positivity) (by positivity)]
       ring
 
+/-! Remark 2.7.9: a bounded centered unit-variance witness and the domain of the
+rate-one exponential MGF.  The symmetric two-point law makes the local Taylor
+calculation exact, while the exponential-law calculation is kept in extended
+measure form through its density. -/
+
+def remark279Law : Measure ℝ :=
+  (1 / 2 : ENNReal) • Measure.dirac (-1) +
+    (1 / 2 : ENNReal) • Measure.dirac 1
+
+lemma remark279Law_probability : IsProbabilityMeasure remark279Law := by
+  apply isProbabilityMeasure_iff.mpr
+  simp [remark279Law, ENNReal.div_eq_inv_mul]
+  calc
+    (2 : ENNReal)⁻¹ + 2⁻¹ = (2 : ENNReal)⁻¹ + (2 : ENNReal)⁻¹ * 1 := by
+      ring
+    _ = (2 : ENNReal)⁻¹ * (1 + 1) := by ring
+    _ = (2 : ENNReal)⁻¹ * 2 := by norm_num
+    _ = 1 := by exact ENNReal.inv_mul_cancel (by norm_num) (by norm_num)
+
+lemma remark279Law_integral (f : ℝ → ℝ) :
+    ∫ x, f x ∂remark279Law =
+      (1 / 2 : ℝ) * f (-1) + (1 / 2 : ℝ) * f 1 := by
+  rw [remark279Law, MeasureTheory.integral_add_measure]
+  · rw [MeasureTheory.integral_smul_measure, MeasureTheory.integral_smul_measure,
+      MeasureTheory.integral_dirac, MeasureTheory.integral_dirac]
+    norm_num
+  · apply Integrable.smul_measure
+    · exact integrable_dirac (by simp)
+    · simp [ENNReal.div_eq_inv_mul]
+  · apply Integrable.smul_measure
+    · exact integrable_dirac (by simp)
+    · simp [ENNReal.div_eq_inv_mul]
+
+lemma remark279_mean :
+    (∫ x, x ∂remark279Law) = 0 := by
+  rw [remark279Law_integral]
+  norm_num
+
+lemma remark279_second_moment :
+    (∫ x, x ^ 2 ∂remark279Law) = 1 := by
+  rw [remark279Law_integral]
+  norm_num
+
+set_option maxRecDepth 10000 in
+lemma cosh_local_taylor :
+    (fun x : ℝ => Real.cosh x - 1 - x ^ 2 / 2) =o[𝓝 (0 : ℝ)]
+      (fun x : ℝ => x ^ 2) := by
+  have hc0 : iteratedDeriv 0 Real.cosh 0 = 1 := by
+    simp [iteratedDeriv]
+  have hc1 : iteratedDeriv 1 Real.cosh 0 = 0 := by
+    rw [iteratedDeriv_one, Real.deriv_cosh]
+    simp
+  have hc2 : iteratedDeriv 2 Real.cosh 0 = 1 := by
+    rw [show (2 : ℕ) = 1 + 1 by norm_num, iteratedDeriv_succ,
+      iteratedDeriv_one, Real.deriv_cosh, Real.deriv_sinh]
+    simp
+  have h := Real.taylor_tendsto (f := Real.cosh) (n := 2) (s := Set.univ)
+    convex_univ (mem_univ (0 : ℝ)) Real.contDiff_cosh.contDiffOn
+  rw [Asymptotics.isLittleO_iff_tendsto]
+  · convert h using 1
+    · funext x
+      simp [taylorWithinEval, taylorWithin, taylorCoeffWithin,
+        Finset.sum_range_succ, hc0, hc1, hc2,
+        div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] <;>
+        ring_nf <;> simp
+    · rw [nhdsWithin_univ]
+  · simp
+
+lemma remark279_local_taylor :
+    (fun lam : ℝ =>
+      (∫ x, Real.exp (lam * x) ∂remark279Law) - 1 -
+        lam * (∫ x, x ∂remark279Law) -
+        lam ^ 2 / 2 * (∫ x, x ^ 2 ∂remark279Law)) =o[𝓝 (0 : ℝ)]
+      (fun lam : ℝ => lam ^ 2) := by
+  have hcosh := cosh_local_taylor
+  convert hcosh using 1
+  funext lam
+  rw [remark279Law_integral, remark279_mean, remark279_second_moment]
+  rw [Real.cosh_eq]
+  ring
+
+private lemma remark279_exp_pdf_measurable :
+    Measurable (ProbabilityTheory.exponentialPDF 1) := by
+  unfold ProbabilityTheory.exponentialPDF
+  exact (ProbabilityTheory.measurable_exponentialPDFReal 1).ennreal_ofReal
+
+lemma remark279_exp_mgf_lt_one {lam : ℝ} (hl : lam < 1) :
+    Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1) ∧
+      (∫ x, Real.exp (lam * x) ∂(expMeasure 1)) = (1 - lam)⁻¹ := by
+  have hpdf := remark279_exp_pdf_measurable
+  have hIntBase : Integrable
+      (fun x : ℝ => Real.exp (lam * x) *
+        (ProbabilityTheory.exponentialPDF 1 x).toReal) volume := by
+    have heq : (fun x : ℝ => Real.exp (lam * x) *
+        (ProbabilityTheory.exponentialPDF 1 x).toReal) =
+        (fun x : ℝ => if 0 ≤ x then Real.exp ((lam - 1) * x) else 0) := by
+      funext x
+      by_cases hx : 0 ≤ x
+      · simp [ProbabilityTheory.exponentialPDF,
+          ProbabilityTheory.exponentialPDFReal, ProbabilityTheory.gammaPDFReal,
+          hx]
+        rw [ENNReal.toReal_ofReal (le_of_lt (Real.exp_pos (-x)))]
+        rw [← Real.exp_add]
+        congr 1
+        ring
+      · simp [ProbabilityTheory.exponentialPDF,
+          ProbabilityTheory.exponentialPDFReal, ProbabilityTheory.gammaPDFReal,
+          hx]
+    rw [heq]
+    let g : ℝ → ℝ := fun x => Real.exp ((lam - 1) * x)
+    have hIoi : IntegrableOn g (Ioi (0 : ℝ)) volume :=
+      integrableOn_exp_mul_Ioi (by linarith) 0
+    have hIci : IntegrableOn g (Ici (0 : ℝ)) volume :=
+      (integrableOn_Ici_iff_integrableOn_Ioi).2 hIoi
+    have hInd : Integrable ((Ici (0 : ℝ)).indicator g) volume :=
+      hIci.integrable_indicator measurableSet_Ici
+    simpa [g, Set.indicator, mem_setOf_eq] using hInd
+  have hInt : Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1) := by
+    change Integrable (fun x : ℝ => Real.exp (lam * x))
+      (volume.withDensity (ProbabilityTheory.exponentialPDF 1))
+    rw [integrable_withDensity_iff hpdf
+      (by filter_upwards [] with x; exact ENNReal.coe_lt_top)]
+    simpa [smul_eq_mul] using hIntBase
+  refine ⟨hInt, ?_⟩
+  change (∫ x, Real.exp (lam * x) ∂volume.withDensity
+      (ProbabilityTheory.exponentialPDF 1)) = (1 - lam)⁻¹
+  rw [integral_withDensity_eq_integral_toReal_smul hpdf
+      (by filter_upwards [] with x; exact ENNReal.coe_lt_top)]
+  simp_rw [smul_eq_mul]
+  have heq2 : (fun x : ℝ => (ProbabilityTheory.exponentialPDF 1 x).toReal *
+      Real.exp (lam * x)) =
+      (Ici (0 : ℝ)).indicator (fun x : ℝ => Real.exp ((lam - 1) * x)) := by
+    funext x
+    by_cases hx : 0 ≤ x
+    · simp [ProbabilityTheory.exponentialPDF,
+        ProbabilityTheory.exponentialPDFReal, ProbabilityTheory.gammaPDFReal,
+        hx]
+      rw [ENNReal.toReal_ofReal (le_of_lt (Real.exp_pos (-x)))]
+      rw [← Real.exp_add]
+      congr 1
+      ring
+    · simp [ProbabilityTheory.exponentialPDF,
+        ProbabilityTheory.exponentialPDFReal, ProbabilityTheory.gammaPDFReal,
+        hx]
+  rw [heq2, integral_indicator measurableSet_Ici, integral_Ici_eq_integral_Ioi]
+  rw [integral_exp_mul_Ioi (by linarith) 0]
+  simp
+  rw [show lam - 1 = -(1 - lam) by ring]
+  have hne : 1 - lam ≠ 0 := by linarith
+  field_simp [hne]
+
+lemma remark279_exp_mgf_not_integrable {lam : ℝ} (hl : 1 ≤ lam) :
+    ¬ Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1) := by
+  intro h
+  have hpdf := remark279_exp_pdf_measurable
+  have hbase : Integrable
+      (fun x : ℝ => Real.exp (lam * x) *
+        (ProbabilityTheory.exponentialPDF 1 x).toReal) volume := by
+    change Integrable (fun x : ℝ => Real.exp (lam * x))
+      (volume.withDensity (ProbabilityTheory.exponentialPDF 1)) at h
+    exact (integrable_withDensity_iff hpdf
+      (by filter_upwards [] with x; exact ENNReal.coe_lt_top)).1 h
+  have hprod : IntegrableOn
+      (fun x : ℝ => Real.exp (lam * x) *
+        (ProbabilityTheory.exponentialPDF 1 x).toReal) (Ioi (0 : ℝ)) volume :=
+    hbase.integrableOn
+  have hexp : IntegrableOn (fun x : ℝ => Real.exp ((lam - 1) * x))
+      (Ioi (0 : ℝ)) volume := by
+    apply hprod.congr_fun
+    · intro x hx
+      have hx0 : 0 ≤ x := le_of_lt hx
+      simp [ProbabilityTheory.exponentialPDF,
+        ProbabilityTheory.exponentialPDFReal, ProbabilityTheory.gammaPDFReal,
+        hx0]
+      rw [ENNReal.toReal_ofReal (le_of_lt (Real.exp_pos (-x)))]
+      rw [← Real.exp_add]
+      congr 1
+      ring
+    · exact measurableSet_Ioi
+  have hconst : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi (0 : ℝ)) volume := by
+    apply hexp.integrable.mono'
+    · fun_prop
+    · filter_upwards [self_mem_ae_restrict measurableSet_Ioi] with x hx
+      rw [Real.norm_eq_abs, abs_one]
+      exact Real.one_le_exp (mul_nonneg (sub_nonneg.mpr hl) (le_of_lt hx))
+  exact not_integrableOn_Ioi_rpow 0 (by simpa using hconst)
+
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
@@ -640,5 +834,25 @@ theorem hdp_02_hlem_hse_hmgf_hto_hmoment
     NumStability.HDP.Scalar.SubExponential.LpMomentGrowth μ X
       (2 * Real.exp C * K) :=
   NumStability.HDP.Scalar.SubExponential.mgfToMoment hK hC hMGF
+
+/-! Stable Chapter 2 alias for Remark 2.7.9. -/
+theorem hdp_02_hrem_h2_d7_d9 : hdp_02_hrem_h2_d7_d9__contract_type := by
+  refine ⟨NumStability.HDP.Scalar.SubExponential.remark279Law,
+    (fun x : ℝ => x), NumStability.HDP.Scalar.SubExponential.remark279Law_probability, ?_⟩
+  constructor
+  · rfl
+  constructor
+  · rfl
+  constructor
+  · simpa using NumStability.HDP.Scalar.SubExponential.remark279_mean
+  constructor
+  · simpa using NumStability.HDP.Scalar.SubExponential.remark279_second_moment
+  constructor
+  · simpa using NumStability.HDP.Scalar.SubExponential.remark279_local_taylor
+  constructor
+  · intro lam
+    exact NumStability.HDP.Scalar.SubExponential.remark279_exp_mgf_lt_one
+  · intro lam
+    exact NumStability.HDP.Scalar.SubExponential.remark279_exp_mgf_not_integrable
 
 end NumStability.HDP.Contract
