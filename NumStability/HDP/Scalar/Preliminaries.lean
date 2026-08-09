@@ -609,6 +609,47 @@ def holderModel
     one_top := holderEndpointOneTop
     top_one := holderEndpointTopOne }
 
+/-! The real `L²` Cauchy--Schwarz representative-level interface. -/
+theorem cauchySchwarzIntegralBound
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ}
+    (hX : MemLp X 2 μ) (hY : MemLp Y 2 μ) :
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (eLpNorm X 2 μ).toReal * (eLpNorm Y 2 μ).toReal := by
+  letI : ENNReal.HolderConjugate 2 2 := inferInstance
+  have hprod : MemLp (fun ω => X ω * Y ω) 1 μ := by
+    exact hY.mul' hX
+  calc
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+        ∫ ω, ‖X ω * Y ω‖ ∂μ := by
+      exact norm_integral_le_integral_norm _
+    _ = (eLpNorm (fun ω => X ω * Y ω) 1 μ).toReal := by
+      rw [eLpNorm_one_eq_lintegral_enorm]
+      rw [integral_eq_lintegral_of_nonneg_ae]
+      · simp only [ofReal_norm_eq_enorm]
+      · exact Filter.Eventually.of_forall (fun ω => norm_nonneg _)
+      · exact hprod.1.norm
+    _ ≤ (eLpNorm X 2 μ * eLpNorm Y 2 μ).toReal := by
+      apply ENNReal.toReal_mono
+        (ENNReal.mul_ne_top hX.eLpNorm_ne_top hY.eLpNorm_ne_top)
+      simpa using eLpNorm_le_eLpNorm_mul_eLpNorm_of_nnnorm
+        (p := (2 : ENNReal)) (q := 2) (r := 1) hX.1 hY.1
+        (fun x y => x * y) 1 (.of_forall fun _ => by simp)
+    _ = (eLpNorm X 2 μ).toReal * (eLpNorm Y 2 μ).toReal := by
+      simp only [ENNReal.toReal_mul]
+
+structure CauchySchwarzModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) where
+  bound : MemLp X 2 μ → MemLp Y 2 μ →
+    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
+      (eLpNorm X 2 μ).toReal * (eLpNorm Y 2 μ).toReal
+
+def cauchySchwarzModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) : CauchySchwarzModelData μ X Y :=
+  { bound := cauchySchwarzIntegralBound }
+
 /-! A concrete two-point witness that the displayed `Lᵖ` functional need not
 be subadditive below one. -/
 theorem twoPointLpTriangleFailure :
@@ -825,6 +866,12 @@ theorem hdp_01_hthm_hholder
     (μ : Measure Ω) (X Y : Ω → ℝ) :
     NumStability.HDP.Scalar.Preliminaries.HolderModelData μ X Y :=
   NumStability.HDP.Scalar.Preliminaries.holderModel μ X Y
+
+theorem hdp_01_hthm_hcauchy_hschwarz
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) :
+    NumStability.HDP.Scalar.Preliminaries.CauchySchwarzModelData μ X Y :=
+  NumStability.HDP.Scalar.Preliminaries.cauchySchwarzModel μ X Y
 
 theorem hdp_01_hthm_hcdf_hdetermines_hlaw
     {μ ν : Measure ℝ} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
