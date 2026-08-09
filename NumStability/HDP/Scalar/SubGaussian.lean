@@ -86,10 +86,27 @@ theorem standardNormalMGF (lam : ℝ) :
   norm_num [Real.sqrt_eq_rpow]
   field_simp
 
+private structure StandardNormalSquareMGFProviders where
+  hVar : gaussianReal 0 1 = volume.withDensity (gaussianPDF 0 1)
+  hPdfMeas : Measurable (gaussianPDF 0 1)
+  hPdfTop : ∀ x : ℝ, gaussianPDF 0 1 x < ⊤
+  hToReal : ∀ x : ℝ, (gaussianPDF 0 1 x).toReal = gaussianPDFReal 0 1 x
+  hWithDensity : ∀ {g : ℝ → ℝ},
+    Integrable g (volume.withDensity (gaussianPDF 0 1)) ↔
+      Integrable (fun x => g x * (gaussianPDF 0 1 x).toReal) volume
+  hIntegral : ∀ {f : ℝ → ℝ},
+    (∫ x, f x ∂(gaussianReal 0 1)) =
+      ∫ x, gaussianPDFReal 0 1 x * f x
+  hExp : ∀ {b : ℝ}, 0 < b →
+    Integrable (fun x : ℝ => Real.exp (-b * x ^ 2)) volume
+  hGaussian : ∀ (b : ℝ),
+    ∫ x : ℝ, Real.exp (-b * x ^ 2) = Real.sqrt (Real.pi / b)
+  hIff : ∀ {b : ℝ},
+    Integrable (fun x : ℝ => Real.exp (-b * x ^ 2)) volume ↔ 0 < b
+
 private theorem standardNormalSquareMGF_integrable
     (lam : ℝ) (hsmall : |lam| < (Real.sqrt 2)⁻¹)
-    (hExp : ∀ {b : ℝ}, 0 < b →
-      Integrable (fun x : ℝ => Real.exp (-b * x ^ 2)) volume) :
+    (p : StandardNormalSquareMGFProviders) :
     Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) := by
   have hsq : lam ^ 2 < (1 / 2 : ℝ) := by
     have hinv : 0 ≤ (Real.sqrt 2)⁻¹ := by positivity
@@ -102,11 +119,9 @@ private theorem standardNormalSquareMGF_integrable
         _ = ((Real.sqrt 2)⁻¹) ^ 2 := sq_abs _
     simpa [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)] using hsq'
   have hb : 0 < (1 / 2 : ℝ) - lam ^ 2 := sub_pos.mpr hsq
-  rw [gaussianReal_of_var_ne_zero 0 (by norm_num)]
-  apply (integrable_withDensity_iff
-    (measurable_gaussianPDF 0 1)
-    (ae_of_all _ (fun x => gaussianPDF_lt_top))).2
-  simp only [toReal_gaussianPDF]
+  rw [p.hVar]
+  apply (p.hWithDensity (g := fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2))).2
+  simp only [p.hToReal]
   have htarget : Integrable (fun x : ℝ => gaussianPDFReal 0 1 x *
       Real.exp (lam ^ 2 * x ^ 2)) volume := by
     rw [show (fun x : ℝ => gaussianPDFReal 0 1 x * Real.exp (lam ^ 2 * x ^ 2)) =
@@ -128,13 +143,12 @@ private theorem standardNormalSquareMGF_integrable
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring]
-    exact (hExp hb).const_mul _
+    exact (p.hExp hb).const_mul _
   simpa only [mul_comm] using htarget
 
 private theorem standardNormalSquareMGF_value
     (lam : ℝ) (hsmall : |lam| < (Real.sqrt 2)⁻¹)
-    (hGaussian : ∀ (b : ℝ),
-      ∫ x : ℝ, Real.exp (-b * x ^ 2) = Real.sqrt (Real.pi / b)) :
+    (p : StandardNormalSquareMGFProviders) :
     ∫ x : ℝ, Real.exp (lam ^ 2 * x ^ 2) ∂(gaussianReal 0 1) =
       (Real.sqrt (1 - 2 * lam ^ 2))⁻¹ := by
   have hsq : lam ^ 2 < (1 / 2 : ℝ) := by
@@ -149,9 +163,7 @@ private theorem standardNormalSquareMGF_value
     simpa [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)] using hsq'
   have hb : 0 < (1 / 2 : ℝ) - lam ^ 2 := sub_pos.mpr hsq
   have hq : 0 < 1 - 2 * lam ^ 2 := by nlinarith
-  rw [integral_gaussianReal_eq_integral_smul (μ := (0 : ℝ)) (v := (1 : NNReal))
-    (f := fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (by norm_num)]
-  simp only [smul_eq_mul]
+  rw [p.hIntegral]
   have hpdf (x : ℝ) : gaussianPDFReal 0 1 x =
       (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) := by
     simp [gaussianPDFReal]
@@ -172,7 +184,7 @@ private theorem standardNormalSquareMGF_value
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring]
-  rw [integral_const_mul, hGaussian]
+  rw [integral_const_mul, p.hGaussian]
   apply (sq_eq_sq₀ (by positivity) (by positivity)).1
   rw [mul_pow]
   simp only [inv_pow]
@@ -183,15 +195,12 @@ private theorem standardNormalSquareMGF_value
 
 private theorem standardNormalSquareMGF_not_integrable
     (lam : ℝ) (hlarge : (Real.sqrt 2)⁻¹ ≤ |lam|)
-    (hiff : ∀ {b : ℝ},
-      Integrable (fun x : ℝ => Real.exp (-b * x ^ 2)) volume ↔ 0 < b) :
+    (p : StandardNormalSquareMGFProviders) :
     ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) := by
   intro hInt
-  rw [gaussianReal_of_var_ne_zero 0 (by norm_num)] at hInt
-  have hvol := (integrable_withDensity_iff
-    (measurable_gaussianPDF 0 1)
-    (ae_of_all _ (fun x => gaussianPDF_lt_top))).1 hInt
-  simp only [toReal_gaussianPDF] at hvol
+  rw [p.hVar] at hInt
+  have hvol := (p.hWithDensity (g := fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2))).1 hInt
+  simp only [p.hToReal] at hvol
   have hvol' : Integrable (fun x : ℝ => gaussianPDFReal 0 1 x *
       Real.exp (lam ^ 2 * x ^ 2)) volume := by
     simpa only [mul_comm] using hvol
@@ -226,7 +235,7 @@ private theorem standardNormalSquareMGF_not_integrable
   rw [hrew] at hvol'
   have hbad : ¬ Integrable (fun x : ℝ =>
       Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) := by
-    rw [hiff]
+    rw [p.hIff]
     exact not_lt_of_ge (sub_nonpos.mpr hsq)
   have hc : (Real.sqrt (2 * Real.pi))⁻¹ ≠ 0 := by positivity
   exact hbad ((integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc) _).mp hvol')
@@ -241,14 +250,31 @@ theorem standardNormalSquareMGF (lam : ℝ) :
           (Real.sqrt (1 - 2 * lam ^ 2))⁻¹) ∧
     ((Real.sqrt 2)⁻¹ ≤ |lam| →
       ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1)) := by
+  let p : StandardNormalSquareMGFProviders :=
+    { hVar := ProbabilityTheory.gaussianReal_of_var_ne_zero 0 (by norm_num)
+      hPdfMeas := ProbabilityTheory.measurable_gaussianPDF 0 1
+      hPdfTop := fun x => ProbabilityTheory.gaussianPDF_lt_top
+      hToReal := fun x => ProbabilityTheory.toReal_gaussianPDF x
+      hWithDensity := by
+        intro g
+        exact (integrable_withDensity_iff
+          (ProbabilityTheory.measurable_gaussianPDF 0 1)
+          (ae_of_all _ (fun x => ProbabilityTheory.gaussianPDF_lt_top)))
+      hIntegral := by
+        intro f
+        simpa only [smul_eq_mul] using
+          (ProbabilityTheory.integral_gaussianReal_eq_integral_smul
+            (μ := (0 : ℝ)) (v := (1 : NNReal)) (f := f) (by norm_num))
+      hExp := _root_.integrable_exp_neg_mul_sq
+      hGaussian := _root_.integral_gaussian
+      hIff := _root_.integrable_exp_neg_mul_sq_iff }
   constructor
   · intro hsmall
     exact ⟨standardNormalSquareMGF_integrable lam hsmall
-        _root_.integrable_exp_neg_mul_sq,
-      standardNormalSquareMGF_value lam hsmall _root_.integral_gaussian⟩
+        p,
+      standardNormalSquareMGF_value lam hsmall p⟩
   · intro hlarge
-    exact standardNormalSquareMGF_not_integrable lam hlarge
-      _root_.integrable_exp_neg_mul_sq_iff
+    exact standardNormalSquareMGF_not_integrable lam hlarge p
 
 /-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
 
