@@ -770,6 +770,363 @@ theorem erdosRenyiDegreeLaw
   have h' := h.congr (Filter.Eventually.of_forall (fun G => congrFun hcongr G))
   simpa [erdosRenyiModel] using h'
 
+/-! The exact finite MGF of Mathlib's canonical binomial PMF. -/
+theorem binomialMgfExact (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (lam : ℝ) :
+    (∫ k : Fin (n + 1), Real.exp (lam * (k : ℝ)) ∂
+      (PMF.binomial (unitInterval.toNNReal p)
+        (by change (p : ℝ) ≤ 1; exact p.2.2) n).toMeasure) =
+      (1 - (p : ℝ) + (p : ℝ) * Real.exp lam) ^ n := by
+  rw [PMF.integral_eq_sum]
+  simp only [smul_eq_mul, PMF.binomial_apply]
+  rw [Finset.sum_fin_eq_sum_range]
+  simp only [Finset.sum_apply]
+  have hpNN : unitInterval.toNNReal p ≤ 1 := by
+    change (p : ℝ) ≤ 1
+    exact p.2.2
+  have hq :
+      (1 - (unitInterval.toNNReal p : ℝ≥0∞)).toReal = 1 - (p : ℝ) := by
+    rw [ENNReal.toReal_sub_of_le (by exact_mod_cast hpNN) ENNReal.one_ne_top]
+    rfl
+  rw [show 1 - (p : ℝ) + (p : ℝ) * Real.exp lam =
+      ((p : ℝ) * Real.exp lam) + (1 - (p : ℝ)) by ring]
+  rw [add_pow]
+  apply Finset.sum_congr rfl
+  intro x hx
+  have hxn : x ≤ n := Nat.le_of_lt_succ (Finset.mem_range.mp hx)
+  have hexp : Real.exp (lam * (x : ℝ)) = Real.exp lam ^ x := by
+    rw [mul_comm, Real.exp_nat_mul]
+  simp only [dif_pos (Nat.lt_succ_of_le hxn)]
+  simp [hq, ENNReal.toReal_mul, hexp]
+  ring
+
+theorem binomialMgfBound (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (lam : ℝ) :
+    (∫ k : Fin (n + 1), Real.exp (lam * (k : ℝ)) ∂
+      (PMF.binomial (unitInterval.toNNReal p)
+        (by change (p : ℝ) ≤ 1; exact p.2.2) n).toMeasure) ≤
+      Real.exp ((Real.exp lam - 1) * (n * (p : ℝ))) := by
+  rw [binomialMgfExact]
+  have hbase : 1 + (Real.exp lam - 1) * (p : ℝ) ≤
+      Real.exp ((Real.exp lam - 1) * (p : ℝ)) := by
+    simpa [add_comm] using
+      Real.add_one_le_exp ((Real.exp lam - 1) * (p : ℝ))
+  have hpow :
+      (1 + (Real.exp lam - 1) * (p : ℝ)) ^ n ≤
+        Real.exp ((Real.exp lam - 1) * (p : ℝ)) ^ n :=
+    pow_le_pow_left₀ (by
+      have hp0 : 0 ≤ (p : ℝ) := p.2.1
+      have hp1 : (p : ℝ) ≤ 1 := p.2.2
+      have hprod : -(p : ℝ) ≤ (Real.exp lam - 1) * (p : ℝ) := by
+        have he : 0 ≤ Real.exp lam := (Real.exp_pos lam).le
+        nlinarith [mul_le_mul_of_nonneg_right (by linarith) hp0]
+      linarith [hp1, hprod]) hbase n
+  calc
+    (1 - (p : ℝ) + (p : ℝ) * Real.exp lam) ^ n =
+        (1 + (Real.exp lam - 1) * (p : ℝ)) ^ n := by
+      congr 1
+      ring
+    _ ≤ Real.exp ((Real.exp lam - 1) * (p : ℝ)) ^ n := hpow
+    _ = Real.exp ((Real.exp lam - 1) * (n * (p : ℝ))) := by
+      rw [← Real.exp_nat_mul]
+      congr 1
+      ring
+
+private lemma exp_add_half_le_graph (δ : ℝ) (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1) :
+    Real.exp (δ / 2) ≤ 1 + δ / 2 + (δ / 2) ^ 2 := by
+  have hrem := Real.abs_exp_sub_one_sub_id_le (x := δ / 2) (by
+    calc
+      |δ / 2| = δ / 2 := abs_of_nonneg (by positivity)
+      _ ≤ 1 := by linarith)
+  have hrem' : Real.exp (δ / 2) - 1 - δ / 2 ≤ (δ / 2) ^ 2 :=
+    (le_abs_self _).trans hrem
+  linarith
+
+private lemma exp_neg_half_le_graph (δ : ℝ) (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1) :
+    Real.exp (-δ / 2) ≤ 1 - δ / 2 + (δ / 2) ^ 2 := by
+  have hrem := Real.abs_exp_sub_one_sub_id_le (x := -δ / 2) (by
+    calc
+      |-δ / 2| = δ / 2 := by
+        rw [abs_of_nonpos (by linarith)]
+        ring
+      _ ≤ 1 := by linarith)
+  have hrem' : Real.exp (-δ / 2) - 1 - (-δ / 2) ≤ (-δ / 2) ^ 2 :=
+    (le_abs_self _).trans hrem
+  linarith
+
+theorem binomialTwoSidedBound (m : ℕ) (p : Set.Icc (0 : ℝ) 1) {δ : ℝ}
+    (hδ0 : 0 < δ) (hδ1 : δ ≤ 1) :
+    let μ : Measure (Fin (m + 1)) :=
+      (PMF.binomial (unitInterval.toNNReal p)
+        (by change (p : ℝ) ≤ 1; exact p.2.2) m).toMeasure
+    μ.real {k |
+        δ * (m * (p : ℝ)) ≤ |(k : ℝ) - m * (p : ℝ)|} ≤
+      2 * Real.exp (-(m * (p : ℝ)) * δ ^ 2 / 4) := by
+  dsimp
+  let μ : Measure (Fin (m + 1)) :=
+    (PMF.binomial (unitInterval.toNNReal p)
+      (by change (p : ℝ) ≤ 1; exact p.2.2) m).toMeasure
+  let S : Fin (m + 1) → ℝ := fun k => (k : ℝ)
+  let mr : ℝ := m * (p : ℝ)
+  have hm : 0 ≤ mr := by
+    dsimp [mr]
+    exact mul_nonneg (by positivity) p.2.1
+  have hS : Measurable S := by
+    dsimp [S]
+    exact measurable_of_finite _
+  have hupper_mgf :
+      (∫ k, Real.exp ((δ / 2) * S k) ∂μ) ≤
+        Real.exp ((Real.exp (δ / 2) - 1) * mr) := by
+    simpa [S, mr, μ] using binomialMgfBound m p (δ / 2)
+  have hlower_mgf :
+      (∫ k, Real.exp ((-δ / 2) * S k) ∂μ) ≤
+        Real.exp ((Real.exp (-δ / 2) - 1) * mr) := by
+    simpa [S, mr, μ] using binomialMgfBound m p (-δ / 2)
+  have hupper_markov :=
+    NumStability.HDP.Scalar.IndependentSums.Hoeffding.exponentialMarkovUpper
+      (μ := μ) (S := S) (lam := δ / 2) (t := (1 + δ) * mr) hS (by linarith)
+      (by exact Integrable.of_finite)
+  have hlower_markov :=
+    NumStability.HDP.Scalar.IndependentSums.Hoeffding.exponentialMarkovUpper
+      (μ := μ) (S := fun k => -S k) (lam := δ / 2)
+      (t := -(1 - δ) * mr) hS.neg (by linarith)
+      (by exact Integrable.of_finite)
+  have hupper_exp : Real.exp (δ / 2) ≤ 1 + δ / 2 + (δ / 2) ^ 2 :=
+    exp_add_half_le_graph δ hδ0.le hδ1
+  have hlower_exp : Real.exp (-δ / 2) ≤ 1 - δ / 2 + (δ / 2) ^ 2 :=
+    exp_neg_half_le_graph δ hδ0.le hδ1
+  have hupper_coeff :
+      -(δ / 2 * ((1 + δ) * mr)) + (Real.exp (δ / 2) - 1) * mr ≤
+        -(mr * δ ^ 2 / 4) := by
+    have hcoeff :
+        -(δ / 2 * (1 + δ)) + (Real.exp (δ / 2) - 1) ≤ -(δ ^ 2 / 4) := by
+      nlinarith [hupper_exp]
+    have := mul_le_mul_of_nonneg_right hcoeff hm
+    nlinarith
+  have hlower_coeff :
+      -(δ / 2 * (-(1 - δ) * mr)) + (Real.exp (-δ / 2) - 1) * mr ≤
+        -(mr * δ ^ 2 / 4) := by
+    have hcoeff :
+        (δ / 2) * (1 - δ) + (Real.exp (-δ / 2) - 1) ≤ -(δ ^ 2 / 4) := by
+      nlinarith [hlower_exp]
+    have := mul_le_mul_of_nonneg_right hcoeff hm
+    nlinarith
+  have hupper_raw : μ.real (S ⁻¹' Set.Ici ((1 + δ) * mr)) ≤
+      Real.exp (-(δ / 2 * ((1 + δ) * mr))) *
+        Real.exp ((Real.exp (δ / 2) - 1) * mr) := by
+    apply le_trans hupper_markov
+    apply mul_le_mul_of_nonneg_left _ (Real.exp_nonneg _)
+    simpa [S, mr] using hupper_mgf
+  have hlower_raw : μ.real ((fun k => -S k) ⁻¹' Set.Ici (-(1 - δ) * mr)) ≤
+      Real.exp (-(δ / 2 * (-(1 - δ) * mr))) *
+        Real.exp ((Real.exp (-δ / 2) - 1) * mr) := by
+    apply le_trans hlower_markov
+    apply mul_le_mul_of_nonneg_left _ (Real.exp_nonneg _)
+    convert hlower_mgf using 1 <;> simp [S, mr] <;> ring
+  have hupper : μ.real {k | (1 + δ) * mr ≤ S k} ≤
+      Real.exp (-(mr * δ ^ 2 / 4)) := by
+    rw [show {k | (1 + δ) * mr ≤ S k} = S ⁻¹' Set.Ici ((1 + δ) * mr) by rfl]
+    refine hupper_raw.trans ?_
+    rw [← Real.exp_add]
+    exact Real.exp_le_exp.2 hupper_coeff
+  have hlower : μ.real {k | S k ≤ (1 - δ) * mr} ≤
+      Real.exp (-(mr * δ ^ 2 / 4)) := by
+    have hset : {k | S k ≤ (1 - δ) * mr} =
+        (fun k => -S k) ⁻¹' Set.Ici (-(1 - δ) * mr) := by
+      ext k
+      simp only [Set.mem_setOf_eq, Set.mem_preimage, Set.mem_Ici]
+      constructor <;> intro h <;> linarith
+    rw [hset]
+    refine hlower_raw.trans ?_
+    rw [← Real.exp_add]
+    exact Real.exp_le_exp.2 hlower_coeff
+  let U : Set (Fin (m + 1)) := {k | (1 + δ) * mr ≤ S k}
+  let L : Set (Fin (m + 1)) := {k | S k ≤ (1 - δ) * mr}
+  have hsubset : {k | δ * mr ≤ |S k - mr|} ⊆ U ∪ L := by
+    intro k h
+    change δ * mr ≤ |S k - mr| at h
+    by_cases hu : (1 + δ) * mr ≤ S k
+    · exact Or.inl hu
+    · right
+      have hnu : S k < (1 + δ) * mr := lt_of_not_ge hu
+      by_contra hnl
+      have hnl' : (1 - δ) * mr < S k := lt_of_not_ge hnl
+      have habs : |S k - mr| < δ * mr := by
+        rw [abs_lt]
+        constructor <;> linarith
+      exact (not_lt_of_ge h) habs
+  have hmono {A B : Set (Fin (m + 1))} (hAB : A ⊆ B) : μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+  have hunion : μ.real (U ∪ L) ≤ μ.real U + μ.real L := by
+    rw [Measure.real_def, Measure.real_def, Measure.real_def]
+    calc
+      (μ (U ∪ L)).toReal ≤ (μ U + μ L).toReal := by
+        apply ENNReal.toReal_mono
+        · exact ENNReal.add_ne_top.mpr ⟨measure_ne_top μ U, measure_ne_top μ L⟩
+        · exact measure_union_le U L
+      _ = (μ U).toReal + (μ L).toReal :=
+        ENNReal.toReal_add (measure_ne_top μ U) (measure_ne_top μ L)
+  have hfinal : μ.real {k | δ * mr ≤ |S k - mr|} ≤
+      2 * Real.exp (-mr * δ ^ 2 / 4) := by
+    calc
+      μ.real {k | δ * mr ≤ |S k - mr|} ≤ μ.real (U ∪ L) := hmono hsubset
+      _ ≤ μ.real U + μ.real L := hunion
+      _ ≤ Real.exp (-(mr * δ ^ 2 / 4)) + Real.exp (-(mr * δ ^ 2 / 4)) :=
+        add_le_add (by simpa [U] using hupper) (by simpa [L] using hlower)
+      _ = 2 * Real.exp (-mr * δ ^ 2 / 4) := by ring
+  simpa [S, mr, μ] using hfinal
+
+set_option maxHeartbeats 800000 in
+theorem erdosRenyiDegreeDeviationBound
+    (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (v : Fin n) {δ : ℝ}
+    (hδ0 : 0 < δ) (hδ1 : δ ≤ 1) :
+    (erdosRenyiModel n p).graphLaw.real {G |
+        δ * ((n - 1) * (p : ℝ)) ≤
+          |((erdosRenyiModel n p).degree v G : ℝ) - (n - 1) * (p : ℝ)|} ≤
+      2 * Real.exp (-((n - 1) * (p : ℝ)) * δ ^ 2 / 4) := by
+  let A : Set ℕ := {k |
+    δ * ((n - 1) * (p : ℝ)) ≤ |(k : ℝ) - (n - 1) * (p : ℝ)|}
+  have hA : MeasurableSet A := by
+    exact (Set.to_countable A).measurableSet
+  have hLaw := erdosRenyiDegreeLaw n p v
+  have hgraph :
+      (erdosRenyiModel n p).graphLaw.real
+          ((erdosRenyiModel n p).degree v ⁻¹' A) =
+        (graphBinomialLaw n p).real A := by
+    rw [Measure.real_def, Measure.real_def, ← hLaw.map_eq,
+      Measure.map_apply_of_aemeasurable hLaw.aemeasurable hA]
+  rw [show {G |
+      δ * ((n - 1) * (p : ℝ)) ≤
+        |((erdosRenyiModel n p).degree v G : ℝ) - (n - 1) * (p : ℝ)|} =
+      ((erdosRenyiModel n p).degree v ⁻¹' A) by
+        ext G
+        rfl]
+  rw [hgraph]
+  rw [Measure.real_def, graphBinomialLaw,
+    PMF.toMeasure_map_apply (p := PMF.binomial (unitInterval.toNNReal p)
+      (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))
+      (f := fun i : Fin (n - 1 + 1) => (i : ℕ))
+      A (measurable_of_countable _) hA]
+  have hpre :
+      (fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A =
+        {i : Fin (n - 1 + 1) | δ * ((n - 1) * (p : ℝ)) ≤
+          |((i : ℕ) : ℝ) - (n - 1) * (p : ℝ)|} := by
+    ext i
+    rfl
+  rw [hpre]
+  exact binomialTwoSidedBound (n - 1) p hδ0 hδ1
+
+set_option maxHeartbeats 800000 in
+theorem erdosRenyiAlmostRegular
+    (n : ℕ) (hn : 2 ≤ n) (p : Set.Icc (0 : ℝ) 1)
+    (hd : 4000 * Real.log (n : ℝ) ≤ (n - 1) * (p : ℝ)) :
+    (erdosRenyiModel n p).graphLaw.real {G |
+        ∀ v : Fin n,
+          |((erdosRenyiModel n p).degree v G : ℝ) - (n - 1) * (p : ℝ)| <
+            ((n - 1) * (p : ℝ)) / 10} ≥ (9 : ℝ) / 10 := by
+  let d : ℝ := (n - 1) * (p : ℝ)
+  let P : Measure (SimpleGraph (Fin n)) := (erdosRenyiModel n p).graphLaw
+  let Bad : Fin n → Set (SimpleGraph (Fin n)) := fun v =>
+    {G | (1 / 10 : ℝ) * d ≤
+      |((erdosRenyiModel n p).degree v G : ℝ) - d|}
+  let Good : Set (SimpleGraph (Fin n)) := {G |
+    ∀ v : Fin n,
+      |((erdosRenyiModel n p).degree v G : ℝ) - d| < d / 10}
+  have hbad_meas : ∀ v : Fin n, MeasurableSet (Bad v) := by
+    intro v
+    have heq : Bad v = {G |
+        (1 / 10 : ℝ) * d ≤ |(graphDegreeSum v G : ℝ) - d|} := by
+      ext G
+      simp only [Bad, Set.mem_setOf_eq]
+      rw [erdosRenyiModel_degree_eq_graphDegreeSum]
+    rw [heq]
+    have hcast : Measurable (fun k : ℕ => (k : ℝ)) := measurable_of_countable _
+    have hmeas : Measurable (fun G : SimpleGraph (Fin n) =>
+        |(graphDegreeSum v G : ℝ) - d|) := by
+      exact ((hcast.comp (measurable_graphDegreeSum v)).sub measurable_const).abs
+    exact hmeas (measurableSet_Ici)
+  have hbad_each : ∀ v : Fin n, P.real (Bad v) ≤
+      2 * Real.exp (-d / 400) := by
+    intro v
+    dsimp [P, Bad, d]
+    convert erdosRenyiDegreeDeviationBound n p v
+      (δ := (1 : ℝ) / 10) (by norm_num) (by norm_num) using 1 <;> ring
+  have hbad_union : P.real (⋃ v, Bad v) ≤
+      2 * (n : ℝ) * Real.exp (-d / 400) := by
+    calc
+      P.real (⋃ v, Bad v) ≤ ∑ v, P.real (Bad v) :=
+        measureReal_iUnion_fintype_le (μ := P) Bad
+      _ ≤ ∑ _v : Fin n, 2 * Real.exp (-d / 400) := by
+        exact Finset.sum_le_sum (fun v _ => hbad_each v)
+      _ = 2 * (n : ℝ) * Real.exp (-d / 400) := by
+        simp
+        ring
+  have hnpos : 0 < (n : ℝ) := by
+    exact_mod_cast (Nat.zero_lt_of_lt hn)
+  have hn2 : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  have hdexp : Real.exp (-d / 400) ≤
+      Real.exp (-10 * Real.log (n : ℝ)) := by
+    apply Real.exp_le_exp.2
+    dsimp [d]
+    nlinarith [hd]
+  have hexp : Real.exp (-10 * Real.log (n : ℝ)) =
+      ((n : ℝ) ^ 10)⁻¹ := by
+    have hpow : Real.exp (10 * Real.log (n : ℝ)) = (n : ℝ) ^ 10 := by
+      calc
+        Real.exp (10 * Real.log (n : ℝ)) =
+            Real.exp (Real.log (n : ℝ)) ^ 10 := by
+          convert Real.exp_nat_mul (Real.log (n : ℝ)) 10 using 1 <;> norm_num
+        _ = (n : ℝ) ^ 10 := by rw [Real.exp_log hnpos]
+    rw [show -10 * Real.log (n : ℝ) = -(10 * Real.log (n : ℝ)) by ring,
+      Real.exp_neg, hpow]
+  have hpow9 : (2 : ℝ) ^ 9 ≤ (n : ℝ) ^ 9 :=
+    pow_le_pow_left₀ (by norm_num) hn2 9
+  have h20 : 20 * (n : ℝ) ≤ (n : ℝ) ^ 10 := by
+    have hmul := mul_le_mul_of_nonneg_left hpow9 hnpos.le
+    calc
+      20 * (n : ℝ) ≤ 512 * (n : ℝ) := by nlinarith
+      _ = (n : ℝ) * (2 : ℝ) ^ 9 := by ring
+      _ ≤ (n : ℝ) * (n : ℝ) ^ 9 := hmul
+      _ = (n : ℝ) ^ 10 := by ring
+  have hsmall : 2 * (n : ℝ) * Real.exp (-d / 400) ≤ (1 : ℝ) / 10 := by
+    have hpowpos : 0 < (n : ℝ) ^ 10 := by positivity
+    have hdiv : 2 * (n : ℝ) / (n : ℝ) ^ 10 ≤ (1 : ℝ) / 10 := by
+      rw [div_le_iff₀ hpowpos]
+      nlinarith [h20]
+    calc
+      2 * (n : ℝ) * Real.exp (-d / 400) ≤
+          2 * (n : ℝ) * Real.exp (-10 * Real.log (n : ℝ)) :=
+        mul_le_mul_of_nonneg_left hdexp (by positivity)
+      _ = 2 * (n : ℝ) / (n : ℝ) ^ 10 := by
+        rw [hexp]
+        simp [div_eq_mul_inv]
+      _ ≤ (1 : ℝ) / 10 := hdiv
+  have hbad_small : P.real (⋃ v, Bad v) ≤ (1 : ℝ) / 10 :=
+    hbad_union.trans hsmall
+  have hgood_eq : Good = (⋃ v, Bad v)ᶜ := by
+    ext G
+    simp only [Good, Bad, Set.mem_compl_iff, Set.mem_iUnion, Set.mem_setOf_eq]
+    constructor
+    · intro hG hbad
+      rcases hbad with ⟨v, hv⟩
+      exact (not_le_of_gt (hG v)) (by
+        convert hv using 1 <;> ring)
+    · intro hG v
+      have hnot : ¬ (1 / 10 : ℝ) * d ≤
+          |((erdosRenyiModel n p).degree v G : ℝ) - d| := by
+        intro hv
+        exact hG ⟨v, hv⟩
+      exact (lt_of_not_ge (by
+        convert hnot using 1 <;> ring))
+  have hUmeas : MeasurableSet (⋃ v, Bad v) := by
+    exact MeasurableSet.iUnion hbad_meas
+  have hgoodprob : P.real Good ≥ (9 : ℝ) / 10 := by
+    rw [hgood_eq, measureReal_compl hUmeas]
+    have hP : P.real Set.univ = 1 := by
+      simp [P]
+    rw [hP]
+    linarith
+  simpa [P, Good, d] using hgoodprob
+
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
 
 namespace NumStability.HDP.Contract
@@ -857,5 +1214,16 @@ theorem hdp_02_hlem_her_hdegree_hlaw
       (NumStability.HDP.Scalar.IndependentSums.Chernoff.graphBinomialLaw n p)
       (NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).graphLaw :=
   NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiDegreeLaw n p v
+
+theorem hdp_02_hprop_h2_d4_d1
+    (n : ℕ) (hn : 2 ≤ n) (p : Set.Icc (0 : ℝ) 1)
+    (hd : 4000 * Real.log (n : ℝ) ≤ (n - 1) * (p : ℝ)) :
+    (NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).graphLaw.real
+        {G |
+          ∀ v : Fin n,
+            |((NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).degree v G : ℝ) -
+                (n - 1) * (p : ℝ)| <
+              ((n - 1) * (p : ℝ)) / 10} ≥ (9 : ℝ) / 10 :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiAlmostRegular n hn p hd
 
 end NumStability.HDP.Contract
