@@ -1611,14 +1611,4 @@ theorem hdp_02_hlem_hlp_hextrapolation
         (∫ ω, |Z ω| ^ (3 : ℕ) ∂μ) ^ (1 / 4 : ℝ) :=
   NumStability.HDP.Scalar.SubGaussian.lpExtrapolation hZ1 hZ3
 
-/-! Stable Chapter 2 alias for the Gaussian sum law in equation (2.18). -/
-theorem hdp_02_heq_h2_d18 {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
-    (hLaw : ∀ i, HasLaw (X i) (gaussianReal 0 (σ i)) μ)
-    (hIndep : iIndepFun X μ) :
-    HasLaw (fun ω => ∑ i, a i * X i ω)
-      (gaussianReal 0 (∑ i, Real.toNNReal ((a i) ^ 2) * σ i)) μ :=
-  NumStability.HDP.Scalar.SubGaussian.independentGaussianWeightedSumLaw a hLaw hIndep
-
 end NumStability.HDP.Contract
