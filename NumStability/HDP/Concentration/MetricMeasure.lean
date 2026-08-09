@@ -139,6 +139,55 @@ theorem distance_to_set_le_add (s : Set ℝ) (x y : ℝ) :
     Metric.infDist x s ≤ Metric.infDist y s + dist x y :=
   Metric.infDist_le_infDist_add_dist
 
+/-!
+  The general metric-space definition from Chapter 5, §5.1.1.  The
+  Lipschitz predicate and constants are the Mathlib ones; the optimal
+  constant is recorded in `ℝ≥0∞` using the infimum of all `NNReal`
+  witnesses.  This is the same convention used by the real-valued
+  `LipschitzInterface` above, but with the source's domain and codomain
+  left general.
+-/
+def metricLipConstants
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    (f : α → β) : Set NNReal :=
+  {K | LipschitzWith K f}
+
+noncomputable def metricLipNorm
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    (f : α → β) : ℝ≥0∞ :=
+  ENNReal.ofNNReal (sInf (metricLipConstants f))
+
+def IsContraction
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    (f : α → β) : Prop :=
+  LipschitzWith 1 f
+
+structure LipschitzMapData
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    (f : α → β) where
+  constant : NNReal
+  bound : LipschitzWith constant f
+  norm : ℝ≥0∞
+  norm_eq : norm = metricLipNorm f
+
+theorem metricLipNorm_le
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    {f : α → β} {K : NNReal} (h : LipschitzWith K f) :
+    metricLipNorm f ≤ ENNReal.ofNNReal K := by
+  rw [metricLipNorm]
+  exact ENNReal.coe_le_coe.mpr (csInf_le (OrderBot.bddBelow _) h)
+
+def lipschitz_map_data_mk
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    {f : α → β} {K : NNReal} (h : LipschitzWith K f) :
+    LipschitzMapData f := by
+  exact {
+    constant := K
+    bound := h
+    norm := metricLipNorm f
+    norm_eq := rfl
+  }
+
 theorem median_exists (μ : Measure ℝ) [IsProbabilityMeasure μ] :
     ∃ m, IsMedian μ m := by
   let f : ℝ → ℝ := ProbabilityTheory.cdf μ
@@ -492,6 +541,11 @@ def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (X : ℝ → ℝ) :
 
 def hdp_05_hiface_hlipschitz (f : ℝ → ℝ) :
     Type := NumStability.HDP.Concentration.MetricMeasure.LipschitzInterface f
+
+def hdp_05_hdef_h5_d1_d1
+    {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
+    (f : α → β) :
+    Type _ := NumStability.HDP.Concentration.MetricMeasure.LipschitzMapData f
 
 def hdp_05_hdef_h5_d2_hriemannian_hmms
     {E H M : Type*}
