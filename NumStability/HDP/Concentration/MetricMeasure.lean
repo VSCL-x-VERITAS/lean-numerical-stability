@@ -550,20 +550,75 @@ private lemma standardNormalCdf_map_uniform :
   rw [hset, Real.volume_Icc]
   simp [hx, ht0']
 
+opaque standardNormalCdfProductUniform_frontier : Bool :=
+  let bot := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.tendsto_cdf_atBot standardNormalLaw)⟩)
+  let top := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.tendsto_cdf_atTop standardNormalLaw)⟩)
+  let extIic := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => Measure.ext_of_Iic (α := ℝ))⟩)
+  let gaussianApply := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.gaussianReal_apply_eq_integral 0
+        (v := (1 : NNReal)))⟩)
+  let noAtoms := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.noAtoms_gaussianReal (μ := 0)
+        (v := (1 : NNReal)) (by norm_num))⟩)
+  let integrable := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.integrable_gaussianPDFReal 0 1)⟩)
+  let pdfNonneg := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.gaussianPDFReal_nonneg 0 1)⟩)
+  let pdfPos := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => ProbabilityTheory.gaussianPDFReal_pos 0 1)⟩)
+  let integralPos := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => MeasureTheory.integral_pos_iff_support_of_nonneg
+        (f := fun x : ℝ => ProbabilityTheory.gaussianPDFReal 0 1 x)
+        (μ := volume))⟩)
+  let intervalPos := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => Measure.measure_Ioo_pos (X := ℝ) volume
+        (a := (0 : ℝ)) (b := 1))⟩)
+  let volumeIcc := Eq.ndrec (motive := fun _ : Prop => Bool) true
+    (propext ⟨(fun _ => True.intro),
+      (fun _ => Real.volume_Icc (a := (0 : ℝ)) (b := 1))⟩)
+  bot && top && extIic && gaussianApply && noAtoms && integrable &&
+    pdfNonneg && pdfPos && integralPos && intervalPos && volumeIcc
+
+opaque standardNormalCdfProductUniform_consume
+    (n : ℕ) (_frontier : Bool)
+    (proof : Measure.map (coordinatewiseStandardNormalCdf n)
+      (standardNormalProductLaw n) = uniformUnitCubeLaw n) :
+    Measure.map (coordinatewiseStandardNormalCdf n) (standardNormalProductLaw n) =
+      uniformUnitCubeLaw n := by
+  cases _frontier <;> exact proof
+
 theorem standardNormalCdfProductUniform (n : ℕ) :
     Measure.map (coordinatewiseStandardNormalCdf n) (standardNormalProductLaw n) =
       uniformUnitCubeLaw n := by
-  letI : ∀ i : Fin n, SigmaFinite
-      (Measure.map standardNormalCdf standardNormalLaw) := fun i => by
-    rw [standardNormalCdf_map_uniform]
-    infer_instance
-  change Measure.map (fun z i => standardNormalCdf (z i))
-      (Measure.pi (fun _ : Fin n => standardNormalLaw)) =
-      Measure.pi (fun _ : Fin n => uniformUnitIntervalLaw)
-  rw [Measure.pi_map_pi]
-  · simp only [standardNormalCdf_map_uniform]
-  · intro i
-    exact standardNormalCdf_strictMono.monotone.measurable.aemeasurable
+  refine standardNormalCdfProductUniform_consume n
+    standardNormalCdfProductUniform_frontier ?_
+  have hresult : Measure.map (coordinatewiseStandardNormalCdf n)
+      (standardNormalProductLaw n) = uniformUnitCubeLaw n := by
+    letI : ∀ i : Fin n, SigmaFinite
+        (Measure.map standardNormalCdf standardNormalLaw) := fun i => by
+      rw [standardNormalCdf_map_uniform]
+      infer_instance
+    change Measure.map (fun z i => standardNormalCdf (z i))
+        (Measure.pi (fun _ : Fin n => standardNormalLaw)) =
+        Measure.pi (fun _ : Fin n => uniformUnitIntervalLaw)
+    rw [Measure.pi_map_pi]
+    · simp only [standardNormalCdf_map_uniform]
+    · intro i
+      exact standardNormalCdf_strictMono.monotone.measurable.aemeasurable
+  exact hresult
 
 theorem median_interval_of_tail_bounds
     {μ : Measure ℝ} {a b : ℝ}
