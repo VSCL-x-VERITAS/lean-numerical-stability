@@ -274,6 +274,40 @@ def variance {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
   expectation μ (fun ω => (X ω - expectation μ X) ^ 2)
 
+/-!
+  Representative-level real `L²` geometry.  The formulas stay in the
+  chapter's Bochner-expectation convention; quotient-space identification is
+  delegated to Mathlib's `MeasureTheory.Lp`.
+-/
+def l2InnerProduct {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) : ℝ :=
+  expectation μ (fun ω => X ω * Y ω)
+
+noncomputable def l2Norm {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
+  Real.sqrt (expectation μ (fun ω => (X ω) ^ 2))
+
+structure L2GeometryModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) where
+  inner_product : ℝ
+  inner_product_eq : inner_product = l2InnerProduct μ X Y
+  x_norm : ℝ
+  x_norm_eq : x_norm = l2Norm μ X
+  y_norm : ℝ
+  y_norm_eq : y_norm = l2Norm μ Y
+
+def l2GeometryModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) :
+    L2GeometryModelData μ X Y :=
+  { inner_product := l2InnerProduct μ X Y
+    inner_product_eq := rfl
+    x_norm := l2Norm μ X
+    x_norm_eq := rfl
+    y_norm := l2Norm μ Y
+    y_norm_eq := rfl }
+
 /-- The centered variable has zero expectation under the book's probability assumptions. -/
 theorem expectation_centered
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -618,6 +652,12 @@ def hdp_01_hdef_hlp_hnorm_hspace
     (μ : Measure Ω) (p : ENNReal) :
     NumStability.HDP.Scalar.Preliminaries.LpNormSpaceModelData μ p :=
   NumStability.HDP.Scalar.Preliminaries.lpNormSpaceModel μ p
+
+def hdp_01_hdef_hl2_hgeometry
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) :
+    NumStability.HDP.Scalar.Preliminaries.L2GeometryModelData μ X Y :=
+  NumStability.HDP.Scalar.Preliminaries.l2GeometryModel μ X Y
 
 theorem hdp_01_hthm_hlp_hbanach_hquasinorm
     {Ω : Type*} [MeasurableSpace Ω]
