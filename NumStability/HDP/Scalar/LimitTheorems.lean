@@ -3,6 +3,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Probability.Distributions.Poisson
 import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
+import Mathlib.Probability.StrongLaw
 import Mathlib.Tactic
 
 /-!
@@ -17,8 +18,9 @@ binomial PMF.
 
 noncomputable section
 
-open MeasureTheory
-open scoped BigOperators ENNReal NNReal
+open MeasureTheory Filter
+open ProbabilityTheory
+open scoped BigOperators ENNReal NNReal Function
 
 namespace NumStability.HDP.Scalar.LimitTheorems
 
@@ -38,6 +40,30 @@ noncomputable def convergenceInDistribution
     (hX : ∀ i, AEMeasurable (X i) μ) (hZ : AEMeasurable Z μ) : Prop :=
   Filter.Tendsto (fun i => probabilityLaw (X i) (hX i)) l
     (nhds (probabilityLaw Z hZ))
+
+/-! The local foundation helper that closes the strong-law prerequisite. -/
+theorem foundation_ext_slln
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : ℕ → Ω → ℝ}
+    (hInt : Integrable (X 0) μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
+    (hIdent : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    ∀ᵐ ω ∂μ, Tendsto
+      (fun n : ℕ => (∑ i ∈ Finset.range n, X i ω) / n) atTop
+      (nhds (∫ ω, X 0 ω ∂μ)) := by
+  exact ProbabilityTheory.strong_law_ae_real X hInt hIndep hIdent
+
+/-! Chapter 1's strong law of large numbers. -/
+theorem strongLaw
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : ℕ → Ω → ℝ}
+    (hInt : Integrable (X 0) μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
+    (hIdent : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    ∀ᵐ ω ∂μ, Tendsto
+      (fun n : ℕ => (∑ i ∈ Finset.range n, X i ω) / n) atTop
+      (nhds (∫ ω, X 0 ω ∂μ)) := by
+  exact foundation_ext_slln hInt hIndep hIdent
 
 /-! ## The standard normal law -/
 
@@ -394,5 +420,16 @@ namespace NumStability.HDP.Contract
 /-- Stable source-facing alias for the local Poisson law interface. -/
 noncomputable def hdp_01_hdef_hpoisson (rate : ℝ≥0) : Measure ℕ :=
   NumStability.HDP.Scalar.LimitTheorems.poissonLaw rate
+
+theorem hdp_01_hthm_h1_d3_d1
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : ℕ → Ω → ℝ}
+    (hInt : Integrable (X 0) μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
+    (hIdent : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
+    ∀ᵐ ω ∂μ, Tendsto
+      (fun n : ℕ => (∑ i ∈ Finset.range n, X i ω) / n) atTop
+      (nhds (∫ ω, X 0 ω ∂μ)) :=
+  NumStability.HDP.Scalar.LimitTheorems.strongLaw hInt hIndep hIdent
 
 end NumStability.HDP.Contract
