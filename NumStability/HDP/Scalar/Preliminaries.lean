@@ -235,6 +235,30 @@ theorem variance_eq_centered_expectation
     variance μ X = expectation μ (fun ω => (X ω - expectation μ X) ^ 2) :=
   rfl
 
+/-! The pointwise layer-cake identity used in the proof of Lemma 1.2.1. -/
+theorem layerCakePointwise {x : ℝ} (hx : 0 ≤ x) :
+    x = (∫ t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
+      ENNReal.ofReal x =
+        ∫⁻ t in Set.Ioi 0,
+          (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume := by
+  have hset : Set.Iio x ∩ Set.Ioi 0 = Set.Ioo 0 x := by
+    ext t
+    simp [and_comm]
+  constructor
+  · rw [MeasureTheory.setIntegral_const]
+    simp [Real.volume_real_Ioc_of_le hx]
+  · calc
+      ENNReal.ofReal x = ENNReal.ofReal (x - 0) := by simp
+      _ = volume (Set.Ioo 0 x) := by rw [Real.volume_Ioo]
+      _ = ∫⁻ t in Set.Ioo 0 x, (1 : ENNReal) ∂volume := by
+        rw [MeasureTheory.setLIntegral_one]
+      _ = ∫⁻ t in Set.Iio x ∩ Set.Ioi 0, (1 : ENNReal) ∂volume := by
+        rw [hset]
+      _ = ∫⁻ t in Set.Ioi 0,
+          (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume := by
+        symm
+        rw [MeasureTheory.setLIntegral_indicator measurableSet_Iio]
+
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
@@ -288,5 +312,12 @@ theorem hdp_01_hdef_hconvex_hfunction
     (r : ℝ) :
     Convex ℝ {x : ℝ | x ∈ (Set.univ : Set ℝ) ∧ φ x ≤ r} :=
   NumStability.HDP.Scalar.Preliminaries.convexFunction_sublevel_convex hφ r
+
+theorem hdp_01_hlem_hlayer_hcake_hpointwise {x : ℝ} (hx : 0 ≤ x) :
+    x = (∫ t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
+      ENNReal.ofReal x =
+        ∫⁻ t in Set.Ioi 0,
+          (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume :=
+  NumStability.HDP.Scalar.Preliminaries.layerCakePointwise hx
 
 end NumStability.HDP.Contract
