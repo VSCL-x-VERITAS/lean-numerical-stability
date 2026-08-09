@@ -23,13 +23,6 @@ def hdp_02_hexample_h2_d7_d12__contract_type : Prop :=
 
 theorem hdp_02_hexample_h2_d7_d12 :
     hdp_02_hexample_h2_d7_d12__contract_type := by
-  intro Ω _ ψ μ p hp hψ
-  constructor
-  · intro X
-    exact NumStability.HDP.Scalar.SubExponential.powerOrliczGauge_eq_eLpNorm
-        ψ μ X p hp hψ
-  · intro X hX
-    exact NumStability.HDP.Scalar.SubExponential.powerOrliczMember_iff_memLp
-        ψ μ X p hp hψ hX
+  exact NumStability.HDP.Scalar.SubExponential.powerOrliczCoincidence
 
 end NumStability.HDP.Contract

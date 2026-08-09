@@ -1061,6 +1061,21 @@ theorem powerOrliczMember_iff_memLp
   rw [orliczMember, powerOrliczGauge_eq_eLpNorm ψ μ X p hp hψ]
   simp [MemLp, hX]
 
+theorem powerOrliczCoincidence :
+    ∀ {Ω : Type*} [MeasurableSpace Ω]
+      (ψ : OrliczFunction) (μ : Measure Ω) (p : NNReal),
+      0 < p →
+      (∀ x : ℝ, 0 ≤ x → ψ x = x ^ (p : ℝ)) →
+      (∀ X : Ω → ℝ, orliczGauge ψ μ X = eLpNorm X (p : ℝ≥0∞) μ) ∧
+      (∀ X : Ω → ℝ, AEStronglyMeasurable X μ →
+        (orliczMember ψ μ X ↔ MemLp X (p : ℝ≥0∞) μ)) := by
+  intro Ω _ ψ μ p hp hψ
+  constructor
+  · intro X
+    exact powerOrliczGauge_eq_eLpNorm ψ μ X p hp hψ
+  · intro X hX
+    exact powerOrliczMember_iff_memLp ψ μ X p hp hψ hX
+
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
