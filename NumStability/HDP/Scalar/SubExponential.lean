@@ -962,25 +962,43 @@ lemma powerOrliczIntegral_eq
   unfold orliczIntegral
   rw [hpoint]
   simp_rw [div_eq_mul_inv]
-  rw [lintegral_mul_const' (t ^ (p : ℝ))⁻¹]
-  · rw [mul_comm (eLpNorm X (p : ℝ≥0∞) μ) t⁻¹]
-    rw [← ENNReal.div_eq_inv_mul]
-    rw [ENNReal.div_rpow_of_nonneg _ _ hpR0]
-    have hLp := eLpNorm_eq_lintegral_rpow_enorm hpE0 hpETop (f := X) (μ := μ)
-    have hLp' : eLpNorm X (p : ℝ≥0∞) μ =
-        (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹ := by
-      simpa [one_div] using hLp
-    have hLpPow := congrArg (fun z : ℝ≥0∞ => z ^ (p : ℝ)) hLp'
-    have hMoment : (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) =
-        eLpNorm X (p : ℝ≥0∞) μ ^ (p : ℝ) := by
-      change eLpNorm X (p : ℝ≥0∞) μ ^ (p : ℝ) =
-        ((∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹) ^ (p : ℝ) at hLpPow
-      rw [ENNReal.rpow_inv_rpow hpR.ne'
-        (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ)] at hLpPow
-      exact hLpPow.symm
-    rw [hMoment]
-    rfl
-  · simp [ht0]
+  let c : ℝ≥0∞ := (t ^ (p : ℝ))⁻¹
+  have htp0 : t ^ (p : ℝ) ≠ 0 := by simp [ht0, hpR]
+  have htpTop : t ^ (p : ℝ) ≠ ∞ :=
+    ENNReal.rpow_ne_top_of_nonneg hpR0 htTop
+  have hc0 : c ≠ 0 := by simp [c, htpTop]
+  have hcTop : c ≠ ∞ := by simp [c, htp0]
+  have hscale : (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) * c ∂μ) =
+      (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) * c := by
+    apply le_antisymm
+    · have h := lintegral_mul_const_le c⁻¹
+        (fun a => ‖X a‖ₑ ^ (p : ℝ) * c) (μ := μ)
+      have h' :
+          (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) * c ∂μ) * c⁻¹ ≤
+            ∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ := by
+        simpa [mul_assoc, ENNReal.mul_inv_cancel hc0 hcTop] using h
+      have h'' := (ENNReal.mul_le_mul_right hc0 hcTop).2 h'
+      simpa [mul_assoc, ENNReal.inv_mul_cancel hc0 hcTop] using h''
+    · exact lintegral_mul_const_le c _
+  rw [hscale]
+  simp only [c]
+  rw [mul_comm (eLpNorm X (p : ℝ≥0∞) μ) t⁻¹]
+  rw [← ENNReal.div_eq_inv_mul]
+  rw [ENNReal.div_rpow_of_nonneg _ _ hpR0]
+  have hLp := eLpNorm_eq_lintegral_rpow_enorm hpE0 hpETop (f := X) (μ := μ)
+  have hLp' : eLpNorm X (p : ℝ≥0∞) μ =
+      (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹ := by
+    simpa [one_div] using hLp
+  have hLpPow := congrArg (fun z : ℝ≥0∞ => z ^ (p : ℝ)) hLp'
+  have hMoment : (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) =
+      eLpNorm X (p : ℝ≥0∞) μ ^ (p : ℝ) := by
+    change eLpNorm X (p : ℝ≥0∞) μ ^ (p : ℝ) =
+      ((∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹) ^ (p : ℝ) at hLpPow
+    rw [ENNReal.rpow_inv_rpow hpR.ne'
+      (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ)] at hLpPow
+    exact hLpPow.symm
+  rw [hMoment]
+  rfl
 
 theorem powerOrliczGauge_eq_eLpNorm
     {Ω : Type*} [MeasurableSpace Ω]
