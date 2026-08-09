@@ -103,6 +103,65 @@ theorem indicatorExpectation
   unfold expectation indicatorFunction
   exact integral_indicator_one hE
 
+/-- Raw moments are restricted to natural exponents. -/
+def rawMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (n : ℕ) : ℝ :=
+  expectation μ (fun ω => X ω ^ n)
+
+/-- Positive-real moments use the absolute value before real exponentiation. -/
+def absoluteMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (p : ℝ) : ENNReal :=
+  ∫⁻ ω, ENNReal.ofReal (Real.rpow |X ω| p) ∂μ
+
+/-- Finite raw moment predicate for a natural exponent. -/
+def HasFiniteRawMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (n : ℕ) : Prop :=
+  Integrable (fun ω => X ω ^ n) μ
+
+/-- Finite absolute moment predicate for a positive real exponent. -/
+def HasFiniteAbsoluteMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (p : ℝ) : Prop :=
+  absoluteMoment μ X p < (⊤ : ENNReal)
+
+theorem no_real_square_root_neg_one :
+    ¬ ∃ y : ℝ, y ^ 2 = -1 := by
+  rintro ⟨y, hy⟩
+  nlinarith [sq_nonneg y]
+
+/-- Corrected raw/absolute moment interface, including the printed obstruction. -/
+structure MomentModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) where
+  raw : ℕ → ℝ
+  raw_eq : ∀ n, raw n = rawMoment μ X n
+  absolute : ℝ → ENNReal
+  absolute_eq : ∀ p, absolute p = absoluteMoment μ X p
+  finite_raw : ∀ n, HasFiniteRawMoment μ X n
+  finite_absolute : ∀ p, 0 < p → HasFiniteAbsoluteMoment μ X p
+  source_obstruction : ¬ ∃ y : ℝ, y ^ 2 = -1
+
+def momentModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ)
+    (hraw : ℕ → ℝ)
+    (hraw_eq : ∀ n, hraw n = rawMoment μ X n)
+    (habsolute : ℝ → ENNReal)
+    (habsolute_eq : ∀ p, habsolute p = absoluteMoment μ X p)
+    (hfinite_raw : ∀ n, HasFiniteRawMoment μ X n)
+    (hfinite_absolute : ∀ p, 0 < p → HasFiniteAbsoluteMoment μ X p) :
+    MomentModelData μ X where
+  raw := hraw
+  raw_eq := hraw_eq
+  absolute := habsolute
+  absolute_eq := habsolute_eq
+  finite_raw := hfinite_raw
+  finite_absolute := hfinite_absolute
+  source_obstruction := no_real_square_root_neg_one
+
 /-- The book's variance, represented by the centered second moment. -/
 def variance {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
@@ -159,5 +218,11 @@ def hdp_01_hdef_hindicator
     NumStability.HDP.Scalar.Preliminaries.expectation μ
         (NumStability.HDP.Scalar.Preliminaries.indicatorFunction E) = μ.real E :=
   NumStability.HDP.Scalar.Preliminaries.indicatorExpectation μ E hE
+
+def hdp_01_hdef_hmoments
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) :
+    Type :=
+  NumStability.HDP.Scalar.Preliminaries.MomentModelData μ X
 
 end NumStability.HDP.Contract
