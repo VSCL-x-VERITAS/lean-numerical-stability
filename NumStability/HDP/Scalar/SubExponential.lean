@@ -27,7 +27,7 @@ noncomputable section
 open Filter Set TopologicalSpace
 open MeasureTheory
 open ProbabilityTheory
-open scoped Topology
+open scoped Topology ENNReal
 
 namespace NumStability.HDP.Scalar.SubExponential
 
@@ -54,6 +54,105 @@ theorem OrliczFunction.tendsto_scale_separation
       Tendsto (fun _ : ℝ => δ) (𝓝[>] (0 : ℝ)) (𝓝 δ))
     simpa [div_eq_mul_inv, mul_comm] using hmul
   exact ψ.tendsto_atTop.comp hscale
+
+/-! The Luxemburg/Orlicz gauge and its a.e. quotient-level space. -/
+def orliczIntegral {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : ENNReal :=
+  ∫⁻ ω, ENNReal.ofReal (ψ (|X ω| / t.toReal)) ∂μ
+
+def orliczAdmissible {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : Prop :=
+  t ≠ 0 ∧ t ≠ ∞ ∧ orliczIntegral ψ μ X t ≤ 1
+
+noncomputable def orliczGauge {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
+  sInf {t : ℝ≥0∞ | orliczAdmissible ψ μ X t}
+
+def orliczMember {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
+  orliczGauge ψ μ X < ∞
+
+def orliczRepresentative {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) :=
+  {X : Ω → ℝ // AEStronglyMeasurable X μ ∧ orliczMember ψ μ X}
+
+def orliczAESetoid {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) : Setoid (orliczRepresentative ψ μ) where
+  r X Y := X.1 =ᵐ[μ] Y.1
+  iseqv := ⟨fun _ => Filter.Eventually.of_forall (fun _ => rfl),
+    fun h => h.symm, fun h₁ h₂ => h₁.trans h₂⟩
+
+def orliczSpace {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) :=
+  Quotient (orliczAESetoid ψ μ)
+
+structure OrliczNormSpaceModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) where
+  representativeGauge : (Ω → ℝ) → ℝ≥0∞
+  representativeGauge_eq : ∀ X, representativeGauge X = orliczGauge ψ μ X
+  representativeMember : (Ω → ℝ) → Prop
+  representativeMember_iff : ∀ X, representativeMember X ↔ orliczMember ψ μ X
+  quotient : Type _
+  quotient_eq : quotient = orliczSpace ψ μ
+
+def orliczNormSpaceModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) : OrliczNormSpaceModelData ψ μ :=
+  { representativeGauge := fun X => orliczGauge ψ μ X
+    representativeGauge_eq := fun _ => rfl
+    representativeMember := fun X => orliczMember ψ μ X
+    representativeMember_iff := fun _ => Iff.rfl
+    quotient := orliczSpace ψ μ
+    quotient_eq := rfl }
+
+lemma orliczAdmissible_smul_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ)
+    {c t : ℝ} (hc : 0 < c) (ht : 0 < t) :
+    orliczAdmissible ψ μ X (ENNReal.ofReal t) ↔
+      orliczAdmissible ψ μ (fun ω => c * X ω) (ENNReal.ofReal (c * t)) := by
+  have ht0 : ENNReal.ofReal t ≠ 0 := (ENNReal.ofReal_ne_zero_iff).2 ht
+  have htTop : ENNReal.ofReal t ≠ ∞ := ENNReal.ofReal_ne_top
+  have hct0 : ENNReal.ofReal (c * t) ≠ 0 :=
+    (ENNReal.ofReal_ne_zero_iff).2 (mul_pos hc ht)
+  have hctTop : ENNReal.ofReal (c * t) ≠ ∞ := ENNReal.ofReal_ne_top
+  have harg : (fun ω =>
+      |c * X ω| / (ENNReal.ofReal (c * t)).toReal) =
+      (fun ω => |X ω| / (ENNReal.ofReal t).toReal) := by
+    funext ω
+    simp only [ENNReal.toReal_ofReal (le_of_lt ht),
+      ENNReal.toReal_ofReal (le_of_lt (mul_pos hc ht)), abs_mul, abs_of_pos hc]
+    field_simp
+  have hInt : orliczIntegral ψ μ (fun ω => c * X ω) (ENNReal.ofReal (c * t)) =
+      orliczIntegral ψ μ X (ENNReal.ofReal t) := by
+    unfold orliczIntegral
+    have hfun : (fun ω => ENNReal.ofReal
+        (ψ (|c * X ω| / (ENNReal.ofReal (c * t)).toReal))) =
+        (fun ω => ENNReal.ofReal
+          (ψ (|X ω| / (ENNReal.ofReal t).toReal))) := by
+      funext ω
+      rw [congrFun harg ω]
+    rw [hfun]
+  constructor
+  · intro h
+    exact ⟨hct0, hctTop, hInt ▸ h.2.2⟩
+  · intro h
+    exact ⟨ht0, htTop, hInt ▸ h.2.2⟩
+
+lemma orliczIntegral_mono
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) {X Y : Ω → ℝ} {t : ℝ≥0∞}
+    (hXY : ∀ ω, |X ω| ≤ |Y ω|) (ht0 : t ≠ 0) (htTop : t ≠ ∞) :
+    orliczIntegral ψ μ X t ≤ orliczIntegral ψ μ Y t := by
+  have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+  apply lintegral_mono
+  intro ω
+  apply ENNReal.ofReal_le_ofReal
+  apply ψ.monotoneOn_nonneg
+  · exact div_nonneg (abs_nonneg _) htpos.le
+  · exact div_nonneg (abs_nonneg _) htpos.le
+  · exact div_le_div_of_nonneg_right (hXY ω) htpos.le
 
 /-! The moment-to-MGF implication from Proposition 2.7.1. -/
 
@@ -831,6 +930,14 @@ namespace NumStability.HDP.Contract
 /-- Stable source-facing alias for the local Orlicz-function interface. -/
 def hdp_02_hdef_horlicz_hfunction : Type :=
   NumStability.HDP.Scalar.SubExponential.OrliczFunction
+
+/-! Stable source-facing alias for the Luxemburg/Orlicz norm-space model. -/
+def hdp_02_hdef_horlicz_hnorm_hspace
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : NumStability.HDP.Scalar.SubExponential.OrliczFunction)
+    (μ : Measure Ω) :
+    NumStability.HDP.Scalar.SubExponential.OrliczNormSpaceModelData ψ μ :=
+  NumStability.HDP.Scalar.SubExponential.orliczNormSpaceModel ψ μ
 
 /-- Stable Chapter 2 alias for the centered moment-to-MGF implication. -/
 theorem hdp_02_hlem_hse_hmoment_hto_hmgf
