@@ -75,6 +75,19 @@ theorem hoeffdingCenteredMGF
       ((‖b - a‖₊ / 2) ^ 2) μ :=
   ProbabilityTheory.hasSubgaussianMGF_of_mem_Icc hX hbound
 
+/-! The one-variable quadratic optimization used by the Hoeffding tail proof. -/
+theorem hoeffdingOptimization {v t : ℝ} (hv : 0 < v) (ht : 0 ≤ t) :
+    (∀ u : ℝ, 0 ≤ u →
+      -t ^ 2 / (2 * v) ≤ -u * t + u ^ 2 * v / 2) ∧
+      (-(t / v) * t + (t / v) ^ 2 * v / 2 = -t ^ 2 / (2 * v)) := by
+  constructor
+  · intro u hu
+    have hsq : 0 ≤ (u * v - t) ^ 2 := sq_nonneg (u * v - t)
+    field_simp
+    nlinarith
+  · field_simp
+    ring
+
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
 namespace NumStability.HDP.Contract
@@ -90,5 +103,12 @@ theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
     HasSubgaussianMGF X ((‖b - a‖₊ / 2) ^ 2) μ :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.hoeffdingBoundedMGF
     hX hbound hmean
+
+theorem hdp_02_hlem_hhoeffding_hoptimization {v t : ℝ} (hv : 0 < v)
+    (ht : 0 ≤ t) :
+    (∀ u : ℝ, 0 ≤ u →
+      -t ^ 2 / (2 * v) ≤ -u * t + u ^ 2 * v / 2) ∧
+      (-(t / v) * t + (t / v) ^ 2 * v / 2 = -t ^ 2 / (2 * v)) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.hoeffdingOptimization hv ht
 
 end NumStability.HDP.Contract
