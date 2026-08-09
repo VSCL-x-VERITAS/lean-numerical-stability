@@ -381,6 +381,21 @@ theorem rademacherHoeffding
         ring
       _ = Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by rfl
 
+/-! Stable source-facing alias for Theorem 2.2.2. -/
+theorem hdp_02_hthm_h2_d2_d2
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hLaw : ∀ i, Measure.map (X i) μ = rademacherPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
+    (ht : 0 ≤ t) (hv : 0 < ∑ i, (a i) ^ 2) :
+    μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤
+      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
+  rademacherHoeffding hX hIndep hLaw hExp ht hv
+
 /-- Zero coefficient energy is the deterministic zero-sum branch. -/
 theorem rademacherHoeffdingZero
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
