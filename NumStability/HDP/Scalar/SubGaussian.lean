@@ -958,6 +958,16 @@ end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
 
+/-! Stable Chapter 2 alias for the standard-normal square-MGF example. -/
+theorem hdp_02_hex_h2_d5_d5a (lam : ℝ) :
+    (|lam| < (Real.sqrt 2)⁻¹ →
+      Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) ∧
+        (∫ x : ℝ, Real.exp (lam ^ 2 * x ^ 2) ∂(gaussianReal 0 1)) =
+          (Real.sqrt (1 - 2 * lam ^ 2))⁻¹) ∧
+    ((Real.sqrt 2)⁻¹ ≤ |lam| →
+      ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1)) :=
+  NumStability.HDP.Scalar.SubGaussian.standardNormalSquareMGF lam
+
 /-- Stable Chapter 2 alias for the moment-to-square-MGF implication. -/
 theorem hdp_02_hlem_hsg_hmoment_hto_hsquare_hmgf
     {Ω : Type*} [MeasurableSpace Ω]
