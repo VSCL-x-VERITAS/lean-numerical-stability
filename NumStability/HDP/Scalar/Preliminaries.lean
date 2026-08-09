@@ -1,6 +1,8 @@
 import Mathlib.Probability.Moments.Variance
 import Mathlib.Probability.CDF
 import Mathlib.MeasureTheory.Function.LpSpace.Basic
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Analysis.Convex.Continuous
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 import Mathlib.Tactic
@@ -248,6 +250,20 @@ theorem convexFunction_sublevel_convex
     {φ : ℝ → ℝ} (hφ : convexFunctionInterface φ) (r : ℝ) :
     Convex ℝ {x : ℝ | x ∈ (Set.univ : Set ℝ) ∧ φ x ≤ r} := by
   exact hφ.convex_le r
+
+/-! Jensen's inequality for a whole-domain real convex function. -/
+theorem jensenIntegral
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {φ : ℝ → ℝ}
+    (hφ : ConvexOn ℝ Set.univ φ)
+    (hX : Integrable X μ)
+    (hφX : Integrable (fun ω => φ (X ω)) μ) :
+    φ (expectation μ X) ≤ expectation μ (fun ω => φ (X ω)) := by
+  have h := hφ.map_integral_le (s := (Set.univ : Set ℝ))
+    (f := X) (g := φ) (hφ.continuousOn isOpen_univ) isClosed_univ
+    (Filter.Eventually.of_forall (fun _ => Set.mem_univ _)) hX hφX
+  simpa [expectation, Function.comp_def] using h
 
 /-- The book's variance, represented by the centered second moment. -/
 def variance {Ω : Type*} [MeasurableSpace Ω]
@@ -499,6 +515,17 @@ theorem hdp_01_hdef_hconvex_hfunction
     (r : ℝ) :
     Convex ℝ {x : ℝ | x ∈ (Set.univ : Set ℝ) ∧ φ x ≤ r} :=
   NumStability.HDP.Scalar.Preliminaries.convexFunction_sublevel_convex hφ r
+
+theorem hdp_01_hthm_hjensen
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {φ : ℝ → ℝ}
+    (hφ : ConvexOn ℝ Set.univ φ)
+    (hX : Integrable X μ)
+    (hφX : Integrable (fun ω => φ (X ω)) μ) :
+    φ (NumStability.HDP.Scalar.Preliminaries.expectation μ X) ≤
+      NumStability.HDP.Scalar.Preliminaries.expectation μ (fun ω => φ (X ω)) :=
+  NumStability.HDP.Scalar.Preliminaries.jensenIntegral hφ hX hφX
 
 theorem hdp_01_hlem_hlayer_hcake_hpointwise {x : ℝ} (hx : 0 ≤ x) :
     x = (∫ t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
