@@ -994,6 +994,20 @@ theorem hdp_02_hthm_h2_d2_d6
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.boundedIndependentHoeffding
     hX hIndep hbound ht hv
 
+/-! Stable Chapter 2 alias for the bounded-variable proof exercise. -/
+theorem hdp_02_hex_h2_d2_d7
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {m M : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hbound : ∀ i, ∀ᵐ ω ∂μ, X i ω ∈ Set.Icc (m i) (M i))
+    (ht : 0 < t) (hv : 0 < ∑ i, ‖M i - m i‖ ^ 2) :
+    μ.real {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} ≤
+      Real.exp (-2 * t ^ 2 / (∑ i, ‖M i - m i‖ ^ 2)) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.boundedIndependentHoeffding
+    hX hIndep hbound ht hv
+
 /-! Stable Chapter 2 alias for the majority-vote amplification exercise. -/
 theorem hdp_02_hex_h2_d2_d8
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
