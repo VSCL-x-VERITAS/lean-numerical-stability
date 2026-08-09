@@ -234,7 +234,11 @@ def hdp_01_hdef_hmoments
     Type :=
   NumStability.HDP.Scalar.Preliminaries.MomentModelData μ X
 
-def hdp_01_hdef_hconvex_hfunction (φ : ℝ → ℝ) : Prop :=
-  NumStability.HDP.Scalar.Preliminaries.convexFunctionInterface φ
+theorem hdp_01_hdef_hconvex_hfunction
+    {φ : ℝ → ℝ}
+    (hφ : NumStability.HDP.Scalar.Preliminaries.convexFunctionInterface φ)
+    (r : ℝ) :
+    Convex ℝ {x : ℝ | x ∈ (Set.univ : Set ℝ) ∧ φ x ≤ r} :=
+  NumStability.HDP.Scalar.Preliminaries.convexFunction_sublevel_convex hφ r
 
 end NumStability.HDP.Contract
