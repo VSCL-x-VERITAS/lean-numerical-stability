@@ -396,6 +396,15 @@ theorem chebyshevEventBound
   rw [← hEvent]
   simpa [variance, expectation] using hMarkov
 
+/-! The source-facing Minkowski bridge reuses Mathlib's `eLpNorm` API. -/
+theorem minkowskiEpnorm
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} {p : ENNReal}
+    (hX : AEStronglyMeasurable X μ) (hY : AEStronglyMeasurable Y μ)
+    (hp : 1 ≤ p) :
+    eLpNorm (X + Y) p μ ≤ eLpNorm X p μ + eLpNorm Y p μ := by
+  exact eLpNorm_add_le hX hY hp
+
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
@@ -483,5 +492,14 @@ theorem hdp_01_hcor_h1_d2_d5
     μ.real {ω | |X ω - NumStability.HDP.Scalar.Preliminaries.expectation μ X| ≥ t} ≤
       NumStability.HDP.Scalar.Preliminaries.variance μ X / t ^ 2 :=
   NumStability.HDP.Scalar.Preliminaries.chebyshevEventBound hX hInt hSqInt ht
+
+theorem hdp_01_hthm_hminkowski
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} {p : ENNReal}
+    (hX : AEStronglyMeasurable X μ) (hY : AEStronglyMeasurable Y μ)
+    (hp : 1 ≤ p) :
+    MeasureTheory.eLpNorm (X + Y) p μ ≤
+      MeasureTheory.eLpNorm X p μ + MeasureTheory.eLpNorm Y p μ :=
+  NumStability.HDP.Scalar.Preliminaries.minkowskiEpnorm hX hY hp
 
 end NumStability.HDP.Contract
