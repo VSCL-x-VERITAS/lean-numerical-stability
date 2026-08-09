@@ -101,11 +101,13 @@ private theorem standardNormalSquareMGF_integrable
     simpa [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)] using hsq'
   have hb : 0 < (1 / 2 : ℝ) - lam ^ 2 := sub_pos.mpr hsq
   rw [gaussianReal_of_var_ne_zero 0 (by norm_num)]
-  apply (integrable_withDensity_iff_integrable_smul'
+  apply (integrable_withDensity_iff
     (measurable_gaussianPDF 0 1)
     (ae_of_all _ (fun x => gaussianPDF_lt_top))).2
-  simp only [toReal_gaussianPDF, smul_eq_mul]
-  rw [show (fun x : ℝ => gaussianPDFReal 0 1 x * Real.exp (lam ^ 2 * x ^ 2)) =
+  simp only [toReal_gaussianPDF]
+  have htarget : Integrable (fun x : ℝ => gaussianPDFReal 0 1 x *
+      Real.exp (lam ^ 2 * x ^ 2)) volume := by
+    rw [show (fun x : ℝ => gaussianPDFReal 0 1 x * Real.exp (lam ^ 2 * x ^ 2)) =
       (fun x => (Real.sqrt (2 * Real.pi))⁻¹ *
         Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) by
     funext x
@@ -124,7 +126,8 @@ private theorem standardNormalSquareMGF_integrable
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring]
-  exact (integrable_exp_neg_mul_sq hb).const_mul _
+    exact (integrable_exp_neg_mul_sq hb).const_mul _
+  simpa only [mul_comm] using htarget
 
 private theorem standardNormalSquareMGF_value
     (lam : ℝ) (hsmall : |lam| < (Real.sqrt 2)⁻¹) :
@@ -179,10 +182,13 @@ private theorem standardNormalSquareMGF_not_integrable
     ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) := by
   intro hInt
   rw [gaussianReal_of_var_ne_zero 0 (by norm_num)] at hInt
-  have hvol := (integrable_withDensity_iff_integrable_smul'
+  have hvol := (integrable_withDensity_iff
     (measurable_gaussianPDF 0 1)
     (ae_of_all _ (fun x => gaussianPDF_lt_top))).1 hInt
-  simp only [toReal_gaussianPDF, smul_eq_mul] at hvol
+  simp only [toReal_gaussianPDF] at hvol
+  have hvol' : Integrable (fun x : ℝ => gaussianPDFReal 0 1 x *
+      Real.exp (lam ^ 2 * x ^ 2)) volume := by
+    simpa only [mul_comm] using hvol
   have hsq : (1 / 2 : ℝ) ≤ lam ^ 2 := by
     have hinv : 0 ≤ (Real.sqrt 2)⁻¹ := by positivity
     have hsq' : ((Real.sqrt 2)⁻¹) ^ 2 ≤ |lam| ^ 2 := by
@@ -211,13 +217,13 @@ private theorem standardNormalSquareMGF_not_integrable
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring
-  rw [hrew] at hvol
+  rw [hrew] at hvol'
   have hbad : ¬ Integrable (fun x : ℝ =>
       Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) := by
     rw [integrable_exp_neg_mul_sq_iff]
     exact not_lt_of_ge (sub_nonpos.mpr hsq)
   have hc : (Real.sqrt (2 * Real.pi))⁻¹ ≠ 0 := by positivity
-  exact hbad ((integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc) _).mp hvol)
+  exact hbad ((integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc) _).mp hvol')
 
 /-! Exercise 2.5.5(a): the standard normal square-MGF is finite exactly on
 the neighborhood `|lam| < 1 / sqrt 2`, where it equals the displayed inverse
