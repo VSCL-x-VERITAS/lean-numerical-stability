@@ -1,4 +1,5 @@
 import Mathlib.Probability.Independence.Integration
+import Mathlib.Probability.Moments.Basic
 import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
@@ -135,6 +136,44 @@ theorem laplaceTransformLeInv {f : ℝ → ℝ}
       integral_exp_mul_Ioi (by linarith) 0
     _ = 1 / t := by simp
 
+/-! The one-sided finite exponential-Markov upper tail bound. -/
+theorem exponentialMarkovUpper
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {S : Ω → ℝ} (hS : Measurable S)
+    {lam t : ℝ} (hlam : 0 < lam)
+    (hExp : Integrable (fun ω => Real.exp (lam * S ω)) μ) :
+    μ.real (S ⁻¹' Set.Ici t) ≤
+      Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+  let Y : Ω → ℝ := fun ω => Real.exp (lam * S ω)
+  have hY : Measurable Y := by
+    simpa [Y] using (hS.const_mul lam).exp
+  have hY_nonneg : ∀ᵐ ω ∂μ, 0 ≤ Y ω :=
+    Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
+  have hY_int : Integrable Y μ := by
+    simpa [Y] using hExp
+  have hY_markov :=
+    NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+      hY hY_nonneg hY_int (Real.exp_pos (lam * t))
+  have measureReal_mono_prob {A B : Set Ω} (hAB : A ⊆ B) :
+      μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+  have hsubset : S ⁻¹' Set.Ici t ⊆
+      Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
+    intro ω hω
+    change t ≤ S ω at hω
+    change Real.exp (lam * t) ≤ Real.exp (lam * S ω)
+    exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
+  calc
+    μ.real (S ⁻¹' Set.Ici t) ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
+      measureReal_mono_prob hsubset
+    _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
+      simpa [Preliminaries.expectation] using hY_markov
+    _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+      simp [Y, Real.exp_neg, div_eq_mul_inv]
+      ring
+
 /-! The finite exponential-Markov upper and lower tail bounds. -/
 theorem exponentialMarkov
     {Ω : Type*} [MeasurableSpace Ω]
@@ -209,6 +248,95 @@ theorem exponentialMarkov
         simp [W, Z, Real.exp_neg, div_eq_mul_inv]
         ring
   exact ⟨hupper, hlower⟩
+
+/-! The finite independent-sum small-ball estimate from Exercise 2.2.10(b). -/
+theorem smallBallProbability
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {ε : ℝ} (hε : 0 < ε)
+    (hX : ∀ i, Measurable (X i)) (hIndep : iIndepFun X μ)
+    (hLaplace : ∀ i,
+      Integrable (fun ω => Real.exp (-(1 / ε) * X i ω)) μ ∧
+        (∫ ω, Real.exp (-(1 / ε) * X i ω) ∂μ) ≤ ε) :
+    μ.real {ω | ∑ i, X i ω ≤ ε * (Fintype.card ι : ℝ)} ≤
+      (Real.exp 1 * ε) ^ Fintype.card ι := by
+  let a : ι → ℝ := fun _ => -(1 / ε)
+  let Z : ι → Ω → ℝ := fun i ω => a i * X i ω
+  let S : Ω → ℝ := fun ω => ∑ i, Z i ω
+  have ha_meas : ∀ i, Measurable (fun x : ℝ => a i * x) := by
+    intro i
+    fun_prop
+  have hZ_meas : ∀ i, Measurable (Z i) := by
+    intro i
+    simpa [Z] using (hX i).const_mul (a i)
+  have hZ_indep : iIndepFun Z μ := by
+    simpa [Z, Function.comp_def] using hIndep.comp (fun i x => a i * x) ha_meas
+  have hZ_exp : ∀ i, Integrable (fun ω => Real.exp (Z i ω)) μ := by
+    intro i
+    simpa [Z, a] using (hLaplace i).1
+  have hS_meas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ (fun i _ => hZ_meas i)
+  have hS_exp : Integrable (fun ω => Real.exp (S ω)) μ := by
+    simpa [S] using
+      (hZ_indep.integrable_exp_mul_sum (t := (1 : ℝ)) hZ_meas
+        (s := Finset.univ) (fun i _ => by simpa using hZ_exp i))
+  have hmgf := mgfIndependentSum (μ := μ) (X := X) 1 a hIndep (by
+    intro i
+    simpa [Z, a] using hZ_exp i)
+  have hupper := exponentialMarkovUpper hS_meas (lam := (1 : ℝ))
+    (t := -(Fintype.card ι : ℝ)) one_pos (by simpa using hS_exp)
+  have hS_formula : ∀ ω, S ω = -(∑ i, X i ω) / ε := by
+    intro ω
+    dsimp [S, Z, a]
+    rw [← Finset.mul_sum]
+    field_simp
+  have hevent :
+      {ω | ∑ i, X i ω ≤ ε * (Fintype.card ι : ℝ)} =
+        S ⁻¹' Set.Ici (-(Fintype.card ι : ℝ)) := by
+    ext ω
+    rw [Set.mem_setOf_eq, Set.mem_preimage, Set.mem_Ici]
+    rw [hS_formula]
+    constructor
+    · intro h
+      apply (le_div_iff₀ hε).2
+      linarith
+    · intro h
+      have h' := (le_div_iff₀ hε).1 h
+      linarith
+  have hmgfS :
+      (∫ ω, Real.exp (S ω) ∂μ) =
+        ∏ i, ∫ ω, Real.exp (a i * X i ω) ∂μ := by
+    calc
+      (∫ ω, Real.exp (S ω) ∂μ) =
+          ∫ ω, Real.exp (1 * ∑ i, a i * X i ω) ∂μ := by
+            simp [S, Z]
+      _ = ∏ i, ∫ ω, Real.exp (1 * (a i * X i ω)) ∂μ := hmgf
+      _ = ∏ i, ∫ ω, Real.exp (a i * X i ω) ∂μ := by
+        simp
+  have hprod :
+      (∏ i, ∫ ω, Real.exp (a i * X i ω) ∂μ) ≤ ε ^ Fintype.card ι := by
+    calc
+      (∏ i, ∫ ω, Real.exp (a i * X i ω) ∂μ) ≤
+          ∏ i, ε := Finset.prod_le_prod
+            (fun i _ => integral_nonneg_of_ae
+              (Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))))
+            (fun i _ => by simpa [a] using (hLaplace i).2)
+      _ = ε ^ Fintype.card ι := by simp
+  rw [hevent]
+  calc
+    μ.real (S ⁻¹' Set.Ici (-(Fintype.card ι : ℝ))) ≤
+        Real.exp (Fintype.card ι : ℝ) * (∫ ω, Real.exp (S ω) ∂μ) := by
+      simpa using hupper
+    _ = Real.exp (Fintype.card ι : ℝ) *
+        (∏ i, ∫ ω, Real.exp (a i * X i ω) ∂μ) := by rw [hmgfS]
+    _ ≤ Real.exp (Fintype.card ι : ℝ) * ε ^ Fintype.card ι :=
+      mul_le_mul_of_nonneg_left hprod (le_of_lt (Real.exp_pos _))
+    _ = (Real.exp 1 * ε) ^ Fintype.card ι := by
+      rw [mul_pow]
+      congr 1
+      rw [← Real.exp_nat_mul]
+      norm_num
 
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
