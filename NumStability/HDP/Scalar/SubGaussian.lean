@@ -4,6 +4,7 @@ import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
+import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.Preliminaries
@@ -19,6 +20,8 @@ noncomputable section
 
 open MeasureTheory
 open ProbabilityTheory
+open Filter
+open scoped Topology
 
 namespace NumStability.HDP.Scalar.SubGaussian
 
@@ -559,6 +562,83 @@ theorem squareMGFToTail
       rw [div_eq_mul_inv, ← Real.exp_neg]
       ring
 
+/-! Exercise 2.5.5(b): a square-MGF bound valid for every real parameter
+forces the variable to have no mass beyond the corresponding deterministic
+threshold.  We retain the tail-zero form, which is the measure-theoretic
+meaning of the source's essential boundedness conclusion. -/
+theorem squareMGFGlobalTailZero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Measurable X) (hK : 0 ≤ K)
+    (hMGF : ∀ lam : ℝ,
+      Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ ∧
+        (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤ Real.exp (K * lam ^ 2))
+    {t : ℝ} (ht : 0 ≤ t) (hthreshold : K < t ^ 2) :
+    μ.real {ω | |X ω| ≥ t} = 0 := by
+  have hgap : 0 < t ^ 2 - K := sub_pos.mpr hthreshold
+  have hbound : ∀ n : ℕ,
+      μ.real {ω | |X ω| ≥ t} ≤
+        Real.exp (-((n : ℝ) ^ 2) * (t ^ 2 - K)) := by
+    intro n
+    by_cases hn : n = 0
+    · subst n
+      have hprob : μ.real {ω | |X ω| ≥ t} ≤ 1 := by
+        rw [Measure.real_def]
+        exact ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+      simpa using hprob
+    · let a : ℝ := (n : ℝ) ^ 2
+      let Y : Ω → ℝ := fun ω => Real.exp (a * X ω ^ 2)
+      have ha : 0 < a := by
+        dsimp [a]
+        positivity
+      have hY : Measurable Y := by
+        dsimp [Y]
+        fun_prop
+      have hmarkov :=
+        NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+          (μ := μ) hY
+          (Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _)))
+          (by simpa [Y, a] using (hMGF (n : ℝ)).1)
+          (Real.exp_pos (a * t ^ 2))
+      have hsubset : {ω | |X ω| ≥ t} ⊆
+          Y ⁻¹' Set.Ici (Real.exp (a * t ^ 2)) := by
+        intro ω hω
+        change Real.exp (a * t ^ 2) ≤ Real.exp (a * X ω ^ 2)
+        apply (Real.exp_le_exp).2
+        apply mul_le_mul_of_nonneg_left _ ha.le
+        exact (sq_le_sq).mpr (by simpa [abs_of_nonneg ht] using hω)
+      have hmono {A B : Set Ω} (hAB : A ⊆ B) : μ.real A ≤ μ.real B := by
+        rw [Measure.real_def, Measure.real_def]
+        exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+      calc
+        μ.real {ω | |X ω| ≥ t} ≤
+            μ.real (Y ⁻¹' Set.Ici (Real.exp (a * t ^ 2))) := hmono hsubset
+        _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (a * t ^ 2) := by
+          simpa [NumStability.HDP.Scalar.Preliminaries.expectation] using hmarkov
+        _ ≤ Real.exp (K * a) / Real.exp (a * t ^ 2) := by
+          apply div_le_div_of_nonneg_right _ (le_of_lt (Real.exp_pos _))
+          simpa [Y, a] using (hMGF (n : ℝ)).2
+        _ = Real.exp (-a * (t ^ 2 - K)) := by
+          rw [div_eq_mul_inv, ← Real.exp_neg, ← Real.exp_add]
+          congr 1
+          ring
+        _ = Real.exp (-((n : ℝ) ^ 2) * (t ^ 2 - K)) := by rfl
+  have hpow : Tendsto (fun n : ℕ => (n : ℝ) ^ 2) atTop atTop := by
+    exact (tendsto_pow_atTop (α := ℝ) (n := 2) (by norm_num)).comp
+      tendsto_natCast_atTop_atTop
+  have hscaled : Tendsto
+      (fun n : ℕ => (t ^ 2 - K) * (n : ℝ) ^ 2) atTop atTop :=
+    hpow.const_mul_atTop hgap
+  have hlim : Tendsto
+      (fun n : ℕ => Real.exp (-((n : ℝ) ^ 2) * (t ^ 2 - K))) atTop (𝓝 0) := by
+    apply Real.tendsto_exp_atBot.comp
+    simpa [Function.comp_def, mul_comm] using
+      (tendsto_neg_atTop_atBot.comp hscaled)
+  exact le_antisymm
+    (le_of_tendsto_of_tendsto' tendsto_const_nhds hlim (fun n => hbound n))
+    (by positivity)
+
 /-! The two-sided tail conversion from an all-parameter linear MGF bound. -/
 theorem mgfToTail
     {Ω : Type*} [MeasurableSpace Ω]
@@ -720,6 +800,20 @@ theorem hdp_02_hlem_hsg_hsquare_hmgf_hto_htail
     {t : ℝ} (ht : 0 ≤ t) :
     μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2) :=
   NumStability.HDP.Scalar.SubGaussian.squareMGFToTail hX hK hMGF ht
+
+/-! Stable Chapter 2 alias for the global square-MGF boundedness exercise. -/
+theorem hdp_02_hex_h2_d5_d5b
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Measurable X) (hK : 0 ≤ K)
+    (hMGF : ∀ lam : ℝ,
+      Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ ∧
+        (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤ Real.exp (K * lam ^ 2))
+    {t : ℝ} (ht : 0 ≤ t) (hthreshold : K < t ^ 2) :
+    μ.real {ω | |X ω| ≥ t} = 0 :=
+  NumStability.HDP.Scalar.SubGaussian.squareMGFGlobalTailZero
+    hX hK hMGF ht hthreshold
 
 /-! Stable Chapter 2 alias for the all-parameter MGF-to-tail implication. -/
 theorem hdp_02_hlem_hsg_hmgf_hto_htail
