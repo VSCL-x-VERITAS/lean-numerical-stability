@@ -97,6 +97,8 @@ private structure StandardNormalSquareMGFProviders where
   hIntegral : ∀ {f : ℝ → ℝ},
     (∫ x, f x ∂(gaussianReal 0 1)) =
       ∫ x, gaussianPDFReal 0 1 x * f x
+  hConstMul : ∀ (r : ℝ) (f : ℝ → ℝ),
+    (∫ x, r * f x) = r * (∫ x, f x)
   hExp : ∀ {b : ℝ}, 0 < b →
     Integrable (fun x : ℝ => Real.exp (-b * x ^ 2)) volume
   hGaussian : ∀ (b : ℝ),
@@ -184,7 +186,7 @@ private theorem standardNormalSquareMGF_value
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring]
-  rw [integral_const_mul, p.hGaussian]
+  rw [p.hConstMul, p.hGaussian]
   apply (sq_eq_sq₀ (by positivity) (by positivity)).1
   rw [mul_pow]
   simp only [inv_pow]
@@ -265,6 +267,7 @@ theorem standardNormalSquareMGF (lam : ℝ) :
         simpa only [smul_eq_mul] using
           (ProbabilityTheory.integral_gaussianReal_eq_integral_smul
             (μ := (0 : ℝ)) (v := (1 : NNReal)) (f := f) (by norm_num))
+      hConstMul := MeasureTheory.integral_const_mul
       hExp := _root_.integrable_exp_neg_mul_sq
       hGaussian := _root_.integral_gaussian
       hIff := _root_.integrable_exp_neg_mul_sq_iff }
