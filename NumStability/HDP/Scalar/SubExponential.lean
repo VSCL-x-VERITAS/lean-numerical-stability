@@ -2,8 +2,10 @@ import Mathlib.Analysis.Convex.Function
 import Mathlib.Topology.Algebra.Order.Field
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.Tactic
 
 /-!
@@ -469,19 +471,145 @@ theorem momentToMGF
                     simp
     _ = 1 + ∫ ω, mgfRemainder X lam ω ∂μ := by rw [hCenter.2]; ring
     _ ≤ 1 + 2 * (Real.exp 1 * (|lam| * K)) ^ 2 := by gcongr
-        _ ≤ Real.exp (2 * (Real.exp 1 * (lam * K)) ^ 2) := by
-          have hsq : (|lam| * K) ^ 2 = (lam * K) ^ 2 := by
-            rw [mul_pow, mul_pow, sq_abs]
-          calc
-            1 + 2 * (Real.exp 1 * (|lam| * K)) ^ 2 =
-                2 * (Real.exp 1 * (|lam| * K)) ^ 2 + 1 := by ring
-            _ ≤ Real.exp (2 * (Real.exp 1 * (|lam| * K)) ^ 2) :=
-              Real.add_one_le_exp _
-            _ = Real.exp (2 * (Real.exp 1 * (lam * K)) ^ 2) := by
-              rw [show (Real.exp 1 * (|lam| * K)) ^ 2 =
-                (Real.exp 1 * (lam * K)) ^ 2 by
-                  rw [mul_pow, mul_pow, sq_abs]
-                  ring]
+    _ ≤ Real.exp (2 * (Real.exp 1 * (lam * K)) ^ 2) := by
+      calc
+        1 + 2 * (Real.exp 1 * (|lam| * K)) ^ 2 =
+            2 * (Real.exp 1 * (|lam| * K)) ^ 2 + 1 := by ring
+        _ ≤ Real.exp (2 * (Real.exp 1 * (|lam| * K)) ^ 2) :=
+          Real.add_one_le_exp _
+        _ = Real.exp (2 * (Real.exp 1 * (lam * K)) ^ 2) := by
+          congr 2
+          rw [mul_pow, mul_pow, sq_abs]
+          ring
+
+/-! The endpoint MGF hypothesis used for the reverse implication. -/
+def TwoSidedMGFBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (X : Ω → ℝ) (K C : ℝ) : Prop :=
+  AEMeasurable X μ ∧
+    (Integrable (fun ω => Real.exp (X ω / K)) μ ∧
+      (∫ ω, Real.exp (X ω / K) ∂μ) ≤ Real.exp C) ∧
+    (Integrable (fun ω => Real.exp (-X ω / K)) μ ∧
+      (∫ ω, Real.exp (-X ω / K) ∂μ) ≤ Real.exp C)
+
+lemma rpow_le_exp_mul
+    {y p : ℝ} (hy : 0 ≤ y) (hp : 1 ≤ p) :
+    y ^ p ≤ p ^ p * Real.exp y := by
+  have hp0 : 0 < p := lt_of_lt_of_le (by norm_num) hp
+  rcases eq_or_lt_of_le hy with rfl | hy
+  · simp [hp0.ne']
+    positivity
+  have hlog := Real.log_le_sub_one_of_pos (div_pos hy hp0)
+  rw [Real.log_div hy.ne' hp0.ne'] at hlog
+  have hmul := mul_le_mul_of_nonneg_left hlog hp0.le
+  have hlogbound : Real.log y * p ≤ Real.log p * p + y := by
+    calc
+      Real.log y * p = p * (Real.log y - Real.log p) + p * Real.log p := by ring
+      _ ≤ p * (y / p - 1) + p * Real.log p :=
+        by simpa [add_comm] using add_le_add_right hmul (p * Real.log p)
+      _ = y - p + Real.log p * p := by field_simp
+      _ ≤ Real.log p * p + y := by nlinarith
+  calc
+    y ^ p = Real.exp (Real.log y * p) := by
+      rw [Real.rpow_def_of_pos hy p]
+    _ ≤ Real.exp (Real.log p * p + y) := Real.exp_le_exp.mpr hlogbound
+    _ = p ^ p * Real.exp y := by
+      rw [Real.rpow_def_of_pos hp0 p, Real.exp_add]
+
+/-! The reverse implication in Proposition 2.7.1.  The endpoint MGF bound
+controls the exponential of the absolute value, and the elementary estimate
+`|x|^p ≤ p^p exp |x|` then gives every real moment. -/
+theorem mgfToMoment
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K C : ℝ} (hK : 0 < K) (hC : 0 ≤ C)
+    (hMGF : TwoSidedMGFBound μ X K C) :
+    LpMomentGrowth μ X (2 * Real.exp C * K) := by
+  rcases hMGF with ⟨hX, hPlus, hMinus⟩
+  have hPlus' : Integrable (fun ω => Real.exp (K⁻¹ * X ω)) μ := by
+    simpa [div_eq_mul_inv, mul_comm] using hPlus.1
+  have hMinus' : Integrable (fun ω => Real.exp (-(K⁻¹) * X ω)) μ := by
+    simpa [div_eq_mul_inv, mul_comm] using hMinus.1
+  have ht : K⁻¹ ≠ 0 := inv_ne_zero hK.ne'
+  have hAbsExp : Integrable (fun ω => Real.exp (|X ω| / K)) μ := by
+    convert ProbabilityTheory.integrable_exp_abs_mul_abs
+      (X := X) (μ := μ) (t := K⁻¹) hPlus' hMinus' using 1
+    funext ω
+    congr 1
+    rw [abs_of_pos (inv_pos.mpr hK)]
+    ring
+  have hSumExp : Integrable
+      (fun ω => Real.exp (X ω / K) + Real.exp (-X ω / K)) μ :=
+    hPlus.1.add hMinus.1
+  have hAbsExp_le : ∀ ω, Real.exp (|X ω| / K) ≤
+      Real.exp (X ω / K) + Real.exp (-X ω / K) := by
+    intro ω
+    by_cases hω : 0 ≤ X ω
+    · rw [abs_of_nonneg hω]
+      exact le_add_of_nonneg_right (Real.exp_nonneg _)
+    · rw [abs_of_neg (lt_of_not_ge hω)]
+      exact le_add_of_nonneg_left (Real.exp_nonneg _)
+  refine ⟨hX, ?_⟩
+  intro p hp
+  have hp0 : 0 < p := lt_of_lt_of_le (by norm_num) hp
+  have hIntMoment : Integrable (fun ω => |X ω| ^ p) μ :=
+    ProbabilityTheory.integrable_rpow_abs_of_integrable_exp_mul
+      (X := X) (μ := μ) ht hPlus' hMinus' hp0.le
+  have hPoint : ∀ ω, |X ω| ^ p ≤
+      (K * p) ^ p * (Real.exp (X ω / K) + Real.exp (-X ω / K)) := by
+    intro ω
+    have hscaled : |X ω| = K * (|X ω| / K) := by field_simp
+    have hpow := rpow_le_exp_mul (y := |X ω| / K) (by positivity) hp
+    have hexp := hAbsExp_le ω
+    calc
+      |X ω| ^ p = (K * (|X ω| / K)) ^ p := by
+        exact congrArg (fun z : ℝ => z ^ p) hscaled
+      _ = K ^ p * (|X ω| / K) ^ p := by
+        rw [Real.mul_rpow hK.le (by positivity)]
+      _ ≤ K ^ p * (p ^ p * Real.exp (|X ω| / K)) := by
+        gcongr
+      _ ≤ K ^ p * (p ^ p *
+          (Real.exp (X ω / K) + Real.exp (-X ω / K))) := by
+        gcongr
+      _ = (K * p) ^ p *
+          (Real.exp (X ω / K) + Real.exp (-X ω / K)) := by
+        rw [Real.mul_rpow hK.le hp0.le]
+        ring
+  have hDom : Integrable
+      (fun ω => (K * p) ^ p *
+        (Real.exp (X ω / K) + Real.exp (-X ω / K))) μ :=
+    hSumExp.const_mul _
+  have hIntegral := MeasureTheory.integral_mono_ae hIntMoment hDom
+    (Filter.Eventually.of_forall hPoint)
+  have hIntegral' :
+      (∫ ω, |X ω| ^ p ∂μ) ≤ (K * p) ^ p * (2 * Real.exp C) := by
+    calc
+      (∫ ω, |X ω| ^ p ∂μ) ≤
+          ∫ ω, (K * p) ^ p *
+            (Real.exp (X ω / K) + Real.exp (-X ω / K)) ∂μ := hIntegral
+      _ = (K * p) ^ p *
+          (∫ ω, Real.exp (X ω / K) + Real.exp (-X ω / K) ∂μ) :=
+        MeasureTheory.integral_const_mul _ _
+      _ = (K * p) ^ p *
+          ((∫ ω, Real.exp (X ω / K) ∂μ) +
+            (∫ ω, Real.exp (-X ω / K) ∂μ)) := by
+        rw [MeasureTheory.integral_add hPlus.1 hMinus.1]
+      _ ≤ (K * p) ^ p * (2 * Real.exp C) := by
+        gcongr
+        exact (add_le_add hPlus.2 hMinus.2).trans
+          (by simp [two_mul])
+  have hA : 1 ≤ 2 * Real.exp C := by
+    have := Real.one_le_exp hC
+    nlinarith
+  have hA' : 2 * Real.exp C ≤ (2 * Real.exp C) ^ p := by
+    simpa [Real.rpow_one] using
+      Real.rpow_le_rpow_of_exponent_le hA hp
+  refine ⟨hIntMoment, ?_⟩
+  calc
+    (∫ ω, |X ω| ^ p ∂μ) ≤ (K * p) ^ p * (2 * Real.exp C) := hIntegral'
+    _ ≤ (K * p) ^ p * (2 * Real.exp C) ^ p := by
+      exact mul_le_mul_of_nonneg_left hA' (by positivity)
+    _ = (2 * Real.exp C * K * p) ^ p := by
+      rw [← Real.mul_rpow (by positivity) (by positivity)]
+      ring
 
 end NumStability.HDP.Scalar.SubExponential
 
@@ -503,5 +631,14 @@ theorem hdp_02_hlem_hse_hmoment_hto_hmgf
       (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
         Real.exp (2 * (Real.exp 1 * (lam * K)) ^ 2) :=
   NumStability.HDP.Scalar.SubExponential.momentToMGF hK hCenter hLp lam hsmall
+
+/-- Stable Chapter 2 alias for the endpoint-MGF-to-moment implication. -/
+theorem hdp_02_hlem_hse_hmgf_hto_hmoment
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K C : ℝ} (hK : 0 < K) (hC : 0 ≤ C)
+    (hMGF : NumStability.HDP.Scalar.SubExponential.TwoSidedMGFBound μ X K C) :
+    NumStability.HDP.Scalar.SubExponential.LpMomentGrowth μ X
+      (2 * Real.exp C * K) :=
+  NumStability.HDP.Scalar.SubExponential.mgfToMoment hK hC hMGF
 
 end NumStability.HDP.Contract
