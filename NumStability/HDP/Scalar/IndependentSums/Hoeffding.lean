@@ -75,6 +75,10 @@ theorem hoeffdingCenteredMGF
       ((‖b - a‖₊ / 2) ^ 2) μ :=
   ProbabilityTheory.hasSubgaussianMGF_of_mem_Icc hX hbound
 
+end NumStability.HDP.Scalar.IndependentSums.Hoeffding
+
+namespace NumStability.HDP.Contract
+
 /-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
 theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
     {Ω : Type*} [MeasurableSpace Ω]
@@ -84,6 +88,7 @@ theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
     (hbound : ∀ᵐ ω ∂μ, X ω ∈ Set.Icc a b)
     (hmean : ∫ ω, X ω ∂μ = 0) :
     HasSubgaussianMGF X ((‖b - a‖₊ / 2) ^ 2) μ :=
-  hoeffdingBoundedMGF hX hbound hmean
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.hoeffdingBoundedMGF
+    hX hbound hmean
 
-end NumStability.HDP.Scalar.IndependentSums.Hoeffding
+end NumStability.HDP.Contract
