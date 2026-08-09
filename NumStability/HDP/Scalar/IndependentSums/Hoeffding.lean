@@ -3,6 +3,7 @@ import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Tactic
+import NumStability.HDP.Scalar.Preliminaries
 
 /-!
 # MGF tensorization for independent sums
@@ -133,6 +134,77 @@ theorem laplaceTransformLeInv {f : ℝ → ℝ}
     _ = -Real.exp ((-t) * 0) / (-t) :=
       integral_exp_mul_Ioi (by linarith) 0
     _ = 1 / t := by simp
+
+/-! The finite exponential-Markov upper and lower tail bounds. -/
+theorem exponentialMarkov
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {S : Ω → ℝ} (hS : Measurable S)
+    {lam t : ℝ} (hlam : 0 < lam)
+    (hExp : Integrable (fun ω => Real.exp (lam * S ω)) μ)
+    (hExpNeg : Integrable (fun ω => Real.exp (lam * (-S ω))) μ) :
+    (μ.real (S ⁻¹' Set.Ici t) ≤
+        Real.exp (-(lam * t)) *
+          (∫ ω, Real.exp (lam * S ω) ∂μ)) ∧
+      (μ.real ((fun ω => -S ω) ⁻¹' Set.Ici t) ≤
+        Real.exp (-(lam * t)) *
+          (∫ ω, Real.exp (lam * (-S ω)) ∂μ)) := by
+  let Y : Ω → ℝ := fun ω => Real.exp (lam * S ω)
+  have hY : Measurable Y := by
+    simpa [Y] using (hS.const_mul lam).exp
+  have hY_nonneg : ∀ᵐ ω ∂μ, 0 ≤ Y ω :=
+    Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
+  have hY_int : Integrable Y μ := by
+    simpa [Y] using hExp
+  have hY_markov :=
+    NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+      hY hY_nonneg hY_int (Real.exp_pos (lam * t))
+  have hupper_subset : S ⁻¹' Set.Ici t ⊆
+      Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
+    intro ω hω
+    change t ≤ S ω at hω
+    change Real.exp (lam * t) ≤ Real.exp (lam * S ω)
+    exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
+  have hupper : μ.real (S ⁻¹' Set.Ici t) ≤
+      Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+    calc
+      μ.real (S ⁻¹' Set.Ici t) ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
+        measureReal_mono hupper_subset
+      _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
+        simpa [Preliminaries.expectation] using hY_markov
+      _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+        simp [Y, Real.exp_neg, div_eq_mul_inv]
+        ring
+  let Z : Ω → ℝ := fun ω => -S ω
+  let W : Ω → ℝ := fun ω => Real.exp (lam * Z ω)
+  have hZ : Measurable Z := by
+    simpa [Z] using hS.neg
+  have hW : Measurable W := by
+    simpa [W] using (hZ.const_mul lam).exp
+  have hW_nonneg : ∀ᵐ ω ∂μ, 0 ≤ W ω :=
+    Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
+  have hW_int : Integrable W μ := by
+    simpa [W, Z] using hExpNeg
+  have hW_markov :=
+    NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+      hW hW_nonneg hW_int (Real.exp_pos (lam * t))
+  have hlower_subset : Z ⁻¹' Set.Ici t ⊆
+      W ⁻¹' Set.Ici (Real.exp (lam * t)) := by
+    intro ω hω
+    change t ≤ Z ω at hω
+    change Real.exp (lam * t) ≤ Real.exp (lam * Z ω)
+    exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
+  have hlower : μ.real (Z ⁻¹' Set.Ici t) ≤
+      Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * (-S ω)) ∂μ) := by
+    calc
+      μ.real (Z ⁻¹' Set.Ici t) ≤ μ.real (W ⁻¹' Set.Ici (Real.exp (lam * t))) :=
+        measureReal_mono hlower_subset
+      _ ≤ (∫ ω, W ω ∂μ) / Real.exp (lam * t) := by
+        simpa [Preliminaries.expectation] using hW_markov
+      _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * (-S ω)) ∂μ) := by
+        simp [W, Z, Real.exp_neg, div_eq_mul_inv]
+        ring
+  exact ⟨hupper, hlower⟩
 
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
