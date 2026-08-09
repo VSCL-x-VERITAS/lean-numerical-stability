@@ -219,6 +219,181 @@ theorem coshLeExpHalfSq (x : ℝ) :
     Real.cosh x ≤ Real.exp (x ^ 2 / 2) :=
   Real.cosh_le_exp_half_sq x
 
+/-! The one-sided finite exponential-Markov upper tail bound. -/
+theorem exponentialMarkovUpper
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {S : Ω → ℝ} (hS : Measurable S)
+    {lam t : ℝ} (hlam : 0 < lam)
+    (hExp : Integrable (fun ω => Real.exp (lam * S ω)) μ) :
+    μ.real (S ⁻¹' Set.Ici t) ≤
+      Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+  let Y : Ω → ℝ := fun ω => Real.exp (lam * S ω)
+  have hY : Measurable Y := by
+    simpa [Y] using (hS.const_mul lam).exp
+  have hY_nonneg : ∀ᵐ ω ∂μ, 0 ≤ Y ω :=
+    Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
+  have hY_int : Integrable Y μ := by
+    simpa [Y] using hExp
+  have hY_markov :=
+    NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+      hY hY_nonneg hY_int (Real.exp_pos (lam * t))
+  have measureReal_mono_prob {A B : Set Ω} (hAB : A ⊆ B) :
+      μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+  have hsubset : S ⁻¹' Set.Ici t ⊆
+      Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
+    intro ω hω
+    change t ≤ S ω at hω
+    change Real.exp (lam * t) ≤ Real.exp (lam * S ω)
+    exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
+  calc
+    μ.real (S ⁻¹' Set.Ici t) ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
+      measureReal_mono_prob hsubset
+    _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
+      simpa [Preliminaries.expectation] using hY_markov
+    _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+      simp [Y, Real.exp_neg, div_eq_mul_inv]
+      ring
+
+/-! The one-coordinate MGF estimate for a Rademacher law. -/
+theorem rademacherWeightedMGFLe
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X)
+    (hLaw : Measure.map X μ = rademacherPMF.toMeasure)
+    (lam a : ℝ) :
+    (∫ ω, Real.exp (lam * (a * X ω)) ∂μ) ≤
+      Real.exp ((lam * a) ^ 2 / 2) := by
+  let f : ℝ → ℝ := fun x => Real.exp (lam * (a * x))
+  have hf : Measurable f := by fun_prop
+  have hmap_integral :
+      (∫ ω, Real.exp (lam * (a * X ω)) ∂μ) =
+        ∫ x : ℝ, Real.exp (lam * (a * x)) ∂Measure.map X μ := by
+    symm
+    rw [MeasureTheory.integral_map hX.aemeasurable hf.aestronglyMeasurable]
+  rw [hmap_integral, hLaw]
+  unfold rademacherPMF
+  rw [← PMF.toMeasure_map rademacherValue]
+  · rw [MeasureTheory.integral_map
+      (measurable_of_countable rademacherValue).aemeasurable
+      hf.aestronglyMeasurable]
+    rw [PMF.integral_eq_sum]
+    simp [f, fairBernoulliPMF, rademacherValue, PMF.bernoulli_apply]
+    calc
+      2⁻¹ * Real.exp (lam * a) +
+          (1 - 2⁻¹) * Real.exp (-(lam * a)) =
+          (Real.exp (lam * a) + Real.exp (-(lam * a))) / 2 := by ring
+      _ = Real.cosh (lam * a) := by rw [Real.cosh_eq]
+      _ ≤ Real.exp ((lam * a) ^ 2 / 2) := coshLeExpHalfSq (lam * a)
+  · exact measurable_of_countable rademacherValue
+
+/-! One-sided Rademacher Hoeffding, with the positive coefficient-energy branch
+made explicit so the optimized exponent never divides by zero. -/
+theorem rademacherHoeffding
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hLaw : ∀ i, Measure.map (X i) μ = rademacherPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
+    (ht : 0 ≤ t) (hv : 0 < ∑ i, (a i) ^ 2) :
+    μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤
+      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by
+  let v : ℝ := ∑ i, (a i) ^ 2
+  let S : Ω → ℝ := fun ω => ∑ i, a i * X i ω
+  have hS_meas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ
+      (fun i _ => (hX i).const_mul (a i))
+  have hS_exp (lam : ℝ) :
+      Integrable (fun ω => Real.exp (lam * S ω)) μ := by
+    let Y : ι → Ω → ℝ := fun i ω => a i * X i ω
+    have hY_meas : ∀ i, Measurable (Y i) := by
+      intro i
+      simpa [Y] using (hX i).const_mul (a i)
+    have hY_indep : iIndepFun Y μ := by
+      have hcomp := hIndep.comp (fun i x => a i * x)
+        (fun _ => by fun_prop)
+      simpa [Y, Function.comp_def] using hcomp
+    have hY_exp : ∀ i, Integrable (fun ω => Real.exp (lam * Y i ω)) μ := by
+      intro i
+      simpa [Y] using hExp lam i
+    have h := hY_indep.integrable_exp_mul_sum hY_meas
+      (s := Finset.univ) (fun i _ => hY_exp i)
+    simpa [S, Y] using h
+  have hmgf (lam : ℝ) :
+      (∫ ω, Real.exp (lam * S ω) ∂μ) =
+        ∏ i, ∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ := by
+    simpa [S] using
+      (mgfIndependentSum (μ := μ) (X := X) lam a hIndep (hExp lam))
+  have hfactor (lam : ℝ) (i : ι) :
+      (∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ) ≤
+        Real.exp ((lam * a i) ^ 2 / 2) :=
+    rademacherWeightedMGFLe (hX i) (hLaw i) lam (a i)
+  by_cases ht0 : t = 0
+  · rw [ht0]
+    have hprob : μ.real {ω | ∑ i, a i * X i ω ≥ 0} ≤ 1 := by
+      rw [Measure.real_def]
+      exact ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+    simpa [v] using hprob
+  · have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
+    let lam : ℝ := t / v
+    have hlam : 0 < lam := div_pos htpos (by simpa [v] using hv)
+    have hupper := exponentialMarkovUpper hS_meas (lam := lam) (t := t)
+      hlam (hS_exp lam)
+    have hprod :
+        (∏ i, ∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ) ≤
+          ∏ i, Real.exp ((lam * a i) ^ 2 / 2) := by
+      apply Finset.prod_le_prod
+      · intro i hi
+        exact MeasureTheory.integral_nonneg (fun ω => Real.exp_nonneg _)
+      · intro i hi
+        exact hfactor lam i
+    have hmgf_upper :
+        (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
+          Real.exp (lam ^ 2 * v / 2) := by
+      rw [hmgf lam]
+      calc
+        (∏ i, ∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ) ≤
+            ∏ i, Real.exp ((lam * a i) ^ 2 / 2) := hprod
+        _ = Real.exp (lam ^ 2 * v / 2) := by
+          rw [← Real.exp_sum]
+          congr 1
+          dsimp [v]
+          ring_nf
+          rw [Finset.mul_sum, Finset.sum_mul]
+    calc
+      μ.real {ω | ∑ i, a i * X i ω ≥ t} =
+          μ.real (S ⁻¹' Set.Ici t) := by rfl
+      _ ≤ Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
+        simpa using hupper
+      _ ≤ Real.exp (-(lam * t)) * Real.exp (lam ^ 2 * v / 2) :=
+        mul_le_mul_of_nonneg_left hmgf_upper (Real.exp_nonneg _)
+      _ = Real.exp (-t ^ 2 / (2 * v)) := by
+        rw [← Real.exp_add]
+        congr 1
+        dsimp [lam]
+        field_simp [ne_of_gt (by simpa [v] using hv)]
+        ring
+      _ = Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by rfl
+
+/-- Zero coefficient energy is the deterministic zero-sum branch. -/
+theorem rademacherHoeffdingZero
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (ha : ∀ i, a i = 0) (ht : 0 < t) :
+    μ.real {ω | ∑ i, a i * X i ω ≥ t} = 0 := by
+  have hevent : {ω | ∑ i, a i * X i ω ≥ t} = (∅ : Set Ω) := by
+    ext ω
+    simp [ha, ht]
+  rw [hevent]
+  simp
+
 /-- A probability density supported on the nonnegative half-line and bounded by one. -/
 structure BoundedDensityOnNonnegative (f : ℝ → ℝ) : Prop where
   nonnegative : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ f x
@@ -257,44 +432,6 @@ theorem laplaceTransformLeInv {f : ℝ → ℝ}
     _ = -Real.exp ((-t) * 0) / (-t) :=
       integral_exp_mul_Ioi (by linarith) 0
     _ = 1 / t := by simp
-
-/-! The one-sided finite exponential-Markov upper tail bound. -/
-theorem exponentialMarkovUpper
-    {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {S : Ω → ℝ} (hS : Measurable S)
-    {lam t : ℝ} (hlam : 0 < lam)
-    (hExp : Integrable (fun ω => Real.exp (lam * S ω)) μ) :
-    μ.real (S ⁻¹' Set.Ici t) ≤
-      Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
-  let Y : Ω → ℝ := fun ω => Real.exp (lam * S ω)
-  have hY : Measurable Y := by
-    simpa [Y] using (hS.const_mul lam).exp
-  have hY_nonneg : ∀ᵐ ω ∂μ, 0 ≤ Y ω :=
-    Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
-  have hY_int : Integrable Y μ := by
-    simpa [Y] using hExp
-  have hY_markov :=
-    NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
-      hY hY_nonneg hY_int (Real.exp_pos (lam * t))
-  have measureReal_mono_prob {A B : Set Ω} (hAB : A ⊆ B) :
-      μ.real A ≤ μ.real B := by
-    rw [Measure.real_def, Measure.real_def]
-    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
-  have hsubset : S ⁻¹' Set.Ici t ⊆
-      Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
-    intro ω hω
-    change t ≤ S ω at hω
-    change Real.exp (lam * t) ≤ Real.exp (lam * S ω)
-    exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
-  calc
-    μ.real (S ⁻¹' Set.Ici t) ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
-      measureReal_mono_prob hsubset
-    _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
-      simpa [Preliminaries.expectation] using hY_markov
-    _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
-      simp [Y, Real.exp_neg, div_eq_mul_inv]
-      ring
 
 /-! The finite exponential-Markov upper and lower tail bounds. -/
 theorem exponentialMarkov
