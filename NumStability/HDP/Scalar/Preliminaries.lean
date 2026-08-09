@@ -375,7 +375,7 @@ theorem chebyshevEventBound
     {t : ℝ} (ht : 0 < t) :
     μ.real {ω | |X ω - expectation μ X| ≥ t} ≤ variance μ X / t ^ 2 := by
   have hY : Measurable (fun ω => (X ω - expectation μ X) ^ 2) :=
-    (hX.sub_const _).pow_const 2
+    (hX.sub measurable_const).pow_const 2
   have hMarkov :=
     markovInequalityFinite (X := fun ω => (X ω - expectation μ X) ^ 2)
       hY (ae_of_all μ (fun ω => sq_nonneg _)) hSqInt (sq_pos_of_pos ht)
