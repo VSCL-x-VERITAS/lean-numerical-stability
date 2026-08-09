@@ -329,11 +329,6 @@ instance standardNormalLaw_noAtoms : NoAtoms standardNormalLaw := by
   dsimp [standardNormalLaw]
   exact ProbabilityTheory.noAtoms_gaussianReal (by norm_num)
 
-instance standardNormalLaw_isOpenPosMeasure :
-    Measure.IsOpenPosMeasure standardNormalLaw := by
-  dsimp [standardNormalLaw]
-  exact (ProbabilityTheory.gaussianReal_absolutelyContinuous' 0 (by norm_num)).isOpenPosMeasure
-
 instance uniformUnitIntervalLaw_isProbabilityMeasure :
     IsProbabilityMeasure uniformUnitIntervalLaw := by
   constructor
@@ -373,8 +368,27 @@ private lemma standardNormalCdf_strictMono :
     StrictMono standardNormalCdf := by
   change StrictMono (ProbabilityTheory.cdf standardNormalLaw)
   intro x y hxy
-  have hIoo : 0 < standardNormalLaw (Ioo x y) :=
-    (Measure.measure_Ioo_pos standardNormalLaw).2 hxy
+  have h_integrable :
+      Integrable (fun z : ℝ => ProbabilityTheory.gaussianPDFReal 0 1 z)
+        (volume.restrict (Ioo x y)) :=
+    (ProbabilityTheory.integrable_gaussianPDFReal 0 1).restrict
+  have h_integral :
+      0 < ∫ z in Ioo x y, ProbabilityTheory.gaussianPDFReal 0 1 z := by
+    rw [integral_pos_iff_support_of_nonneg
+      (μ := volume.restrict (Ioo x y))
+      (f := ProbabilityTheory.gaussianPDFReal 0 1)
+      (fun z => ProbabilityTheory.gaussianPDFReal_nonneg 0 1 z) h_integrable]
+    have hsupport : Function.support (ProbabilityTheory.gaussianPDFReal 0 1) =
+        (Set.univ : Set ℝ) := by
+      ext z
+      simp only [Function.mem_support, ne_eq, Set.mem_univ, iff_true]
+      exact (ProbabilityTheory.gaussianPDFReal_pos 0 1 z (by norm_num)).ne'
+    rw [hsupport, Measure.restrict_apply_univ]
+    exact (Measure.measure_Ioo_pos volume).2 hxy
+  have hIoo : 0 < standardNormalLaw (Ioo x y) := by
+    rw [standardNormalLaw,
+      ProbabilityTheory.gaussianReal_apply_eq_integral 0 (by norm_num)]
+    exact ENNReal.ofReal_pos.mpr h_integral
   have hIoc : 0 < standardNormalLaw (Ioc x y) :=
     lt_of_lt_of_le hIoo (measure_mono Ioo_subset_Ioc_self)
   have hmass : 0 < (ProbabilityTheory.cdf standardNormalLaw).measure (Ioc x y) := by
