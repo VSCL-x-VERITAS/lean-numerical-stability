@@ -6,6 +6,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.Preliminaries
 
@@ -84,6 +85,155 @@ theorem standardNormalMGF (lam : ℝ) :
   rw [hpoint, integral_const_mul, integral_const_mul, hshift, hgauss]
   norm_num [Real.sqrt_eq_rpow]
   field_simp
+
+private theorem standardNormalSquareMGF_integrable
+    (lam : ℝ) (hsmall : |lam| < (Real.sqrt 2)⁻¹) :
+    Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) := by
+  have hsq : lam ^ 2 < (1 / 2 : ℝ) := by
+    have hinv : 0 ≤ (Real.sqrt 2)⁻¹ := by positivity
+    have hsq' : lam ^ 2 < ((Real.sqrt 2)⁻¹) ^ 2 := by
+      calc
+        lam ^ 2 = |lam| ^ 2 := (sq_abs lam).symm
+        _ < |(Real.sqrt 2)⁻¹| ^ 2 :=
+          (sq_lt_sq₀ (abs_nonneg lam) (abs_nonneg ((Real.sqrt 2)⁻¹))).2
+            (by simpa [abs_of_nonneg hinv] using hsmall)
+        _ = ((Real.sqrt 2)⁻¹) ^ 2 := sq_abs _
+    simpa [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)] using hsq'
+  have hb : 0 < (1 / 2 : ℝ) - lam ^ 2 := sub_pos.mpr hsq
+  rw [gaussianReal_of_var_ne_zero 0 (by norm_num)]
+  apply (integrable_withDensity_iff_integrable_smul'
+    (measurable_gaussianPDF 0 1)
+    (ae_of_all _ (fun x => gaussianPDF_lt_top))).2
+  simp only [toReal_gaussianPDF, smul_eq_mul]
+  rw [show (fun x : ℝ => gaussianPDFReal 0 1 x * Real.exp (lam ^ 2 * x ^ 2)) =
+      (fun x => (Real.sqrt (2 * Real.pi))⁻¹ *
+        Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) by
+    funext x
+    have hpdf (x : ℝ) : gaussianPDFReal 0 1 x =
+        (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) := by
+      simp [gaussianPDFReal]
+    rw [hpdf]
+    calc
+      (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) *
+          Real.exp (lam ^ 2 * x ^ 2) =
+          (Real.sqrt (2 * Real.pi))⁻¹ *
+            (Real.exp (-x ^ 2 / 2) * Real.exp (lam ^ 2 * x ^ 2)) := by ring
+      _ = (Real.sqrt (2 * Real.pi))⁻¹ *
+          Real.exp (-x ^ 2 / 2 + lam ^ 2 * x ^ 2) := by rw [Real.exp_add]
+      _ = (Real.sqrt (2 * Real.pi))⁻¹ *
+          Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
+            congr 2
+            ring]
+  exact (integrable_exp_neg_mul_sq hb).const_mul _
+
+private theorem standardNormalSquareMGF_value
+    (lam : ℝ) (hsmall : |lam| < (Real.sqrt 2)⁻¹) :
+    ∫ x : ℝ, Real.exp (lam ^ 2 * x ^ 2) ∂(gaussianReal 0 1) =
+      (Real.sqrt (1 - 2 * lam ^ 2))⁻¹ := by
+  have hsq : lam ^ 2 < (1 / 2 : ℝ) := by
+    have hinv : 0 ≤ (Real.sqrt 2)⁻¹ := by positivity
+    have hsq' : lam ^ 2 < ((Real.sqrt 2)⁻¹) ^ 2 := by
+      calc
+        lam ^ 2 = |lam| ^ 2 := (sq_abs lam).symm
+        _ < |(Real.sqrt 2)⁻¹| ^ 2 :=
+          (sq_lt_sq₀ (abs_nonneg lam) (abs_nonneg ((Real.sqrt 2)⁻¹))).2
+            (by simpa [abs_of_nonneg hinv] using hsmall)
+        _ = ((Real.sqrt 2)⁻¹) ^ 2 := sq_abs _
+    simpa [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)] using hsq'
+  have hb : 0 < (1 / 2 : ℝ) - lam ^ 2 := sub_pos.mpr hsq
+  have hq : 0 < 1 - 2 * lam ^ 2 := by nlinarith
+  rw [integral_gaussianReal_eq_integral_smul (μ := (0 : ℝ)) (v := (1 : NNReal))
+    (f := fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (by norm_num)]
+  simp only [smul_eq_mul]
+  have hpdf (x : ℝ) : gaussianPDFReal 0 1 x =
+      (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) := by
+    simp [gaussianPDFReal]
+  simp_rw [hpdf]
+  rw [show (fun x : ℝ => (Real.sqrt (2 * Real.pi))⁻¹ *
+      Real.exp (-x ^ 2 / 2) * Real.exp (lam ^ 2 * x ^ 2)) =
+      (fun x => (Real.sqrt (2 * Real.pi))⁻¹ *
+        Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) by
+    funext x
+    calc
+      (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) *
+          Real.exp (lam ^ 2 * x ^ 2) =
+          (Real.sqrt (2 * Real.pi))⁻¹ *
+            (Real.exp (-x ^ 2 / 2) * Real.exp (lam ^ 2 * x ^ 2)) := by ring
+      _ = (Real.sqrt (2 * Real.pi))⁻¹ *
+          Real.exp (-x ^ 2 / 2 + lam ^ 2 * x ^ 2) := by rw [Real.exp_add]
+      _ = (Real.sqrt (2 * Real.pi))⁻¹ *
+          Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
+            congr 2
+            ring]
+  rw [integral_const_mul, integral_gaussian]
+  apply (sq_eq_sq₀ (by positivity) (by positivity)).1
+  rw [mul_pow]
+  simp only [inv_pow]
+  rw [Real.sq_sqrt (by positivity : (0 : ℝ) ≤ 2 * Real.pi),
+    Real.sq_sqrt (div_nonneg (by positivity : (0 : ℝ) ≤ Real.pi) hb.le),
+    Real.sq_sqrt hq.le]
+  field_simp
+
+private theorem standardNormalSquareMGF_not_integrable
+    (lam : ℝ) (hlarge : (Real.sqrt 2)⁻¹ ≤ |lam|) :
+    ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) := by
+  intro hInt
+  rw [gaussianReal_of_var_ne_zero 0 (by norm_num)] at hInt
+  have hvol := (integrable_withDensity_iff_integrable_smul'
+    (measurable_gaussianPDF 0 1)
+    (ae_of_all _ (fun x => gaussianPDF_lt_top))).1 hInt
+  simp only [toReal_gaussianPDF, smul_eq_mul] at hvol
+  have hsq : (1 / 2 : ℝ) ≤ lam ^ 2 := by
+    have hinv : 0 ≤ (Real.sqrt 2)⁻¹ := by positivity
+    have hsq' : ((Real.sqrt 2)⁻¹) ^ 2 ≤ |lam| ^ 2 := by
+      calc
+        ((Real.sqrt 2)⁻¹) ^ 2 = |(Real.sqrt 2)⁻¹| ^ 2 := (sq_abs _).symm
+        _ ≤ |lam| ^ 2 :=
+          (sq_le_sq₀ (abs_nonneg ((Real.sqrt 2)⁻¹)) (abs_nonneg lam)).2
+            (by simpa [abs_of_nonneg hinv] using hlarge)
+    simpa [abs_sq, Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)] using hsq'
+  have hrew : (fun x : ℝ => gaussianPDFReal 0 1 x * Real.exp (lam ^ 2 * x ^ 2)) =
+      (fun x => (Real.sqrt (2 * Real.pi))⁻¹ *
+        Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) := by
+    funext x
+    have hpdf (x : ℝ) : gaussianPDFReal 0 1 x =
+        (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) := by
+      simp [gaussianPDFReal]
+    rw [hpdf]
+    calc
+      (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) *
+          Real.exp (lam ^ 2 * x ^ 2) =
+          (Real.sqrt (2 * Real.pi))⁻¹ *
+            (Real.exp (-x ^ 2 / 2) * Real.exp (lam ^ 2 * x ^ 2)) := by ring
+      _ = (Real.sqrt (2 * Real.pi))⁻¹ *
+          Real.exp (-x ^ 2 / 2 + lam ^ 2 * x ^ 2) := by rw [Real.exp_add]
+      _ = (Real.sqrt (2 * Real.pi))⁻¹ *
+          Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
+            congr 2
+            ring
+  rw [hrew] at hvol
+  have hbad : ¬ Integrable (fun x : ℝ =>
+      Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) := by
+    rw [integrable_exp_neg_mul_sq_iff]
+    exact not_lt_of_ge (sub_nonpos.mpr hsq)
+  have hc : (Real.sqrt (2 * Real.pi))⁻¹ ≠ 0 := by positivity
+  exact hbad ((integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc) _).mp hvol)
+
+/-! Exercise 2.5.5(a): the standard normal square-MGF is finite exactly on
+the neighborhood `|lam| < 1 / sqrt 2`, where it equals the displayed inverse
+square-root formula, and is non-integrable at and beyond the boundary. -/
+theorem standardNormalSquareMGF (lam : ℝ) :
+    (|lam| < (Real.sqrt 2)⁻¹ →
+      Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1) ∧
+        (∫ x : ℝ, Real.exp (lam ^ 2 * x ^ 2) ∂(gaussianReal 0 1)) =
+          (Real.sqrt (1 - 2 * lam ^ 2))⁻¹) ∧
+    ((Real.sqrt 2)⁻¹ ≤ |lam| →
+      ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1)) := by
+  constructor
+  · intro hsmall
+    exact ⟨standardNormalSquareMGF_integrable lam hsmall,
+      standardNormalSquareMGF_value lam hsmall⟩
+  · exact standardNormalSquareMGF_not_integrable lam
 
 /-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
 
