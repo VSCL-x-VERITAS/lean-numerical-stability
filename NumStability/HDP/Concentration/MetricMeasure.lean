@@ -2,8 +2,11 @@ import Mathlib.Probability.CDF
 import Mathlib.Topology.MetricSpace.Lipschitz
 import Mathlib.Topology.MetricSpace.HausdorffDistance
 import Mathlib.Analysis.Normed.MulAction
+import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.Geometry.Manifold.Riemannian.Basic
+import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
 import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+import Mathlib.MeasureTheory.Measure.WithDensity
 import Mathlib.Tactic
 
 noncomputable section
@@ -362,6 +365,81 @@ def riemannianManifoldData_mk
   ricci_lower_bound_pos := hc_pos
   ricci_lower_bound_bound := hc_bound
 
+/-- The source-facing strongly log-concave law interface from §5.2.8.
+
+The density is kept as an explicit ENNReal function so that its normalizing
+integral and the associated measure are visible.  The Hessian is the second
+Fréchet derivative when the potential is twice differentiable, and the
+curvature inequality is recorded pointwise on vectors.
+-/
+structure StronglyLogConcaveData
+    {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [MeasureSpace E] where
+  potential : E → ℝ
+  density : E → ENNReal
+  density_eq_exp :
+    ∀ x, density x = ENNReal.ofReal (Real.exp (-potential x))
+  density_normalized :
+    ∫⁻ x, density x ∂(volume : Measure E) = 1
+  law : Measure E
+  law_eq_density :
+    law = (volume : Measure E).withDensity density
+  law_is_probability : IsProbabilityMeasure law
+  twice_differentiable :
+    ∀ x, DifferentiableAt ℝ potential x ∧
+      DifferentiableAt ℝ (fun y => fderiv ℝ potential y) x
+  hessian : E → E →L[ℝ] E →L[ℝ] ℝ
+  hessian_eq_second_derivative :
+    ∀ x, hessian x = fderiv ℝ (fun y => fderiv ℝ potential y) x
+  curvature : ℝ
+  curvature_pos : 0 < curvature
+  hessian_lower_bound :
+    ∀ (x : E) (v : E), curvature * ‖v‖ ^ 2 ≤ hessian x v v
+  hessian_comp_id :
+    ∀ x, (hessian x).comp (ContinuousLinearMap.id ℝ E) = hessian x
+
+def stronglyLogConcaveData_mk
+    {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [MeasureSpace E]
+    (hpotential : E → ℝ)
+    (hdensity : E → ENNReal)
+    (hdensity_eq_exp :
+      ∀ x, hdensity x = ENNReal.ofReal (Real.exp (-hpotential x)))
+    (hdensity_normalized :
+      ∫⁻ x, hdensity x ∂(volume : Measure E) = 1)
+    (hlaw : Measure E)
+    (hlaw_eq_density :
+      hlaw = (volume : Measure E).withDensity hdensity)
+    (hlaw_is_probability : IsProbabilityMeasure hlaw)
+    (htwice :
+      ∀ x, DifferentiableAt ℝ hpotential x ∧
+        DifferentiableAt ℝ (fun y => fderiv ℝ hpotential y) x)
+    (hhessian : E → E →L[ℝ] E →L[ℝ] ℝ)
+    (hhessian_eq :
+      ∀ x, hhessian x = fderiv ℝ (fun y => fderiv ℝ hpotential y) x)
+    (hcurvature : ℝ) (hcurvature_pos : 0 < hcurvature)
+    (hhessian_lower :
+      ∀ (x : E) (v : E), hcurvature * ‖v‖ ^ 2 ≤ hhessian x v v)
+    (hhessian_comp_id :
+      ∀ x, (hhessian x).comp (ContinuousLinearMap.id ℝ E) = hhessian x) :
+    StronglyLogConcaveData (E := E) where
+  potential := hpotential
+  density := hdensity
+  density_eq_exp := hdensity_eq_exp
+  density_normalized := hdensity_normalized
+  law := hlaw
+  law_eq_density := hlaw_eq_density
+  law_is_probability := hlaw_is_probability
+  twice_differentiable := htwice
+  hessian := hhessian
+  hessian_eq_second_derivative := hhessian_eq
+  curvature := hcurvature
+  curvature_pos := hcurvature_pos
+  hessian_lower_bound := hhessian_lower
+  hessian_comp_id := hhessian_comp_id
+
 end NumStability.HDP.Concentration.MetricMeasure
 
 namespace NumStability.HDP.Contract
@@ -384,5 +462,12 @@ def hdp_05_hdef_h5_d2_hriemannian_hmms
     [Bundle.RiemannianBundle (fun x : M => TangentSpace I x)] :
     Type _ :=
   NumStability.HDP.Concentration.MetricMeasure.RiemannianManifoldData (M := M) I
+
+def hdp_05_hdef_h5_d2_hstrongly_hlogconcave
+    {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [MeasureSpace E] :
+    Type _ :=
+  NumStability.HDP.Concentration.MetricMeasure.StronglyLogConcaveData (E := E)
 
 end NumStability.HDP.Contract
