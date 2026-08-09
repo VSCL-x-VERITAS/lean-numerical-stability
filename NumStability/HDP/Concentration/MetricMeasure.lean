@@ -1,4 +1,7 @@
 import Mathlib.Probability.CDF
+import Mathlib.Topology.MetricSpace.Lipschitz
+import Mathlib.Topology.MetricSpace.HausdorffDistance
+import Mathlib.Analysis.Normed.MulAction
 import Mathlib.Tactic
 
 noncomputable section
@@ -49,6 +52,70 @@ structure MedianCertificate (μ : Measure ℝ) (X : ℝ → ℝ) where
   quantile_boundary : ℝ
   quantile_boundary_eq :
     quantile_boundary = medianBoundary (medianLaw μ X)
+
+/-!
+  Chapter 5's Lipschitz interface uses Mathlib's `NNReal` constants and
+  records the infimum in `ENNReal`, while retaining Mathlib's distance-to-set
+  function.  The bundled certificate keeps both source-facing operations in
+  one declaration.
+-/
+def lipConstants (f : ℝ → ℝ) : Set NNReal :=
+  {K | LipschitzWith K f}
+
+noncomputable def lipNorm (f : ℝ → ℝ) : ℝ≥0∞ :=
+  ENNReal.ofNNReal (sInf (lipConstants f))
+
+structure LipschitzInterface (f : ℝ → ℝ) where
+  constant : NNReal
+  bound : LipschitzWith constant f
+  norm : ℝ≥0∞
+  norm_eq : norm = lipNorm f
+  distance_to_set : ℝ → Set ℝ → ℝ
+  distance_to_set_eq :
+    ∀ x s, distance_to_set x s = Metric.infDist x s
+
+theorem lipNorm_le {f : ℝ → ℝ} {K : NNReal}
+    (h : LipschitzWith K f) :
+    lipNorm f ≤ ENNReal.ofNNReal K := by
+  rw [lipNorm]
+  exact ENNReal.coe_le_coe.mpr (csInf_le (OrderBot.bddBelow _) h)
+
+def lipschitz_interface_mk
+    {f : ℝ → ℝ} {K : NNReal} (h : LipschitzWith K f) :
+    LipschitzInterface f := by
+  exact {
+    constant := K
+    bound := h
+    norm := lipNorm f
+    norm_eq := rfl
+    distance_to_set := Metric.infDist
+    distance_to_set_eq := fun _ _ => rfl
+  }
+
+theorem lipschitz_smul_left
+    {f : ℝ → ℝ} {K : NNReal} (c : ℝ) (h : LipschitzWith K f) :
+    LipschitzWith (‖c‖₊ * K) (fun x => c * f x) := by
+  simpa [smul_eq_mul, Function.comp_def] using
+    (lipschitzWith_smul c).comp h
+
+theorem lipschitz_comp
+    {f : ℝ → ℝ} {g : ℝ → ℝ} {Kf Kg : NNReal}
+    (hf : LipschitzWith Kf f) (hg : LipschitzWith Kg g) :
+    LipschitzWith (Kf * Kg) (f ∘ g) :=
+  hf.comp hg
+
+theorem lipschitz_restrict
+    {f : ℝ → ℝ} {K : NNReal} (h : LipschitzWith K f) (s : Set ℝ) :
+    LipschitzWith K (s.restrict f) :=
+  h.restrict s
+
+theorem distance_to_set_lipschitz (s : Set ℝ) :
+    LipschitzWith 1 (fun x : ℝ => Metric.infDist x s) :=
+  Metric.lipschitz_infDist_pt s
+
+theorem distance_to_set_le_add (s : Set ℝ) (x y : ℝ) :
+    Metric.infDist x s ≤ Metric.infDist y s + dist x y :=
+  Metric.infDist_le_infDist_add_dist
 
 theorem median_exists (μ : Measure ℝ) [IsProbabilityMeasure μ] :
     ∃ m, IsMedian μ m := by
@@ -193,5 +260,8 @@ namespace NumStability.HDP.Contract
 
 def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (X : ℝ → ℝ) :
     Type := NumStability.HDP.Concentration.MetricMeasure.MedianCertificate μ X
+
+def hdp_05_hiface_hlipschitz (f : ℝ → ℝ) :
+    Type := NumStability.HDP.Concentration.MetricMeasure.LipschitzInterface f
 
 end NumStability.HDP.Contract
