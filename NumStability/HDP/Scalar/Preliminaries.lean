@@ -638,18 +638,6 @@ theorem cauchySchwarzIntegralBound
     _ = (eLpNorm X 2 μ).toReal * (eLpNorm Y 2 μ).toReal := by
       simp only [ENNReal.toReal_mul]
 
-structure CauchySchwarzModelData
-    {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (X Y : Ω → ℝ) where
-  bound : MemLp X 2 μ → MemLp Y 2 μ →
-    ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
-      (eLpNorm X 2 μ).toReal * (eLpNorm Y 2 μ).toReal
-
-def cauchySchwarzModel
-    {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (X Y : Ω → ℝ) : CauchySchwarzModelData μ X Y :=
-  { bound := cauchySchwarzIntegralBound }
-
 /-! A concrete two-point witness that the displayed `Lᵖ` functional need not
 be subadditive below one. -/
 theorem twoPointLpTriangleFailure :
@@ -866,12 +854,6 @@ theorem hdp_01_hthm_hholder
     (μ : Measure Ω) (X Y : Ω → ℝ) :
     NumStability.HDP.Scalar.Preliminaries.HolderModelData μ X Y :=
   NumStability.HDP.Scalar.Preliminaries.holderModel μ X Y
-
-theorem hdp_01_hthm_hcauchy_hschwarz
-    {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (X Y : Ω → ℝ) :
-    NumStability.HDP.Scalar.Preliminaries.CauchySchwarzModelData μ X Y :=
-  NumStability.HDP.Scalar.Preliminaries.cauchySchwarzModel μ X Y
 
 theorem hdp_01_hthm_hcdf_hdetermines_hlaw
     {μ ν : Measure ℝ} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
