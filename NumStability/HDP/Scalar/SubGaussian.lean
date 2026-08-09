@@ -12,6 +12,7 @@ import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.Preliminaries
+import NumStability.HDP.ContractSignatures.C_02_hex_h2_d6_d9
 
 /-!
 # Standard-normal MGF
@@ -1434,5 +1435,14 @@ theorem hdp_02_hlem_hsg_hmgf_hto_htail
     {t : ℝ} (ht : 0 ≤ t) :
     μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) :=
   NumStability.HDP.Scalar.SubGaussian.mgfToTail hX hK hMGF ht
+
+/-! Stable Chapter 2 alias for Exercise 2.6.9. -/
+theorem hdp_02_hex_h2_d6_d9 : hdp_02_hex_h2_d6_d9__contract_type := by
+  simpa [hdp_02_hex_h2_d6_d9__contract_type,
+    NumStability.HDP.Scalar.SubGaussian.exercise269Law,
+    NumStability.HDP.Scalar.SubGaussian.exercise269Mean,
+    NumStability.HDP.Scalar.SubGaussian.twoPointPsiTwoNorm,
+    NumStability.HDP.Scalar.SubGaussian.twoPointPsiTwoAdmissible] using
+    NumStability.HDP.Scalar.SubGaussian.exercise269_counterexample
 
 end NumStability.HDP.Contract
