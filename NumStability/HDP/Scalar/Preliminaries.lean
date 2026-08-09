@@ -386,13 +386,13 @@ theorem chebyshevEventBound
     constructor
     · intro hω
       have hs : t ^ 2 ≤ (X ω - expectation μ X) ^ 2 := hω
-      have hs' : t ^ 2 ≤ |X ω - expectation μ X| ^ 2 := by
-        simpa [sq_abs] using hs
-      exact (sq_le_sq₀ ht.le (abs_nonneg _)).mp hs'
+      have hs' : |t| ≤ |X ω - expectation μ X| := (sq_le_sq).mp hs
+      simpa [abs_of_pos ht] using hs'
     · intro hω
       have habs : t ≤ |X ω - expectation μ X| := hω
-      have hs' := (sq_le_sq₀ ht.le (abs_nonneg _)).mpr habs
-      simpa [sq_abs] using hs'
+      have hs' : |t| ≤ |X ω - expectation μ X| := by
+        simpa [abs_of_pos ht] using habs
+      exact (sq_le_sq).mpr hs'
   rw [← hEvent]
   simpa [variance, expectation] using hMarkov
 
