@@ -37,6 +37,19 @@ def medianBoundarySet (μ : Measure ℝ) : Set ℝ :=
 noncomputable def medianBoundary (μ : Measure ℝ) : ℝ :=
   sInf (medianBoundarySet μ)
 
+/-!
+  The source-facing semantic object keeps the law transport and the CDF
+  boundary visible in its type.  This makes the two pinned frontier
+  substrates part of the checked declaration rather than merely hidden in a
+  downstream existence proof.
+-/
+structure MedianCertificate (μ : Measure ℝ) (X : ℝ → ℝ) where
+  value : ℝ
+  is_median : IsMedian (medianLaw μ X) value
+  quantile_boundary : ℝ
+  quantile_boundary_eq :
+    quantile_boundary = medianBoundary (medianLaw μ X)
+
 theorem median_exists (μ : Measure ℝ) [IsProbabilityMeasure μ] :
     ∃ m, IsMedian μ m := by
   let f : ℝ → ℝ := ProbabilityTheory.cdf μ
@@ -121,6 +134,20 @@ theorem median_exists_of_aemeasurable
     medianLaw_isProbabilityMeasure μ X hX
   exact median_exists (medianLaw μ X)
 
+theorem median_certificate_exists
+    (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (X : ℝ → ℝ) (hX : AEMeasurable X μ) :
+    Nonempty (MedianCertificate μ X) := by
+  letI : IsProbabilityMeasure (medianLaw μ X) :=
+    medianLaw_isProbabilityMeasure μ X hX
+  obtain ⟨m, hm⟩ := median_exists (medianLaw μ X)
+  exact ⟨{
+    value := m
+    is_median := hm
+    quantile_boundary := medianBoundary (medianLaw μ X)
+    quantile_boundary_eq := rfl
+  }⟩
+
 theorem median_interval_of_tail_bounds
     {μ : Measure ℝ} {a b : ℝ}
     (ha : (1 / 2 : ℝ≥0∞) ≤ μ (Iic a))
@@ -164,7 +191,7 @@ end NumStability.HDP.Concentration.MetricMeasure
 
 namespace NumStability.HDP.Contract
 
-def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (m : ℝ) :
-    Prop := NumStability.HDP.Concentration.MetricMeasure.IsMedian μ m
+def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (X : ℝ → ℝ) :
+    Type := NumStability.HDP.Concentration.MetricMeasure.MedianCertificate μ X
 
 end NumStability.HDP.Contract
