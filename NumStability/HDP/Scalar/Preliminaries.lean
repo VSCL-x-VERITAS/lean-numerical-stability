@@ -320,6 +320,18 @@ theorem markovInequalityFinite
     ENNReal.toReal_ofReal ht.le] at hreal
   exact hreal
 
+theorem markovInequality
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ᵐ ω ∂μ, 0 ≤ X ω) (hInt : Integrable X μ)
+    {t : ℝ} (ht : 0 < t) :
+    (μ.real (X ⁻¹' Set.Ici t) ≤ expectation μ X / t) ∧
+      (μ (X ⁻¹' Set.Ici t) ≤
+        (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) / ENNReal.ofReal t) := by
+  constructor
+  · exact markovInequalityFinite hX hNonneg hInt ht
+  · exact markovInequalityExtended hX hNonneg ht
+
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
