@@ -975,7 +975,7 @@ theorem binomialTwoSidedBound (m : ℕ) (p : Set.Icc (0 : ℝ) 1) {δ : ℝ}
       _ = 2 * Real.exp (-mr * δ ^ 2 / 4) := by ring
   simpa [S, mr, μ] using hfinal
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 4000000 in
 theorem erdosRenyiDegreeDeviationBound
     (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (v : Fin n) {δ : ℝ}
     (hδ0 : 0 < δ) (hδ1 : δ ≤ 1) :
@@ -988,6 +988,14 @@ theorem erdosRenyiDegreeDeviationBound
   have hA : MeasurableSet A := by
     exact (Set.to_countable A).measurableSet
   have hLaw := erdosRenyiDegreeLaw n p v
+  have hn0 : n ≠ 0 := by
+    intro hn0
+    subst n
+    exact Nat.not_lt_zero _ v.isLt
+  have hn1 : 1 ≤ n := Nat.one_le_iff_ne_zero.mpr hn0
+  have hsub : ((n - 1 : ℕ) : ℝ) = (n : ℝ) - 1 := by
+    rw [Nat.cast_sub hn1]
+    norm_num
   have hgraph :
       (erdosRenyiModel n p).graphLaw.real
           ((erdosRenyiModel n p).degree v ⁻¹' A) =
@@ -1001,11 +1009,25 @@ theorem erdosRenyiDegreeDeviationBound
         ext G
         rfl]
   rw [hgraph]
-  rw [Measure.real_def, graphBinomialLaw,
-    PMF.toMeasure_map_apply (p := PMF.binomial (unitInterval.toNNReal p)
+  rw [graphBinomialLaw]
+  have hpmf :
+      ((PMF.map (fun i : Fin (n - 1 + 1) => (i : ℕ))
+          (PMF.binomial (unitInterval.toNNReal p)
+            (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))).toMeasure).real A =
+        (PMF.binomial (unitInterval.toNNReal p)
+          (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1)).toMeasure.real
+          ((fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A) := by
+    change (((PMF.map (fun i : Fin (n - 1 + 1) => (i : ℕ))
+        (PMF.binomial (unitInterval.toNNReal p)
+          (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))).toMeasure A).toReal) =
+      ((PMF.binomial (unitInterval.toNNReal p)
+        (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1)).toMeasure
+        ((fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A)).toReal
+    rw [PMF.toMeasure_map_apply (p := PMF.binomial (unitInterval.toNNReal p)
       (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1))
       (f := fun i : Fin (n - 1 + 1) => (i : ℕ))
       A (measurable_of_countable _) hA]
+  rw [hpmf]
   have hpre :
       (fun i : Fin (n - 1 + 1) => (i : ℕ)) ⁻¹' A =
         {i : Fin (n - 1 + 1) | δ * ((n - 1) * (p : ℝ)) ≤
@@ -1013,9 +1035,9 @@ theorem erdosRenyiDegreeDeviationBound
     ext i
     rfl
   rw [hpre]
-  exact binomialTwoSidedBound (n - 1) p hδ0 hδ1
+  simpa [hsub] using (binomialTwoSidedBound (n - 1) p hδ0 hδ1)
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 4000000 in
 theorem erdosRenyiAlmostRegular
     (n : ℕ) (hn : 2 ≤ n) (p : Set.Icc (0 : ℝ) 1)
     (hd : 4000 * Real.log (n : ℝ) ≤ (n - 1) * (p : ℝ)) :
