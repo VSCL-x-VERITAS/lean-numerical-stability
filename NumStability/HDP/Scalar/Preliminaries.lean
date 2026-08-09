@@ -1,5 +1,6 @@
 import Mathlib.Probability.Moments.Variance
 import Mathlib.Probability.CDF
+import Mathlib.MeasureTheory.Function.LpSpace.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 import Mathlib.Tactic
@@ -128,6 +129,27 @@ def absoluteMoment
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (p : ℝ) : ENNReal :=
   ∫⁻ ω, ENNReal.ofReal (Real.rpow |X ω| p) ∂μ
+
+/-! The representative and quotient-level `Lᵖ` interface. -/
+structure LpNormSpaceModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ENNReal) where
+  representativeNorm : (Ω → ℝ) → ENNReal
+  representativeNorm_eq : ∀ X, representativeNorm X = eLpNorm X p μ
+  representativeMember : (Ω → ℝ) → Prop
+  representativeMember_iff : ∀ X, representativeMember X ↔ MemLp X p μ
+  quotient : AddSubgroup (Ω →ₘ[μ] ℝ)
+  quotient_eq : quotient = MeasureTheory.Lp ℝ p μ
+
+def lpNormSpaceModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ENNReal) : LpNormSpaceModelData μ p :=
+  { representativeNorm := fun X => eLpNorm X p μ
+    representativeNorm_eq := fun _ => rfl
+    representativeMember := fun X => MemLp X p μ
+    representativeMember_iff := fun _ => Iff.rfl
+    quotient := MeasureTheory.Lp ℝ p μ
+    quotient_eq := rfl }
 
 /-- Finite raw moment predicate for a natural exponent. -/
 def HasFiniteRawMoment
@@ -464,6 +486,12 @@ def hdp_01_hdef_hmgf
     (μ : Measure Ω) (X : Ω → ℝ) :
     Type :=
   NumStability.HDP.Scalar.Preliminaries.MGFModelData μ X
+
+def hdp_01_hdef_hlp_hnorm_hspace
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ENNReal) :
+    NumStability.HDP.Scalar.Preliminaries.LpNormSpaceModelData μ p :=
+  NumStability.HDP.Scalar.Preliminaries.lpNormSpaceModel μ p
 
 theorem hdp_01_hdef_hconvex_hfunction
     {φ : ℝ → ℝ}
