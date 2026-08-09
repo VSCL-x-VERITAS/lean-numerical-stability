@@ -259,6 +259,17 @@ theorem layerCakePointwise {x : ℝ} (hx : 0 ≤ x) :
         symm
         rw [MeasureTheory.setLIntegral_indicator measurableSet_Iio]
 
+/-! The pointwise indicator inequality used in the proof of Markov's bound. -/
+theorem markovIndicatorBound {x t : ℝ} (hx : 0 ≤ x) (ht : 0 < t) :
+    t * Set.indicator (Set.Ici t) (fun _ => (1 : ℝ)) x ≤ x := by
+  by_cases hxt : t ≤ x
+  · have hmem : x ∈ Set.Ici t := hxt
+    rw [Set.indicator_of_mem hmem]
+    simpa using hxt
+  · have htx : x < t := lt_of_not_ge hxt
+    simp [Set.indicator, not_le.mpr htx]
+    exact hx
+
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
@@ -319,5 +330,10 @@ theorem hdp_01_hlem_hlayer_hcake_hpointwise {x : ℝ} (hx : 0 ≤ x) :
         ∫⁻ t in Set.Ioi 0,
           (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume :=
   NumStability.HDP.Scalar.Preliminaries.layerCakePointwise hx
+
+theorem hdp_01_hlem_hmarkov_hindicator_hbound {x t : ℝ}
+    (hx : 0 ≤ x) (ht : 0 < t) :
+    t * Set.indicator (Set.Ici t) (fun _ => (1 : ℝ)) x ≤ x :=
+  NumStability.HDP.Scalar.Preliminaries.markovIndicatorBound hx ht
 
 end NumStability.HDP.Contract
