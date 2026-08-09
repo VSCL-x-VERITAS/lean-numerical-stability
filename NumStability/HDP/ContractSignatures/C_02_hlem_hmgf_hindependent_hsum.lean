@@ -14,15 +14,13 @@ open ProbabilityTheory
 
 namespace NumStability.HDP.Contract
 
-def hdp_02_hlem_hmgf_hindependent_hsum__contract_type
-    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+def hdp_02_hlem_hmgf_hindependent_hsum__contract_type : Prop :=
+  ∀ {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ι → Ω → ℝ} (lam : ℝ) (a : ι → ℝ)
-    (hX : iIndepFun X μ)
-    (hExp : ∀ i, Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ) :
-    Prop :=
-  (∫ ω, Real.exp (lam * ∑ i, a i * X i ω) ∂μ =
-    ∏ i, ∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ)
+    {X : ι → Ω → ℝ} (lam : ℝ) (a : ι → ℝ),
+    iIndepFun X μ →
+      (∀ i, Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ) →
+      (∫ ω, Real.exp (lam * ∑ i, a i * X i ω) ∂μ =
+        ∏ i, ∫ ω, Real.exp (lam * (a i * X i ω)) ∂μ)
 
 end NumStability.HDP.Contract
-
