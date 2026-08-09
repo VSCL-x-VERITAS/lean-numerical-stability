@@ -85,6 +85,19 @@ theorem monotone_cdf
   intro s t hst
   exact measure_mono (Set.Iic_subset_Iic.2 hst)
 
+/-! The CDF uniqueness bridge for real probability laws. -/
+theorem cdfDeterminesLaw
+    {μ ν : Measure ℝ} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
+    (∀ t : ℝ, μ (Set.Iic t) = ν (Set.Iic t)) ↔ μ = ν := by
+  constructor
+  · intro h
+    apply Measure.eq_of_cdf μ ν
+    ext t
+    rw [ProbabilityTheory.cdf_eq_real, ProbabilityTheory.cdf_eq_real]
+    simpa [measureReal_def] using congrArg ENNReal.toReal (h t)
+  · intro h t
+    rw [h]
+
 /-- The book's mean notation, represented by the Bochner integral. -/
 def expectation {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
@@ -501,5 +514,10 @@ theorem hdp_01_hthm_hminkowski
     MeasureTheory.eLpNorm (X + Y) p μ ≤
       MeasureTheory.eLpNorm X p μ + MeasureTheory.eLpNorm Y p μ :=
   NumStability.HDP.Scalar.Preliminaries.minkowskiEpnorm hX hY hp
+
+theorem hdp_01_hthm_hcdf_hdetermines_hlaw
+    {μ ν : Measure ℝ} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
+    (∀ t : ℝ, μ (Set.Iic t) = ν (Set.Iic t)) ↔ μ = ν :=
+  NumStability.HDP.Scalar.Preliminaries.cdfDeterminesLaw
 
 end NumStability.HDP.Contract
