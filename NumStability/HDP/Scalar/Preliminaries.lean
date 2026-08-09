@@ -127,6 +127,48 @@ def HasFiniteAbsoluteMoment
     (μ : Measure Ω) (X : Ω → ℝ) (p : ℝ) : Prop :=
   absoluteMoment μ X p < (⊤ : ENNReal)
 
+/-- The nonnegative exponential integrand used by the extended MGF. -/
+def exponentialIntegrand
+    {α : Type*} (X : α → ℝ) (t : ℝ) : α → ℝ :=
+  fun x => Real.exp (t * X x)
+
+/-- The unconditional, extended-real moment generating function. -/
+def mgf
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ) : ENNReal :=
+  ∫⁻ ω, ENNReal.ofReal (exponentialIntegrand X t ω) ∂μ
+
+/-- The parameter values at which the extended MGF is finite. -/
+def mgfDomain
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : Set ℝ :=
+  {t | mgf μ X t < (⊤ : ENNReal)}
+
+/-- Exponential integrability permits the usual real-valued MGF notation. -/
+def HasExponentialIntegrability
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ) : Prop :=
+  Integrable (exponentialIntegrand X t) μ
+
+/-- The real-valued MGF on an explicitly integrable parameter. -/
+def realMgf
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ) : ℝ :=
+  expectation μ (exponentialIntegrand X t)
+
+/-- Source-facing extended and finite-real MGF interfaces. -/
+structure MGFModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) where
+  measurable : AEMeasurable X μ
+  extended : ℝ → ENNReal
+  extended_eq : ∀ t, extended t = mgf μ X t
+  domain : Set ℝ
+  domain_eq : domain = mgfDomain μ X
+  real : ℝ → ℝ
+  real_eq : ∀ t, real t = realMgf μ X t
+  real_domain : ∀ t, t ∈ domain → HasExponentialIntegrability μ X t
+
 theorem no_real_square_root_neg_one :
     ¬ ∃ y : ℝ, y ^ 2 = -1 := by
   rintro ⟨y, hy⟩
@@ -231,8 +273,14 @@ def hdp_01_hdef_hindicator
 def hdp_01_hdef_hmoments
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) :
-    Type :=
+  Type :=
   NumStability.HDP.Scalar.Preliminaries.MomentModelData μ X
+
+def hdp_01_hdef_hmgf
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) :
+    Type :=
+  NumStability.HDP.Scalar.Preliminaries.MGFModelData μ X
 
 theorem hdp_01_hdef_hconvex_hfunction
     {φ : ℝ → ℝ}
