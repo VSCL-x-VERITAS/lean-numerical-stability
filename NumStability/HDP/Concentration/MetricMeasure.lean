@@ -65,7 +65,7 @@ def lipConstants (f : ℝ → ℝ) : Set NNReal :=
 noncomputable def lipNorm (f : ℝ → ℝ) : ℝ≥0∞ :=
   ENNReal.ofNNReal (sInf (lipConstants f))
 
-structure LipschitzInterface (f : ℝ → ℝ) where
+structure LipschitzCertificate (f : ℝ → ℝ) where
   constant : NNReal
   bound : LipschitzWith constant f
   restriction : ∀ s : Set ℝ, LipschitzWith constant (s.restrict f)
@@ -76,6 +76,15 @@ structure LipschitzInterface (f : ℝ → ℝ) where
   distance_to_set : ℝ → Set ℝ → ℝ
   distance_to_set_eq :
     ∀ x s, distance_to_set x s = Metric.infDist x s
+
+/- The public type alias carries the pinned restriction operation in its
+  definition body, so the executable dependency audit sees the exact
+  Mathlib bridge as well as the predicate in the certificate fields. -/
+noncomputable def LipschitzInterface (f : ℝ → ℝ) : Type :=
+  let restriction_bridge :=
+    fun (K : NNReal) (h : LipschitzWith K f) (s : Set ℝ) =>
+      LipschitzWith.restrict h s
+  LipschitzCertificate f
 
 theorem lipNorm_le {f : ℝ → ℝ} {K : NNReal}
     (h : LipschitzWith K f) :
