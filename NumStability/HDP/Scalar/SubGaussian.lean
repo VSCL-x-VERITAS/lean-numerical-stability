@@ -559,6 +559,127 @@ theorem squareMGFToTail
       rw [div_eq_mul_inv, ← Real.exp_neg]
       ring
 
+/-! The two-sided tail conversion from an all-parameter linear MGF bound. -/
+theorem mgfToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Measurable X) (hK : 0 < K)
+    (hMGF : ∀ lam : ℝ,
+      Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+        (∫ ω, Real.exp (lam * X ω) ∂μ) ≤ Real.exp (K ^ 2 * lam ^ 2))
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) := by
+  by_cases ht0 : t = 0
+  · rw [ht0]
+    have hprob : μ.real {ω | |X ω| ≥ 0} ≤ 1 := by
+      rw [Measure.real_def]
+      exact ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+    calc
+      μ.real {ω | |X ω| ≥ 0} ≤ 1 := hprob
+      _ ≤ 2 * Real.exp (-0 ^ 2 / (4 * K ^ 2)) := by
+        simp
+  have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
+  let lam : ℝ := t / (2 * K ^ 2)
+  have hlam : 0 < lam := by
+    dsimp [lam]
+    positivity
+  have hupper : μ.real {ω | X ω ≥ t} ≤
+      Real.exp (-t ^ 2 / (4 * K ^ 2)) := by
+    let Y : Ω → ℝ := fun ω => Real.exp (lam * X ω)
+    have hY : Measurable Y := by
+      simpa [Y] using (hX.const_mul lam).exp
+    have hmarkov :=
+      NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite hY
+        (Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _)))
+        (hMGF lam).1 (Real.exp_pos (lam * t))
+    have hsubset : {ω | X ω ≥ t} ⊆
+        Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
+      intro ω hω
+      change Real.exp (lam * t) ≤ Real.exp (lam * X ω)
+      exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
+    have hmono {A B : Set Ω} (hAB : A ⊆ B) :
+        μ.real A ≤ μ.real B := by
+      rw [Measure.real_def, Measure.real_def]
+      exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+    calc
+      μ.real {ω | X ω ≥ t} ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
+        hmono hsubset
+      _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
+        simpa [NumStability.HDP.Scalar.Preliminaries.expectation] using hmarkov
+      _ ≤ Real.exp (K ^ 2 * lam ^ 2) / Real.exp (lam * t) := by
+        exact div_le_div_of_nonneg_right (hMGF lam).2 (le_of_lt (Real.exp_pos _))
+      _ = Real.exp (-t ^ 2 / (4 * K ^ 2)) := by
+        rw [div_eq_mul_inv, ← Real.exp_neg, ← Real.exp_add]
+        congr 1
+        dsimp [lam]
+        field_simp [ne_of_gt hK]
+        ring
+  have hlower : μ.real {ω | -X ω ≥ t} ≤
+      Real.exp (-t ^ 2 / (4 * K ^ 2)) := by
+    let Y : Ω → ℝ := fun ω => Real.exp (lam * (-X ω))
+    have hY : Measurable Y := by
+      simpa [Y] using ((hX.neg.const_mul lam).exp)
+    have hmarkov :=
+      NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite hY
+        (Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _)))
+        (by simpa [Y, mul_assoc] using (hMGF (-lam)).1)
+        (Real.exp_pos (lam * t))
+    have hsubset : {ω | -X ω ≥ t} ⊆
+        Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
+      intro ω hω
+      change Real.exp (lam * t) ≤ Real.exp (lam * (-X ω))
+      exact (Real.exp_le_exp).2 (mul_le_mul_of_nonneg_left hω hlam.le)
+    have hmono {A B : Set Ω} (hAB : A ⊆ B) :
+        μ.real A ≤ μ.real B := by
+      rw [Measure.real_def, Measure.real_def]
+      exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+    calc
+      μ.real {ω | -X ω ≥ t} ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
+        hmono hsubset
+      _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
+        simpa [NumStability.HDP.Scalar.Preliminaries.expectation] using hmarkov
+      _ ≤ Real.exp (K ^ 2 * (-lam) ^ 2) / Real.exp (lam * t) := by
+        exact div_le_div_of_nonneg_right (by simpa [Y, mul_assoc] using (hMGF (-lam)).2)
+          (le_of_lt (Real.exp_pos _))
+      _ = Real.exp (-t ^ 2 / (4 * K ^ 2)) := by
+        rw [div_eq_mul_inv, ← Real.exp_neg, ← Real.exp_add]
+        congr 1
+        dsimp [lam]
+        field_simp [ne_of_gt hK]
+        ring
+  have hsubset : {ω | |X ω| ≥ t} ⊆
+      {ω | X ω ≥ t} ∪ {ω | -X ω ≥ t} := by
+    intro ω hω
+    change t ≤ |X ω| at hω
+    change t ≤ X ω ∨ t ≤ -X ω
+    by_cases h : t ≤ X ω
+    · exact Or.inl h
+    · right
+      have hlt : X ω < t := lt_of_not_ge h
+      by_contra hnot
+      exact (not_lt_of_ge hω) ((abs_lt).2 (by constructor <;> linarith))
+  have hunion : μ.real ({ω | X ω ≥ t} ∪ {ω | -X ω ≥ t}) ≤
+      μ.real {ω | X ω ≥ t} + μ.real {ω | -X ω ≥ t} := by
+    rw [Measure.real_def, Measure.real_def, Measure.real_def]
+    calc
+      (μ ({ω | X ω ≥ t} ∪ {ω | -X ω ≥ t})).toReal ≤
+          (μ {ω | X ω ≥ t} + μ {ω | -X ω ≥ t}).toReal := by
+        apply ENNReal.toReal_mono
+        · exact ENNReal.add_ne_top.mpr ⟨measure_ne_top μ _, measure_ne_top μ _⟩
+        · exact measure_union_le _ _
+      _ = (μ {ω | X ω ≥ t}).toReal + (μ {ω | -X ω ≥ t}).toReal :=
+        ENNReal.toReal_add (measure_ne_top μ _) (measure_ne_top μ _)
+  calc
+    μ.real {ω | |X ω| ≥ t} ≤
+        μ.real ({ω | X ω ≥ t} ∪ {ω | -X ω ≥ t}) := by
+      rw [Measure.real_def, Measure.real_def]
+      exact ENNReal.toReal_mono (measure_ne_top μ _) (measure_mono hsubset)
+    _ ≤ μ.real {ω | X ω ≥ t} + μ.real {ω | -X ω ≥ t} := hunion
+    _ ≤ Real.exp (-t ^ 2 / (4 * K ^ 2)) +
+        Real.exp (-t ^ 2 / (4 * K ^ 2)) := add_le_add hupper hlower
+    _ = 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) := by ring
+
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
@@ -599,5 +720,18 @@ theorem hdp_02_hlem_hsg_hsquare_hmgf_hto_htail
     {t : ℝ} (ht : 0 ≤ t) :
     μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2) :=
   NumStability.HDP.Scalar.SubGaussian.squareMGFToTail hX hK hMGF ht
+
+/-! Stable Chapter 2 alias for the all-parameter MGF-to-tail implication. -/
+theorem hdp_02_hlem_hsg_hmgf_hto_htail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Measurable X) (hK : 0 < K)
+    (hMGF : ∀ lam : ℝ,
+      Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+        (∫ ω, Real.exp (lam * X ω) ∂μ) ≤ Real.exp (K ^ 2 * lam ^ 2))
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.mgfToTail hX hK hMGF ht
 
 end NumStability.HDP.Contract
