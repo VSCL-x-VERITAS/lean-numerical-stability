@@ -68,6 +68,9 @@ noncomputable def lipNorm (f : ℝ → ℝ) : ℝ≥0∞ :=
 structure LipschitzInterface (f : ℝ → ℝ) where
   constant : NNReal
   bound : LipschitzWith constant f
+  restriction : ∀ s : Set ℝ, LipschitzWith constant (s.restrict f)
+  restriction_rule :
+    ∀ s, LipschitzWith.restrict bound s = restriction s
   norm : ℝ≥0∞
   norm_eq : norm = lipNorm f
   distance_to_set : ℝ → Set ℝ → ℝ
@@ -86,6 +89,8 @@ def lipschitz_interface_mk
   exact {
     constant := K
     bound := h
+    restriction := fun s => LipschitzWith.restrict h s
+    restriction_rule := fun _ => rfl
     norm := lipNorm f
     norm_eq := rfl
     distance_to_set := Metric.infDist
