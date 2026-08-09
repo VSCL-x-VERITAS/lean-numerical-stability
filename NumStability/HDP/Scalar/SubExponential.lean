@@ -95,16 +95,13 @@ structure OrliczNormSpaceModelData
   representativeMember_iff : ∀ X, representativeMember X ↔ orliczMember ψ μ X
   quotient : Type _
   quotient_eq : quotient = orliczSpace ψ μ
-
-def orliczNormSpaceModel
-    {Ω : Type*} [MeasurableSpace Ω]
-    (ψ : OrliczFunction) (μ : Measure Ω) : OrliczNormSpaceModelData ψ μ :=
-  { representativeGauge := fun X => orliczGauge ψ μ X
-    representativeGauge_eq := fun _ => rfl
-    representativeMember := fun X => orliczMember ψ μ X
-    representativeMember_iff := fun _ => Iff.rfl
-    quotient := orliczSpace ψ μ
-    quotient_eq := rfl }
+  admissible_smul_iff :
+    ∀ (X : Ω → ℝ) {c t : ℝ}, 0 < c → 0 < t →
+      (orliczAdmissible ψ μ X (ENNReal.ofReal t) ↔
+        orliczAdmissible ψ μ (fun ω => c * X ω) (ENNReal.ofReal (c * t)))
+  integral_mono :
+    ∀ {X Y : Ω → ℝ} {t : ℝ≥0∞}, (∀ ω, |X ω| ≤ |Y ω|) → t ≠ 0 → t ≠ ∞ →
+      orliczIntegral ψ μ X t ≤ orliczIntegral ψ μ Y t
 
 lemma orliczAdmissible_smul_iff
     {Ω : Type*} [MeasurableSpace Ω]
@@ -153,6 +150,20 @@ lemma orliczIntegral_mono
     · exact div_nonneg (abs_nonneg _) htpos.le
     · exact div_nonneg (abs_nonneg _) htpos.le
     · exact div_le_div_of_nonneg_right (hXY ω) htpos.le)
+
+def orliczNormSpaceModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) : OrliczNormSpaceModelData ψ μ :=
+  { representativeGauge := fun X => orliczGauge ψ μ X
+    representativeGauge_eq := fun _ => rfl
+    representativeMember := fun X => orliczMember ψ μ X
+    representativeMember_iff := fun _ => Iff.rfl
+    quotient := orliczSpace ψ μ
+    quotient_eq := rfl
+    admissible_smul_iff := by
+      intro X c t
+      simpa using (orliczAdmissible_smul_iff ψ μ X (c := c) (t := t))
+    integral_mono := fun hXY ht0 htTop => orliczIntegral_mono ψ μ hXY ht0 htTop }
 
 /-! The moment-to-MGF implication from Proposition 2.7.1. -/
 
