@@ -1,12 +1,15 @@
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Integral.Gamma
 import Mathlib.MeasureTheory.Function.L1Space.Integrable
+import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.Preliminaries
 
@@ -278,6 +281,213 @@ theorem standardNormalSquareMGF (lam : ℝ) :
       standardNormalSquareMGF_value lam hsmall p⟩
   · intro hlarge
     exact standardNormalSquareMGF_not_integrable lam hlarge p
+
+/-! Exercise 2.5.1: exact standard-normal `Lᵖ` moments and a uniform
+`O(√p)` estimate.  The norm statement uses Mathlib's root-free `eLpNorm'`
+representation, while the growth companion exposes the equivalent real
+integral form used by the source calculation. -/
+theorem standardNormalLpNorm (p : ℝ) (hp : 1 ≤ p) :
+    (eLpNorm' (fun x : ℝ => x) p (gaussianReal 0 1)).toReal =
+      (2 ^ (p / 2) * Real.Gamma ((1 + p) / 2) / Real.Gamma (1 / 2)) ^ (1 / p) := by
+  have hp0 : 0 < p := lt_of_lt_of_le zero_lt_one hp
+  have hpm : 0 ≤ p := hp0.le
+  have hInt : Integrable (fun x : ℝ => |x| ^ p) (gaussianReal 0 1) :=
+    integrable_rpow_abs_of_integrable_exp_mul (t := (1 : ℝ)) one_ne_zero
+      (integrable_exp_mul_gaussianReal (μ := (0 : ℝ)) (v := (1 : NNReal)) 1)
+      (integrable_exp_mul_gaussianReal (μ := (0 : ℝ)) (v := (1 : NNReal)) (-1)) hpm
+  have hnonneg : 0 ≤ᶠ[ae (gaussianReal 0 1)] (fun x : ℝ => |x| ^ p) :=
+    Filter.Eventually.of_forall (fun x => Real.rpow_nonneg (abs_nonneg x) p)
+  have hlin :
+      (∫⁻ x : ℝ, ‖(fun y : ℝ => y) x‖ₑ ^ p ∂(gaussianReal 0 1)) =
+        ENNReal.ofReal (∫ x : ℝ, |x| ^ p ∂(gaussianReal 0 1)) := by
+    calc
+      (∫⁻ x : ℝ, ‖(fun y : ℝ => y) x‖ₑ ^ p ∂(gaussianReal 0 1)) =
+          ∫⁻ x : ℝ, ENNReal.ofReal (|x| ^ p) ∂(gaussianReal 0 1) := by
+            apply lintegral_congr
+            intro x
+            rw [Real.enorm_eq_ofReal_abs]
+            rw [ENNReal.ofReal_rpow_of_nonneg (abs_nonneg x) hpm]
+      _ = ENNReal.ofReal (∫ x : ℝ, |x| ^ p ∂(gaussianReal 0 1)) :=
+        (MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt hnonneg).symm
+  rw [MeasureTheory.eLpNorm'_eq_lintegral_enorm, hlin, ← ENNReal.toReal_rpow,
+    ENNReal.toReal_ofReal (integral_nonneg (fun x =>
+      Real.rpow_nonneg (abs_nonneg x) p))]
+  congr 1
+  rw [ProbabilityTheory.integral_gaussianReal_eq_integral_smul (μ := (0 : ℝ))
+    (v := (1 : NNReal)) (f := fun x : ℝ => |x| ^ p) (by norm_num)]
+  simp_rw [smul_eq_mul]
+  rw [show (fun x : ℝ =>
+      gaussianPDFReal 0 1 x * |x| ^ p) =
+      (fun x : ℝ =>
+        (Real.sqrt (2 * Real.pi))⁻¹ *
+          (|x| ^ p * Real.exp (-x ^ 2 / 2))) by
+    funext x
+    have hpdf :
+        gaussianPDFReal 0 1 x =
+          (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-x ^ 2 / 2) := by
+      simp [gaussianPDFReal]
+    rw [hpdf]
+    ring]
+  rw [integral_const_mul]
+  have habs :
+      (∫ x : ℝ, |x| ^ p * Real.exp (-x ^ 2 / 2)) =
+        2 * ∫ x : ℝ in Set.Ioi 0, x ^ p * Real.exp (-x ^ 2 / 2) := by
+    calc
+      (∫ x : ℝ, |x| ^ p * Real.exp (-x ^ 2 / 2)) =
+          ∫ x : ℝ, (|x| ^ p * Real.exp (-|x| ^ 2 / 2)) := by
+            apply integral_congr_ae
+            filter_upwards [] with x
+            rw [sq_abs]
+      _ = 2 * ∫ x : ℝ in Set.Ioi 0, x ^ p * Real.exp (-x ^ 2 / 2) := by
+        exact integral_comp_abs (f := fun x : ℝ =>
+          x ^ p * Real.exp (-x ^ 2 / 2))
+  rw [habs]
+  have hgamma := integral_rpow_mul_exp_neg_mul_rpow (p := (2 : ℝ))
+    (q := p) (b := (1 / 2 : ℝ)) (by norm_num) (by linarith) (by norm_num)
+  have hgamma' :
+      ∫ x : ℝ in Set.Ioi 0, x ^ p * Real.exp (-x ^ 2 / 2) =
+        (1 / 2) ^ (-(p + 1) / 2) * (1 / 2) * Real.Gamma ((p + 1) / 2) := by
+    calc
+      (∫ x : ℝ in Set.Ioi 0, x ^ p * Real.exp (-x ^ 2 / 2)) =
+          ∫ x : ℝ in Set.Ioi 0, x ^ p * Real.exp (-(1 / 2) * x ^ 2) := by
+            apply setIntegral_congr_fun measurableSet_Ioi
+            intro x hx
+            congr 3
+            dsimp
+            rw [show -x ^ 2 / 2 = -(1 / 2) * x ^ 2 by ring]
+            have hx2 : x ^ (2 : ℝ) = x ^ (2 : ℕ) := by
+              norm_num [Real.rpow_natCast]
+            rw [hx2]
+      _ = _ := hgamma
+  rw [hgamma']
+  have hsqrt : 0 < Real.sqrt (2 * Real.pi) := by positivity
+  have hgamma0 : 0 < Real.Gamma (1 / 2) :=
+    Real.Gamma_pos_of_pos (by norm_num)
+  have hgammaP : 0 < Real.Gamma ((p + 1) / 2) :=
+    Real.Gamma_pos_of_pos (by linarith)
+  rw [show (1 + p) / 2 = (p + 1) / 2 by ring]
+  have hpi : Real.Gamma (1 / 2) = Real.sqrt Real.pi := by
+    exact Real.Gamma_one_half_eq
+  rw [hpi]
+  field_simp [hsqrt.ne', hgamma0.ne']
+  rw [show (1 / 2 : ℝ) ^ (-((p + 1) / 2)) =
+      2 ^ ((p + 1) / 2) by
+    rw [show (1 / 2 : ℝ) = (2 : ℝ)⁻¹ by ring,
+      Real.inv_rpow (by positivity : (0 : ℝ) ≤ 2),
+      Real.rpow_neg (by positivity : (0 : ℝ) ≤ 2)]
+    simp]
+  rw [Real.sqrt_mul (by norm_num : (0 : ℝ) ≤ 2)]
+  simp only [Real.sqrt_eq_rpow]
+  rw [show (p + 1) / 2 = p / 2 + 1 / 2 by ring,
+    Real.rpow_add (by norm_num : (0 : ℝ) < 2)]
+  ring
+
+theorem standardNormalLpNormGrowth :
+    ∃ C : ℝ, 0 < C ∧
+      ∀ p : ℝ, 1 ≤ p →
+        (∫ x : ℝ, |x| ^ p ∂(gaussianReal 0 1)) ^ (1 / p) ≤ C * Real.sqrt p := by
+  refine ⟨2 * Real.exp 1, by positivity, ?_⟩
+  intro p hp
+  have hp0 : 0 < p := lt_of_lt_of_le zero_lt_one hp
+  have hpm : 0 ≤ p := hp0.le
+  have hq : 0 < Real.sqrt p := Real.sqrt_pos.2 hp0
+  have hq2 : (Real.sqrt p) ^ 2 = p := Real.sq_sqrt hpm
+  have hdiv : p / Real.sqrt p = Real.sqrt p := by
+    apply (div_eq_iff hq.ne').2
+    nlinarith [hq2]
+  have hInt : Integrable (fun x : ℝ => |x| ^ p) (gaussianReal 0 1) :=
+    integrable_rpow_abs_of_integrable_exp_mul (t := (1 : ℝ)) one_ne_zero
+      (integrable_exp_mul_gaussianReal (μ := (0 : ℝ)) (v := (1 : NNReal)) 1)
+      (integrable_exp_mul_gaussianReal (μ := (0 : ℝ)) (v := (1 : NNReal)) (-1)) hpm
+  have hplus : Integrable (fun x : ℝ => Real.exp (Real.sqrt p * x))
+      (gaussianReal 0 1) :=
+    integrable_exp_mul_gaussianReal (μ := (0 : ℝ)) (v := (1 : NNReal)) _
+  have hminus : Integrable (fun x : ℝ => Real.exp (-Real.sqrt p * x))
+      (gaussianReal 0 1) :=
+    integrable_exp_mul_gaussianReal (μ := (0 : ℝ)) (v := (1 : NNReal)) _
+  have hsum : Integrable (fun x : ℝ =>
+      Real.exp (Real.sqrt p * x) + Real.exp (-Real.sqrt p * x))
+      (gaussianReal 0 1) := hplus.add hminus
+  have hpoint : ∀ x : ℝ, |x| ^ p ≤
+      (p / Real.sqrt p) ^ p *
+        (Real.exp (Real.sqrt p * x) + Real.exp (-Real.sqrt p * x)) := by
+    intro x
+    have h := rpow_abs_le_mul_max_exp x hpm hq.ne'
+    rw [abs_of_pos hq] at h
+    calc
+      |x| ^ p ≤ (p / Real.sqrt p) ^ p *
+          max (Real.exp (Real.sqrt p * x)) (Real.exp (-Real.sqrt p * x)) := by
+            simpa using h
+      _ ≤ (p / Real.sqrt p) ^ p *
+          (Real.exp (Real.sqrt p * x) + Real.exp (-Real.sqrt p * x)) := by
+            apply mul_le_mul_of_nonneg_left
+            · exact max_le
+                (le_add_of_nonneg_right (Real.exp_nonneg _))
+                (le_add_of_nonneg_left (Real.exp_nonneg _))
+            · positivity
+  have hprod : Integrable (fun x : ℝ =>
+      (p / Real.sqrt p) ^ p *
+        (Real.exp (Real.sqrt p * x) + Real.exp (-Real.sqrt p * x)))
+      (gaussianReal 0 1) := hsum.const_mul _
+  have hbound := integral_mono_ae hInt hprod
+    (Filter.Eventually.of_forall hpoint)
+  have hsumEval :
+      (∫ x : ℝ, Real.exp (Real.sqrt p * x) +
+        Real.exp (-Real.sqrt p * x) ∂(gaussianReal 0 1)) =
+        2 * Real.exp (p / 2) := by
+    rw [integral_add hplus hminus, standardNormalMGF, standardNormalMGF]
+    simp [hq2]
+    ring
+  have hbound' :
+      (∫ x : ℝ, |x| ^ p ∂(gaussianReal 0 1)) ≤
+        (Real.sqrt p) ^ p * (2 * Real.exp (p / 2)) := by
+    calc
+      (∫ x : ℝ, |x| ^ p ∂(gaussianReal 0 1)) ≤
+          (p / Real.sqrt p) ^ p *
+            (∫ x : ℝ, Real.exp (Real.sqrt p * x) +
+              Real.exp (-Real.sqrt p * x) ∂(gaussianReal 0 1)) := by
+        simpa [integral_const_mul] using hbound
+      _ = (Real.sqrt p) ^ p * (2 * Real.exp (p / 2)) := by
+        rw [hsumEval, hdiv]
+  have hB : 2 * Real.exp (p / 2) ≤ (2 * Real.exp 1) ^ p := by
+    have htwo : (2 : ℝ) ≤ 2 ^ p := by
+      simpa using Real.rpow_le_rpow_of_exponent_le (x := (2 : ℝ))
+        (y := (1 : ℝ)) (z := p) (by norm_num) hp
+    have hexp : Real.exp (p / 2) ≤ Real.exp p := by
+      exact Real.exp_le_exp.2 (by linarith)
+    calc
+      2 * Real.exp (p / 2) ≤ 2 ^ p * Real.exp p :=
+        mul_le_mul htwo hexp (by positivity) (by positivity)
+      _ = (2 * Real.exp 1) ^ p := by
+        rw [Real.mul_rpow (by norm_num) (by positivity), Real.exp_one_rpow]
+  have hroot := Real.rpow_le_rpow
+    (integral_nonneg (fun x => Real.rpow_nonneg (abs_nonneg x) p)) hbound'
+      (one_div_pos.mpr hp0).le
+  calc
+    (∫ x : ℝ, |x| ^ p ∂(gaussianReal 0 1)) ^ (1 / p) ≤
+        ((Real.sqrt p) ^ p * (2 * Real.exp (p / 2))) ^ (1 / p) := hroot
+    _ = Real.sqrt p * (2 * Real.exp (p / 2)) ^ (1 / p) := by
+      rw [Real.mul_rpow (by positivity : (0 : ℝ) ≤ (Real.sqrt p) ^ p)
+        (by positivity), ← Real.rpow_mul hq.le]
+      congr 1
+      field_simp
+      simp
+    _ ≤ 2 * Real.exp 1 * Real.sqrt p := by
+      have hBroot : (2 * Real.exp (p / 2)) ^ (1 / p) ≤
+          ((2 * Real.exp 1) ^ p) ^ (1 / p) :=
+        Real.rpow_le_rpow (by positivity) hB (one_div_pos.mpr hp0).le
+      have hCroot : ((2 * Real.exp 1) ^ p) ^ (1 / p) =
+          2 * Real.exp 1 := by
+        rw [← Real.rpow_mul (by positivity : (0 : ℝ) ≤ 2 * Real.exp 1)]
+        congr 1
+        field_simp
+        simp
+      rw [hCroot] at hBroot
+      calc
+        Real.sqrt p * (2 * Real.exp (p / 2)) ^ (1 / p) ≤
+            Real.sqrt p * (2 * Real.exp 1) :=
+          mul_le_mul_of_nonneg_left hBroot hq.le
+        _ = 2 * Real.exp 1 * Real.sqrt p := by ring
 
 /-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
 
@@ -957,6 +1167,12 @@ theorem mgfToTail
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
+
+/-! Stable Chapter 2 alias for the standard-normal `Lᵖ` moment formula. -/
+theorem hdp_02_hex_h2_d5_d1 (p : ℝ) (hp : 1 ≤ p) :
+    (eLpNorm' (fun x : ℝ => x) p (gaussianReal 0 1)).toReal =
+      (2 ^ (p / 2) * Real.Gamma ((1 + p) / 2) / Real.Gamma (1 / 2)) ^ (1 / p) :=
+  NumStability.HDP.Scalar.SubGaussian.standardNormalLpNorm p hp
 
 /-! Stable Chapter 2 alias for the standard-normal square-MGF example. -/
 theorem hdp_02_hex_h2_d5_d5a (lam : ℝ) :
