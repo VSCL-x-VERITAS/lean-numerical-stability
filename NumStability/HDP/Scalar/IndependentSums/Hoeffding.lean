@@ -117,4 +117,9 @@ theorem hdp_02_hlem_hhoeffding_hoptimization {v t : ℝ} (hv : 0 < v)
       (-(t / v) * t + (t / v) ^ 2 * v / 2 = -t ^ 2 / (2 * v)) :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.hoeffdingOptimization hv ht
 
+/-- Stable Chapter 2 alias for Exercise 2.2.3. -/
+theorem hdp_02_hex_h2_d2_d3 (x : ℝ) :
+    Real.cosh x ≤ Real.exp (x ^ 2 / 2) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.coshLeExpHalfSq x
+
 end NumStability.HDP.Contract
