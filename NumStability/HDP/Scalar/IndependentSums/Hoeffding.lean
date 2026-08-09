@@ -1,6 +1,8 @@
 import Mathlib.Probability.Independence.Integration
 import Mathlib.Probability.Moments.Basic
 import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Probability.ProbabilityMassFunction.Constructions
+import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Tactic
@@ -19,8 +21,128 @@ noncomputable section
 
 open MeasureTheory
 open ProbabilityTheory
+open scoped BigOperators ENNReal NNReal
 
 namespace NumStability.HDP.Scalar.IndependentSums.Hoeffding
+
+/-! The symmetric Bernoulli/Rademacher law from Definition 2.2.1. -/
+
+/-- The affine encoding of a Boolean outcome as a Rademacher value. -/
+def rademacherValue : Bool → ℝ := fun b => if b then 1 else -1
+
+/-- The corresponding `{0,1}`-valued Bernoulli indicator. -/
+def bernoulliIndicator : Bool → ℝ := fun b => if b then 1 else 0
+
+/-- The fair Bernoulli law used by the canonical coupling. -/
+noncomputable def fairBernoulliPMF : PMF Bool :=
+  PMF.bernoulli (1 / 2 : ℝ≥0) (by norm_num)
+
+/-- The symmetric Bernoulli/Rademacher law on `{-1,1}`. -/
+noncomputable def rademacherPMF : PMF ℝ :=
+  fairBernoulliPMF.map rademacherValue
+
+/-- Pointwise, the Rademacher encoding is `2X-1` for a fair indicator. -/
+theorem rademacherValue_eq_affine (b : Bool) :
+    rademacherValue b = 2 * bernoulliIndicator b - 1 := by
+  cases b
+  · norm_num [rademacherValue, bernoulliIndicator]
+  · norm_num [rademacherValue, bernoulliIndicator] <;> rfl
+
+@[simp]
+theorem rademacherPMF_mass_one : rademacherPMF 1 = 1 / 2 := by
+  simp [rademacherPMF, fairBernoulliPMF, rademacherValue, PMF.map_apply,
+    PMF.bernoulli_apply]
+  norm_num
+
+@[simp]
+theorem rademacherPMF_mass_neg_one : rademacherPMF (-1) = 1 / 2 := by
+  simp [rademacherPMF, fairBernoulliPMF, rademacherValue, PMF.map_apply,
+    PMF.bernoulli_apply]
+  norm_num
+
+theorem rademacherPMF_mean :
+    ∫ x : ℝ, x ∂rademacherPMF.toMeasure = 0 := by
+  let f : Bool → ℝ := rademacherValue
+  have hf : Measurable f := measurable_of_countable f
+  unfold rademacherPMF
+  rw [← PMF.toMeasure_map f]
+  · change (∫ y : ℝ, id y ∂Measure.map f
+      fairBernoulliPMF.toMeasure) = 0
+    rw [MeasureTheory.integral_map hf.aemeasurable
+      (continuous_id.aestronglyMeasurable)]
+    rw [PMF.integral_eq_sum]
+    simp [f, fairBernoulliPMF, rademacherValue, PMF.bernoulli_apply]
+    norm_num
+  · exact hf
+
+theorem rademacherPMF_variance :
+    ∫ x : ℝ, (x - 0) ^ 2 ∂rademacherPMF.toMeasure = 1 := by
+  let f : Bool → ℝ := rademacherValue
+  have hf : Measurable f := measurable_of_countable f
+  unfold rademacherPMF
+  rw [← PMF.toMeasure_map f]
+  · change (∫ y : ℝ, (id y - 0) ^ 2 ∂Measure.map f
+      fairBernoulliPMF.toMeasure) = 1
+    rw [MeasureTheory.integral_map hf.aemeasurable
+      (((continuous_id.sub continuous_const).pow 2).aestronglyMeasurable)]
+    rw [PMF.integral_eq_sum]
+    simp [f, fairBernoulliPMF, rademacherValue, PMF.bernoulli_apply]
+  · exact hf
+
+theorem rademacherPMF_abs :
+    ∫ x : ℝ, |x| ∂rademacherPMF.toMeasure = 1 := by
+  let f : Bool → ℝ := rademacherValue
+  have hf : Measurable f := measurable_of_countable f
+  unfold rademacherPMF
+  rw [← PMF.toMeasure_map f]
+  · change (∫ y : ℝ, |y| ∂Measure.map f
+      fairBernoulliPMF.toMeasure) = 1
+    rw [MeasureTheory.integral_map hf.aemeasurable
+      (continuous_abs.aestronglyMeasurable)]
+    rw [PMF.integral_eq_sum]
+    simp [f, fairBernoulliPMF, rademacherValue, PMF.bernoulli_apply]
+  · exact hf
+
+/-- The affine Bernoulli coupling is Rademacher exactly at the fair parameter. -/
+theorem affineBernoulliIsRademacherIff {p : ℝ≥0} (hp : p ≤ 1) :
+    PMF.map rademacherValue (PMF.bernoulli p hp) = rademacherPMF ↔
+      p = (1 / 2 : ℝ≥0) := by
+  constructor
+  · intro h
+    have h1 := congrArg (fun q : PMF ℝ => q 1) h
+    have hneq : (1 : ℝ) ≠ -1 := by norm_num
+    have h1simp : (p : ℝ≥0∞) = (1 / 2 : ℝ≥0∞) := by
+      simpa [rademacherPMF, fairBernoulliPMF, PMF.map_apply,
+        rademacherValue, PMF.bernoulli_apply, hneq] using h1
+    have h1nn : (p : ℝ≥0∞) = ((1 / 2 : ℝ≥0) : ℝ≥0∞) := by
+      convert h1simp using 1 <;> norm_num
+    exact_mod_cast h1nn
+  · intro hp'
+    subst p
+    rfl
+
+/-- The complete source-facing package for Definition 2.2.1. -/
+structure RademacherModelData where
+  law : PMF ℝ
+  mass_one : law 1 = 1 / 2
+  mass_neg_one : law (-1) = 1 / 2
+  affine_bernoulli_iff :
+    ∀ {p : ℝ≥0} (hp : p ≤ 1),
+      PMF.map rademacherValue (PMF.bernoulli p hp) = law ↔
+        p = (1 / 2 : ℝ≥0)
+  mean : ∫ x : ℝ, x ∂law.toMeasure = 0
+  variance : ∫ x : ℝ, (x - 0) ^ 2 ∂law.toMeasure = 1
+  abs_mean : ∫ x : ℝ, |x| ∂law.toMeasure = 1
+
+/-- Canonical Rademacher law and its defining Bernoulli coupling and moments. -/
+noncomputable def rademacherModel : RademacherModelData :=
+  { law := rademacherPMF
+    mass_one := rademacherPMF_mass_one
+    mass_neg_one := rademacherPMF_mass_neg_one
+    affine_bernoulli_iff := fun hp => affineBernoulliIsRademacherIff hp
+    mean := rademacherPMF_mean
+    variance := rademacherPMF_variance
+    abs_mean := rademacherPMF_abs }
 
 /-- The MGF of a weighted finite sum factors under mutual independence. -/
 theorem mgfIndependentSum
