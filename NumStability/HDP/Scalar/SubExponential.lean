@@ -146,13 +146,13 @@ lemma orliczIntegral_mono
     (hXY : ∀ ω, |X ω| ≤ |Y ω|) (ht0 : t ≠ 0) (htTop : t ≠ ∞) :
     orliczIntegral ψ μ X t ≤ orliczIntegral ψ μ Y t := by
   have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
-  apply lintegral_mono
-  intro ω
-  apply ENNReal.ofReal_le_ofReal
-  apply ψ.monotoneOn_nonneg
-  · exact div_nonneg (abs_nonneg _) htpos.le
-  · exact div_nonneg (abs_nonneg _) htpos.le
-  · exact div_le_div_of_nonneg_right (hXY ω) htpos.le
+  apply lintegral_mono_ae
+  exact Filter.Eventually.of_forall (fun ω => by
+    apply ENNReal.ofReal_le_ofReal
+    apply ψ.monotoneOn_nonneg
+    · exact div_nonneg (abs_nonneg _) htpos.le
+    · exact div_nonneg (abs_nonneg _) htpos.le
+    · exact div_le_div_of_nonneg_right (hXY ω) htpos.le)
 
 /-! The moment-to-MGF implication from Proposition 2.7.1. -/
 
