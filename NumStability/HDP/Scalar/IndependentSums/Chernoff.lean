@@ -9,6 +9,7 @@ import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.IndependentSums.Hoeffding
+import NumStability.HDP.Scalar.IndependentSums.GraphDegreeLaw
 
 /-!
 # The Erdős--Rényi random graph interface
@@ -703,6 +704,19 @@ noncomputable def erdosRenyiModel (n : ℕ) (p : Set.Icc (0 : ℝ) 1) :
   { graphLaw := SimpleGraph.binomialRandom (Fin n) p
     degree := fun v G =>
       @SimpleGraph.degree (Fin n) G v (Fintype.ofFinite (G.neighborSet v)) }
+
+theorem erdosRenyiModel_degree_eq_graphDegreeSum
+    (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (v : Fin n) (G : SimpleGraph (Fin n)) :
+    (erdosRenyiModel n p).degree v G = graphDegreeSum v G := by
+  dsimp [erdosRenyiModel]
+  letI : Fintype (G.neighborSet v) := Fintype.ofFinite _
+  calc
+    @SimpleGraph.degree (Fin n) G v (Fintype.ofFinite (G.neighborSet v)) =
+        Fintype.card (G.neighborSet v) :=
+      (SimpleGraph.card_neighborSet_eq_degree G v).symm
+    _ = (G.neighborSet v).ncard := by
+      rw [Set.ncard_eq_toFinset_card', Set.toFinset_card]
+    _ = graphDegreeSum v G := (graphDegreeSum_eq_graphDegree v G).symm
 
 /-- The fixed set of possible edges incident to a vertex.  This is the finite
 edge-coordinate index set used when reducing a random-graph degree to a
