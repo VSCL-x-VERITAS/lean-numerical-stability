@@ -6,6 +6,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Tactic
+import NumStability.HDP.Scalar.Preliminaries
 
 /-!
 # Standard-normal MGF
@@ -512,10 +513,51 @@ theorem squareMGFToMGF
       _ = Real.exp (lam ^ 2 / 2 + C) := by
         rw [Real.exp_add]
       _ ≤ Real.exp ((C + 1 / 2) * lam ^ 2) := by
-        apply Real.exp_le_exp.mpr
-        have hprod : 0 ≤ C * (lam ^ 2 - 1) :=
-          mul_nonneg hC (sub_nonneg.mpr hlam2)
-        nlinarith
+            apply Real.exp_le_exp.mpr
+            have hprod : 0 ≤ C * (lam ^ 2 - 1) :=
+              mul_nonneg hC (sub_nonneg.mpr hlam2)
+            nlinarith
+
+/-! The square-MGF tail conversion used by the sub-Gaussian equivalences. -/
+theorem squareMGFToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Measurable X) (hK : 0 < K)
+    (hMGF : Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
+      (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ 2)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2) := by
+  let Y : Ω → ℝ := fun ω => Real.exp (X ω ^ 2 / K ^ 2)
+  have hY : Measurable Y := by
+    simpa [Y] using (hX.pow_const 2).div_const (K ^ 2) |>.exp
+  have hY_nonneg : ∀ᵐ ω ∂μ, 0 ≤ Y ω :=
+    Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
+  have hmarkov :=
+    NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+      hY hY_nonneg hMGF.1 (Real.exp_pos (t ^ 2 / K ^ 2))
+  have hsubset : {ω | |X ω| ≥ t} ⊆
+      Y ⁻¹' Set.Ici (Real.exp (t ^ 2 / K ^ 2)) := by
+    intro ω hω
+    change Real.exp (t ^ 2 / K ^ 2) ≤ Real.exp (X ω ^ 2 / K ^ 2)
+    apply (Real.exp_le_exp).2
+    apply (div_le_div_of_nonneg_right _ (sq_nonneg K))
+    have habs : |t| ≤ |X ω| := by simpa [abs_of_nonneg ht] using hω
+    exact (sq_le_sq).mpr habs
+  have hmono {A B : Set Ω} (hAB : A ⊆ B) :
+      μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+  calc
+    μ.real {ω | |X ω| ≥ t} ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (t ^ 2 / K ^ 2))) :=
+      hmono hsubset
+    _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (t ^ 2 / K ^ 2) := by
+      simpa [NumStability.HDP.Scalar.Preliminaries.expectation] using hmarkov
+    _ ≤ 2 / Real.exp (t ^ 2 / K ^ 2) := by
+      exact div_le_div_of_nonneg_right hMGF.2 (le_of_lt (Real.exp_pos _))
+    _ = 2 * Real.exp (-t ^ 2 / K ^ 2) := by
+      rw [div_eq_mul_inv, ← Real.exp_neg]
+      ring
 
 end NumStability.HDP.Scalar.SubGaussian
 
@@ -545,5 +587,17 @@ theorem hdp_02_hlem_hsg_hsquare_hmgf_hto_hmgf
       (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
         Real.exp ((C + 1 / 2) * lam ^ 2) :=
   NumStability.HDP.Scalar.SubGaussian.squareMGFToMGF hC hCenter hSquare lam
+
+/-! Stable Chapter 2 alias for the square-MGF-to-tail implication. -/
+theorem hdp_02_hlem_hsg_hsquare_hmgf_hto_htail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Measurable X) (hK : 0 < K)
+    (hMGF : Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
+      (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ 2)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2) :=
+  NumStability.HDP.Scalar.SubGaussian.squareMGFToTail hX hK hMGF ht
 
 end NumStability.HDP.Contract
