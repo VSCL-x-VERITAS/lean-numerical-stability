@@ -427,7 +427,179 @@ theorem poissonMeasure_conv_poissonMeasure (r s : ℝ≥0) :
       ring
   all_goals exact measurableSet_preimage measurable_add (measurableSet_singleton n)
 
-/-- The sum of independent Poisson variables has the Poisson law with summed rate. -/
+private lemma exp_add_half_le (δ : ℝ) (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1) :
+    Real.exp (δ / 2) ≤ 1 + δ / 2 + (δ / 2) ^ 2 := by
+  have hrem := Real.abs_exp_sub_one_sub_id_le (x := δ / 2) (by
+    calc
+      |δ / 2| = δ / 2 := abs_of_nonneg (by positivity)
+      _ ≤ 1 := by linarith)
+  have hrem' : Real.exp (δ / 2) - 1 - δ / 2 ≤ (δ / 2) ^ 2 :=
+    (le_abs_self _).trans hrem
+  linarith
+
+private lemma exp_neg_half_le (δ : ℝ) (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1) :
+    Real.exp (-δ / 2) ≤ 1 - δ / 2 + (δ / 2) ^ 2 := by
+  have hrem := Real.abs_exp_sub_one_sub_id_le (x := -δ / 2) (by
+    calc
+      |-δ / 2| = δ / 2 := by
+        rw [abs_of_nonpos (by linarith)]
+        ring
+      _ ≤ 1 := by linarith)
+  have hrem' : Real.exp (-δ / 2) - 1 - (-δ / 2) ≤ (-δ / 2) ^ 2 :=
+    (le_abs_self _).trans hrem
+  linarith
+
+/-! Exercise 2.3.5: the optimized Poisson-binomial Chernoff bounds imply a
+quadratic two-sided estimate.  We use the non-optimized parameter `δ/2`; the
+second-order exponential remainder gives the explicit universal constant
+`c = 1/4` uniformly for `0 < δ ≤ 1`. -/
+theorem poissonBinomialTwoSidedQuadraticBound
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {B : ι → Ω → Bool} {p : ι → ℝ≥0}
+    (hp : ∀ i, p i ≤ 1)
+    (hB : iIndepFun B μ)
+    (hLaw : ∀ i, HasLaw (B i) (PMF.bernoulli (p i) (hp i)).toMeasure μ)
+    (hMeas : ∀ i, Measurable (B i))
+    {δ : ℝ} (hδ0 : 0 < δ) (hδ1 : δ ≤ 1)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (if B i ω then 1 else 0))) μ)
+    (hExpS : ∀ (lam : ℝ),
+      Integrable (fun ω => Real.exp (lam * ∑ i, (if B i ω then 1 else 0))) μ) :
+    μ.real {ω |
+        δ * (∑ i, (p i : ℝ)) ≤
+          |(∑ i, (if B i ω then 1 else 0)) - ∑ i, (p i : ℝ)|} ≤
+      2 * Real.exp (-(∑ i, (p i : ℝ)) * δ ^ 2 / 4) := by
+  let S : Ω → ℝ := fun ω => ∑ i, (if B i ω then 1 else 0)
+  let m : ℝ := ∑ i, (p i : ℝ)
+  have hm : 0 ≤ m := by
+    dsimp [m]
+    exact Finset.sum_nonneg (fun i _ => by positivity)
+  have hS : Measurable S := by
+    dsimp [S]
+    refine Finset.measurable_fun_sum Finset.univ ?_
+    intro i hi
+    exact Measurable.ite
+      (measurableSet_preimage (hMeas i) (measurableSet_singleton (true : Bool)))
+      measurable_const measurable_const
+  have hupper_mgf := poissonBinomialMgfBound hp hB hLaw (δ / 2) (by
+    intro i
+    exact hExp (δ / 2) i)
+  have hlower_mgf := poissonBinomialMgfBound hp hB hLaw (-δ / 2) (by
+    intro i
+    exact hExp (-δ / 2) i)
+  have hupper_markov :=
+    NumStability.HDP.Scalar.IndependentSums.Hoeffding.exponentialMarkovUpper
+      (μ := μ) (t := (1 + δ) * m) hS (by linarith) (hExpS (δ / 2))
+  have hlower_markov :=
+    NumStability.HDP.Scalar.IndependentSums.Hoeffding.exponentialMarkovUpper
+      (μ := μ) (S := fun ω => -S ω) (lam := δ / 2) (t := -(1 - δ) * m)
+      hS.neg (by linarith)
+    (by
+      have hEq :
+          (fun ω => Real.exp (δ / 2 * (fun ω => -S ω) ω)) =
+            (fun ω => Real.exp ((-δ / 2) * ∑ i, (if B i ω then 1 else 0))) := by
+        funext ω
+        dsimp [S]
+        congr 1
+        ring
+      rw [hEq]
+      exact hExpS (-δ / 2))
+  have hupper_exp : Real.exp (δ / 2) ≤ 1 + δ / 2 + (δ / 2) ^ 2 :=
+    exp_add_half_le δ hδ0.le hδ1
+  have hlower_exp : Real.exp (-δ / 2) ≤ 1 - δ / 2 + (δ / 2) ^ 2 :=
+    exp_neg_half_le δ hδ0.le hδ1
+  have hupper_coeff :
+      -(δ / 2 * ((1 + δ) * m)) + (Real.exp (δ / 2) - 1) * m ≤
+        -(m * δ ^ 2 / 4) := by
+    have hcoeff :
+        -(δ / 2 * (1 + δ)) + (Real.exp (δ / 2) - 1) ≤ -(δ ^ 2 / 4) := by
+      nlinarith [hupper_exp]
+    have := mul_le_mul_of_nonneg_right hcoeff hm
+    nlinarith
+  have hlower_coeff :
+      -(δ / 2 * (-(1 - δ) * m)) + (Real.exp (-δ / 2) - 1) * m ≤
+        -(m * δ ^ 2 / 4) := by
+    have hcoeff :
+        (δ / 2) * (1 - δ) + (Real.exp (-δ / 2) - 1) ≤ -(δ ^ 2 / 4) := by
+      nlinarith [hlower_exp]
+    have := mul_le_mul_of_nonneg_right hcoeff hm
+    nlinarith
+  have hupper_raw : μ.real (S ⁻¹' Set.Ici ((1 + δ) * m)) ≤
+      Real.exp (-(δ / 2 * ((1 + δ) * m))) *
+        Real.exp ((Real.exp (δ / 2) - 1) * m) := by
+    apply le_trans hupper_markov
+    apply mul_le_mul_of_nonneg_left _ (Real.exp_nonneg _)
+    simpa [S, m, mul_assoc] using hupper_mgf
+  have hlower_raw : μ.real ((fun ω => -S ω) ⁻¹' Set.Ici (-(1 - δ) * m)) ≤
+      Real.exp (-(δ / 2 * (-(1 - δ) * m))) *
+        Real.exp ((Real.exp (-δ / 2) - 1) * m) := by
+    apply le_trans hlower_markov
+    apply mul_le_mul_of_nonneg_left _ (Real.exp_nonneg _)
+    have hEq :
+        (fun ω => Real.exp (δ / 2 * (fun ω => -S ω) ω)) =
+          (fun ω => Real.exp ((-δ / 2) * ∑ i, (if B i ω then 1 else 0))) := by
+      funext ω
+      dsimp [S]
+      congr 1
+      ring
+    rw [hEq]
+    simpa [m] using hlower_mgf
+  have hupper : μ.real {ω | (1 + δ) * m ≤ S ω} ≤
+      Real.exp (-(m * δ ^ 2 / 4)) := by
+    rw [show {ω | (1 + δ) * m ≤ S ω} = S ⁻¹' Set.Ici ((1 + δ) * m) by rfl]
+    refine hupper_raw.trans ?_
+    rw [← Real.exp_add]
+    exact Real.exp_le_exp.2 hupper_coeff
+  have hlower : μ.real {ω | S ω ≤ (1 - δ) * m} ≤
+      Real.exp (-(m * δ ^ 2 / 4)) := by
+    have hset : {ω | S ω ≤ (1 - δ) * m} =
+        (fun ω => -S ω) ⁻¹' Set.Ici (-(1 - δ) * m) := by
+      ext ω
+      simp only [Set.mem_setOf_eq, Set.mem_preimage, Set.mem_Ici]
+      constructor <;> intro h <;> linarith
+    rw [hset]
+    refine hlower_raw.trans ?_
+    rw [← Real.exp_add]
+    exact Real.exp_le_exp.2 hlower_coeff
+  let U : Set Ω := {ω | (1 + δ) * m ≤ S ω}
+  let L : Set Ω := {ω | S ω ≤ (1 - δ) * m}
+  have hsubset : {ω | δ * m ≤ |S ω - m|} ⊆ U ∪ L := by
+    intro ω hω
+    change δ * m ≤ |S ω - m| at hω
+    by_cases hupper : (1 + δ) * m ≤ S ω
+    · exact Or.inl hupper
+    · right
+      have hnotupper : S ω < (1 + δ) * m := lt_of_not_ge hupper
+      by_contra hnotlower
+      have hlower' : (1 - δ) * m < S ω := lt_of_not_ge hnotlower
+      have habs : |S ω - m| < δ * m := by
+        rw [abs_lt]
+        constructor <;> linarith
+      exact (not_lt_of_ge hω) habs
+  have hmono {A B : Set Ω} (hAB : A ⊆ B) : μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+  have hunion : μ.real (U ∪ L) ≤ μ.real U + μ.real L := by
+    rw [Measure.real_def, Measure.real_def, Measure.real_def]
+    calc
+      (μ (U ∪ L)).toReal ≤ (μ U + μ L).toReal := by
+        apply ENNReal.toReal_mono
+        · exact ENNReal.add_ne_top.mpr ⟨measure_ne_top μ U, measure_ne_top μ L⟩
+        · exact measure_union_le U L
+      _ = (μ U).toReal + (μ L).toReal :=
+        ENNReal.toReal_add (measure_ne_top μ U) (measure_ne_top μ L)
+  have hfinal : μ.real {ω | δ * m ≤ |S ω - m|} ≤
+      2 * Real.exp (-m * δ ^ 2 / 4) := by
+    calc
+      μ.real {ω | δ * m ≤ |S ω - m|} ≤ μ.real (U ∪ L) := hmono hsubset
+      _ ≤ μ.real U + μ.real L := hunion
+      _ ≤ Real.exp (-(m * δ ^ 2 / 4)) + Real.exp (-(m * δ ^ 2 / 4)) :=
+        add_le_add (by simpa [U] using hupper) (by simpa [L] using hlower)
+      _ = 2 * Real.exp (-m * δ ^ 2 / 4) := by ring
+  simpa [S, m] using hfinal
+
+/-! The sum of independent Poisson variables has the Poisson law with summed rate. -/
 theorem poissonAddLaw
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X Y : Ω → ℕ} {r s : ℝ≥0}
@@ -606,6 +778,26 @@ theorem hdp_02_hex_h2_d3_d2
         ((Real.exp 1 * (∑ i, (p i : ℝ)) / t) ^ t) :=
   NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonBinomialLowerChernoffBound
     hp hB hLaw hMeas hExp ht htμ hExpS
+
+theorem hdp_02_hex_h2_d3_d5
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {B : ι → Ω → Bool} {p : ι → ℝ≥0}
+    (hp : ∀ i, p i ≤ 1)
+    (hB : iIndepFun B μ)
+    (hLaw : ∀ i, HasLaw (B i) (PMF.bernoulli (p i) (hp i)).toMeasure μ)
+    (hMeas : ∀ i, Measurable (B i))
+    {δ : ℝ} (hδ0 : 0 < δ) (hδ1 : δ ≤ 1)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (if B i ω then 1 else 0))) μ)
+    (hExpS : ∀ (lam : ℝ),
+      Integrable (fun ω => Real.exp (lam * ∑ i, (if B i ω then 1 else 0))) μ) :
+    μ.real {ω |
+        δ * (∑ i, (p i : ℝ)) ≤
+          |(∑ i, (if B i ω then 1 else 0)) - ∑ i, (p i : ℝ)|} ≤
+      2 * Real.exp (-(∑ i, (p i : ℝ)) * δ ^ 2 / 4) :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonBinomialTwoSidedQuadraticBound
+    hp hB hLaw hMeas hδ0 hδ1 hExp hExpS
 
 theorem hdp_02_hlem_hbernoulli_hmgf_hbound :
     NumStability.HDP.Scalar.IndependentSums.Chernoff.BernoulliMgfModelData :=
