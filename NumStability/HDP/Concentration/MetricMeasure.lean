@@ -7,6 +7,8 @@ import Mathlib.Geometry.Manifold.Riemannian.Basic
 import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
 import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 import Mathlib.MeasureTheory.Measure.WithDensity
+import Mathlib.Logic.Equiv.Basic
+import Mathlib.Probability.UniformOn
 import Mathlib.Tactic
 
 noncomputable section
@@ -440,6 +442,47 @@ def stronglyLogConcaveData_mk
   hessian_lower_bound := hhessian_lower
   hessian_comp_id := hhessian_comp_id
 
+/-- The finite symmetric group on n points. -/
+def symmetricGroup (n : ℕ) : Type :=
+  Equiv.Perm (Fin n)
+
+/-- Normalized Hamming distance on permutations, with n>0 explicit. -/
+def normalizedHammingDistance
+    (n : ℕ) (hn : 0 < n)
+    (p q : symmetricGroup n) : ℝ :=
+  (Fintype.card {i : Fin n // p.toFun i ≠ q.toFun i} : ℝ) / n
+
+/- The uniform probability law is kept with an explicit measurable space,
+   since finite permutation types do not carry a default measurable space. -/
+structure SymmetricGroupData
+    (n : ℕ) (hn : 0 < n)
+    (m : MeasurableSpace (symmetricGroup n)) where
+  uniformLaw : @Measure (symmetricGroup n) m
+  uniformLaw_eq :
+    uniformLaw =
+      @ProbabilityTheory.uniformOn (symmetricGroup n) m Set.univ
+  uniformLaw_is_probability :
+    @IsProbabilityMeasure (symmetricGroup n) m uniformLaw
+  distance : symmetricGroup n → symmetricGroup n → ℝ
+  distance_eq_normalized_hamming :
+    ∀ p q, distance p q = normalizedHammingDistance n hn p q
+
+def symmetricGroupData_mk
+    (n : ℕ) (hn : 0 < n)
+    (m : MeasurableSpace (symmetricGroup n))
+    (μ : @Measure (symmetricGroup n) m)
+    (hμ :
+      μ = @ProbabilityTheory.uniformOn (symmetricGroup n) m Set.univ)
+    (hμ_prob : @IsProbabilityMeasure (symmetricGroup n) m μ)
+    (d : symmetricGroup n → symmetricGroup n → ℝ)
+    (hd : ∀ p q, d p q = normalizedHammingDistance n hn p q) :
+    SymmetricGroupData n hn m where
+  uniformLaw := μ
+  uniformLaw_eq := hμ
+  uniformLaw_is_probability := hμ_prob
+  distance := d
+  distance_eq_normalized_hamming := hd
+
 end NumStability.HDP.Concentration.MetricMeasure
 
 namespace NumStability.HDP.Contract
@@ -469,5 +512,12 @@ def hdp_05_hdef_h5_d2_hstrongly_hlogconcave
     [MeasureSpace E] :
     Type _ :=
   NumStability.HDP.Concentration.MetricMeasure.StronglyLogConcaveData (E := E)
+
+def hdp_05_hdef_h5_d2_hsymmetric_hgroup
+    (n : ℕ) (hn : 0 < n)
+    (m : MeasurableSpace
+      (NumStability.HDP.Concentration.MetricMeasure.symmetricGroup n)) :
+    Type _ :=
+  NumStability.HDP.Concentration.MetricMeasure.SymmetricGroupData n hn m
 
 end NumStability.HDP.Contract
