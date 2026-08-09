@@ -934,6 +934,107 @@ theorem remark279_contract :
   · intro lam
     exact remark279_exp_mgf_not_integrable
 
+/-! ## Example 2.7.12: power Orlicz gauges are classical `Lᵖ` gauges -/
+
+lemma powerOrliczIntegral_eq
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ)
+    (p : NNReal) (hp : 0 < p)
+    (hψ : ∀ x : ℝ, 0 ≤ x → ψ x = x ^ (p : ℝ))
+    {t : ℝ≥0∞} (ht0 : t ≠ 0) (htTop : t ≠ ∞) :
+    orliczIntegral ψ μ X t =
+      (eLpNorm X (p : ℝ≥0∞) μ / t) ^ (p : ℝ) := by
+  have hpR : 0 < (p : ℝ) := by exact_mod_cast hp
+  have hpR0 : 0 ≤ (p : ℝ) := hpR.le
+  have htR : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+  have hpE0 : (p : ℝ≥0∞) ≠ 0 := by exact_mod_cast hp.ne'
+  have hpETop : (p : ℝ≥0∞) ≠ ∞ := by simp
+  have hLpEq : eLpNorm X (p : ℝ≥0∞) μ = eLpNorm' X (p : ℝ) μ := by
+    simpa using (eLpNorm_eq_eLpNorm' (p := (p : ℝ≥0∞)) hpE0 hpETop
+      (f := X) (μ := μ))
+  have hpoint : (fun ω => ENNReal.ofReal (ψ (|X ω| / t.toReal))) =
+      (fun ω => ‖X ω‖ₑ ^ (p : ℝ) / t ^ (p : ℝ)) := by
+    funext ω
+    rw [hψ _ (div_nonneg (abs_nonneg _) htR.le)]
+    rw [← ENNReal.ofReal_rpow_of_nonneg (div_nonneg (abs_nonneg _) htR.le) hpR0]
+    rw [ENNReal.ofReal_div_of_pos htR]
+    rw [← ofReal_norm_eq_enorm]
+    simp only [Real.norm_eq_abs]
+    rw [ENNReal.div_rpow_of_nonneg _ _ hpR0]
+    rw [ENNReal.ofReal_toReal htTop]
+  unfold orliczIntegral
+  rw [hpoint]
+  simp_rw [div_eq_mul_inv]
+  rw [lintegral_mul_const' (t ^ (p : ℝ))⁻¹]
+  · rw [mul_comm (eLpNorm X (p : ℝ≥0∞) μ) t⁻¹]
+    rw [← ENNReal.div_eq_inv_mul]
+    rw [ENNReal.div_rpow_of_nonneg _ _ hpR0]
+    rw [lintegral_rpow_enorm_eq_rpow_eLpNorm' hpR]
+    rw [← hLpEq]
+    rfl
+  · simp [ht0]
+
+theorem powerOrliczGauge_eq_eLpNorm
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ)
+    (p : NNReal) (hp : 0 < p)
+    (hψ : ∀ x : ℝ, 0 ≤ x → ψ x = x ^ (p : ℝ)) :
+    orliczGauge ψ μ X = eLpNorm X (p : ℝ≥0∞) μ := by
+  have hpR : 0 < (p : ℝ) := by exact_mod_cast hp
+  let L : ℝ≥0∞ := eLpNorm X (p : ℝ≥0∞) μ
+  have hlower : ∀ {t : ℝ≥0∞},
+      orliczAdmissible ψ μ X t → L ≤ t := by
+    intro t ht
+    rcases ht with ⟨ht0, htTop, hInt⟩
+    have hpow : (L / t) ^ (p : ℝ) ≤ 1 := by
+      rw [← powerOrliczIntegral_eq ψ μ X p hp hψ ht0 htTop]
+      exact hInt
+    have hpow' : (L / t) ^ (p : ℝ) ≤ (1 : ℝ≥0∞) ^ (p : ℝ) := by
+      simpa using hpow
+    have hratio : L / t ≤ 1 := (ENNReal.rpow_le_rpow_iff hpR).mp hpow'
+    have hLt : L ≤ 1 * t := (ENNReal.div_le_iff ht0 htTop).mp hratio
+    simpa using hLt
+  have hupper : eLpNorm X (p : ℝ≥0∞) μ ≤ orliczGauge ψ μ X := by
+    apply le_sInf
+    intro t ht
+    exact hlower ht
+  have hLupper : orliczGauge ψ μ X ≤ L := by
+    unfold orliczGauge
+    by_cases hLtop : L = ∞
+    · simp [hLtop]
+    by_cases hL0 : L = 0
+    · rw [hL0]
+      apply le_of_forall_gt_imp_ge_of_dense
+      intro t ht
+      by_cases htTop : t = ∞
+      · simp [htTop]
+      have ht0 : t ≠ 0 := ne_of_gt ht
+      apply sInf_le
+      refine ⟨ht0, htTop, ?_⟩
+      rw [powerOrliczIntegral_eq ψ μ X p hp hψ ht0 htTop]
+      have hLzero : eLpNorm X (p : ℝ≥0∞) μ = 0 := by simpa [L] using hL0
+      simp [hLzero, ht0, hpR]
+    · have hL0' : L ≠ 0 := hL0
+      have hL0'' : eLpNorm X (p : ℝ≥0∞) μ ≠ 0 := by simpa [L] using hL0'
+      have hLtop' : eLpNorm X (p : ℝ≥0∞) μ ≠ ∞ := by simpa [L] using hLtop
+      have hLmem : orliczAdmissible ψ μ X L := by
+        refine ⟨hL0', hLtop, ?_⟩
+        rw [powerOrliczIntegral_eq ψ μ X p hp hψ hL0' hLtop]
+        rw [ENNReal.div_self hL0'' hLtop']
+        simp
+      exact sInf_le hLmem
+  exact le_antisymm hLupper hupper
+
+theorem powerOrliczMember_iff_memLp
+    {Ω : Type*} [MeasurableSpace Ω]
+    (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ)
+    (p : NNReal) (hp : 0 < p)
+    (hψ : ∀ x : ℝ, 0 ≤ x → ψ x = x ^ (p : ℝ))
+    (hX : AEStronglyMeasurable X μ) :
+    orliczMember ψ μ X ↔ MemLp X (p : ℝ≥0∞) μ := by
+  rw [orliczMember, powerOrliczGauge_eq_eLpNorm ψ μ X p hp hψ]
+  simp [MemLp, hX]
+
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
