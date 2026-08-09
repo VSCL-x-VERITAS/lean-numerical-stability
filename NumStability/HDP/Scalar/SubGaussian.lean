@@ -2,6 +2,8 @@ import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Tactic
 
@@ -347,6 +349,174 @@ theorem momentToSquareMGF
   exact squareMGF_real_le hLp.1 hK.le
     (evenMomentBound_of_lpMomentGrowth hLp) hsmall'
 
+lemma exp_le_add_exp_sq (x : ℝ) :
+    Real.exp x ≤ x + Real.exp (x ^ 2) := by
+  have hcosh (y : ℝ) : Real.cosh y ≤ Real.exp (y ^ 2 / 2) :=
+    Real.cosh_le_exp_half_sq y
+  rcases le_total x 0 with hx | hx
+  · have hy : 0 ≤ -x := neg_nonneg.mpr hx
+    have hs : -x ≤ Real.sinh (-x) := (Real.self_le_sinh_iff).2 hy
+    have hmain : Real.exp x - x ≤ Real.cosh (-x) := by
+      rw [Real.cosh_eq]
+      simp only [neg_neg]
+      have hpos : 0 < Real.exp (-x) := Real.exp_pos _
+      have hident : Real.exp x = (Real.exp (-x))⁻¹ := by
+        simpa using (Real.exp_neg (-x))
+      rw [hident]
+      rw [Real.sinh_eq] at hs
+      simp only [neg_neg] at hs
+      rw [hident] at hs
+      field_simp at hs ⊢
+      nlinarith [hs]
+    have hhalf : Real.exp ((-x) ^ 2 / 2) ≤ Real.exp ((-x) ^ 2) := by
+      rw [Real.exp_le_exp]
+      nlinarith [sq_nonneg x]
+    have hsq : (-x) ^ 2 = x ^ 2 := by ring
+    have hchain : Real.cosh (-x) ≤ Real.exp (x ^ 2) := by
+      exact (hcosh (-x)).trans (by simpa [hsq] using hhalf)
+    linarith [hmain, hchain]
+  · have hcoshsub : Real.cosh x - Real.sinh x = Real.exp (-x) :=
+      Real.cosh_sub_sinh x
+    have hs : Real.sinh x - x ≤ Real.cosh x - 1 := by
+      have he : 1 - x ≤ Real.exp (-x) := by
+        simpa [sub_eq_add_neg, add_comm] using (Real.add_one_le_exp (-x))
+      linarith [hcoshsub]
+    have hmain : Real.exp x - x ≤ 2 * Real.cosh x - 1 := by
+      rw [← Real.cosh_add_sinh x]
+      linarith
+    have hsq : 2 * Real.cosh x - 1 ≤ Real.exp (x ^ 2) := by
+      have hc := hcosh x
+      have hp : 0 ≤ Real.exp (x ^ 2 / 2) := Real.exp_nonneg _
+      have hsquare : (Real.exp (x ^ 2 / 2) - 1) ^ 2 ≥ 0 := sq_nonneg _
+      have hexp : Real.exp (x ^ 2 / 2) ^ 2 = Real.exp (x ^ 2) := by
+        calc
+          Real.exp (x ^ 2 / 2) ^ 2 =
+              Real.exp (x ^ 2 / 2) * Real.exp (x ^ 2 / 2) := by ring
+          _ = Real.exp (x ^ 2 / 2 + x ^ 2 / 2) := by rw [Real.exp_add]
+          _ = Real.exp (x ^ 2) := by congr 1 <;> ring
+      rw [← hexp]
+      nlinarith
+    linarith [hmain, hsq]
+
+lemma exp_le_abs_add_exp_sq (x : ℝ) :
+    Real.exp x ≤ |x| + Real.exp (x ^ 2) := by
+  exact (exp_le_add_exp_sq x).trans (by
+    simpa [add_comm] using add_le_add_right (le_abs_self x) (Real.exp (x ^ 2)))
+
+def SquareMGFLocal {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (X : Ω → ℝ) (C : ℝ) : Prop :=
+  AEMeasurable X μ ∧
+    ∀ t : ℝ, |t| ≤ 1 →
+      Integrable (fun ω => Real.exp (t ^ 2 * X ω ^ 2)) μ ∧
+        (∫ ω, Real.exp (t ^ 2 * X ω ^ 2) ∂μ) ≤ Real.exp (C * t ^ 2)
+
+lemma integrable_exp_mul_of_square
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    {X : Ω → ℝ} (hX : AEMeasurable X μ) (hIntX : Integrable X μ)
+    {a : ℝ} (hSq : Integrable (fun ω => Real.exp (a ^ 2 * X ω ^ 2)) μ) :
+    Integrable (fun ω => Real.exp (a * X ω)) μ := by
+  have hdom : Integrable (fun ω => |a| * |X ω| +
+      Real.exp (a ^ 2 * X ω ^ 2)) μ := by
+    have hlin : Integrable (fun ω => |a| * |X ω|) μ :=
+      hIntX.norm.const_mul |a|
+    exact hlin.add hSq
+  refine MeasureTheory.Integrable.mono' hdom ?_ ?_
+  · fun_prop
+  filter_upwards [] with ω
+  have hpoint := exp_le_abs_add_exp_sq (a * X ω)
+  have hposExp : 0 < Real.exp (a * X ω) := Real.exp_pos _
+  simpa only [Real.norm_eq_abs, abs_of_pos hposExp, abs_mul, mul_pow] using hpoint
+
+/-! A centered local square-MGF bound implies a global linear MGF bound. -/
+theorem squareMGFToMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {C : ℝ} (hC : 0 ≤ C)
+    (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    (hSquare : SquareMGFLocal μ X C) (lam : ℝ) :
+    Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+      (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+        Real.exp ((C + 1 / 2) * lam ^ 2) := by
+  by_cases hsmall : |lam| ≤ 1
+  · have hsq := hSquare.2 lam hsmall
+    have hInt := integrable_exp_mul_of_square hSquare.1 hCenter.1 hsq.1
+    refine ⟨hInt, ?_⟩
+    have hlin : Integrable (fun ω => lam * X ω) μ := hCenter.1.const_mul lam
+    have hsum : Integrable (fun ω => lam * X ω +
+        Real.exp (lam ^ 2 * X ω ^ 2)) μ := hlin.add hsq.1
+    have hmono := MeasureTheory.integral_mono_ae hInt hsum
+      (Filter.Eventually.of_forall (fun ω => by
+        have hpoint := exp_le_add_exp_sq (lam * X ω)
+        convert hpoint using 1 <;> ring))
+    calc
+      (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+          ∫ ω, lam * X ω + Real.exp (lam ^ 2 * X ω ^ 2) ∂μ := hmono
+      _ = lam * (∫ ω, X ω ∂μ) +
+          ∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ := by
+            rw [integral_add hlin hsq.1, integral_const_mul]
+      _ = ∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ := by
+            rw [hCenter.2]
+            ring
+      _ ≤ Real.exp (C * lam ^ 2) := hsq.2
+      _ ≤ Real.exp ((C + 1 / 2) * lam ^ 2) := by
+            apply Real.exp_le_exp.mpr
+            nlinarith [sq_nonneg lam]
+  · have hlam : 1 < |lam| := lt_of_not_ge hsmall
+    have hlam2 : 1 ≤ lam ^ 2 := by
+      have hsquare := sq_abs lam
+      nlinarith
+    have hsq := hSquare.2 1 (by norm_num)
+    have hInt : Integrable (fun ω => Real.exp (lam * X ω)) μ := by
+      have hdom : Integrable (fun ω => Real.exp (lam ^ 2 / 2) *
+          Real.exp (X ω ^ 2)) μ := by
+        simpa using hsq.1.const_mul (Real.exp (lam ^ 2 / 2))
+      refine MeasureTheory.Integrable.mono' hdom
+        ((hSquare.1.const_mul lam).exp.aestronglyMeasurable) ?_
+      filter_upwards [] with ω
+      have hyoung : lam * X ω ≤ lam ^ 2 / 2 + X ω ^ 2 / 2 := by
+        nlinarith [sq_nonneg (lam - X ω)]
+      have hpos : 0 < Real.exp (lam * X ω) := Real.exp_pos _
+      rw [Real.norm_eq_abs, abs_of_pos hpos]
+      calc
+        Real.exp (lam * X ω) ≤ Real.exp (lam ^ 2 / 2 + X ω ^ 2 / 2) :=
+          Real.exp_le_exp.mpr hyoung
+        _ = Real.exp (lam ^ 2 / 2) * Real.exp (X ω ^ 2 / 2) := by
+          rw [Real.exp_add]
+        _ ≤ Real.exp (lam ^ 2 / 2) * Real.exp (X ω ^ 2) := by
+          gcongr
+          nlinarith [sq_nonneg (X ω)]
+    refine ⟨hInt, ?_⟩
+    have hdom : Integrable (fun ω => Real.exp (lam ^ 2 / 2) *
+        Real.exp (X ω ^ 2)) μ := by
+      simpa using hsq.1.const_mul (Real.exp (lam ^ 2 / 2))
+    have hmono := MeasureTheory.integral_mono_ae hInt hdom
+      (Filter.Eventually.of_forall (fun ω => by
+        have hyoung : lam * X ω ≤ lam ^ 2 / 2 + X ω ^ 2 / 2 := by
+          nlinarith [sq_nonneg (lam - X ω)]
+        calc
+          Real.exp (lam * X ω) ≤ Real.exp (lam ^ 2 / 2 + X ω ^ 2 / 2) :=
+            Real.exp_le_exp.mpr hyoung
+          _ = Real.exp (lam ^ 2 / 2) * Real.exp (X ω ^ 2 / 2) := by
+            rw [Real.exp_add]
+          _ ≤ Real.exp (lam ^ 2 / 2) * Real.exp (X ω ^ 2) := by
+            gcongr
+            nlinarith [sq_nonneg (X ω)]))
+    calc
+      (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+          ∫ ω, Real.exp (lam ^ 2 / 2) * Real.exp (X ω ^ 2) ∂μ := hmono
+      _ = Real.exp (lam ^ 2 / 2) *
+          (∫ ω, Real.exp (X ω ^ 2) ∂μ) := by rw [integral_const_mul]
+      _ ≤ Real.exp (lam ^ 2 / 2) * Real.exp C := by
+        gcongr
+        simpa using hsq.2
+      _ = Real.exp (lam ^ 2 / 2 + C) := by
+        rw [Real.exp_add]
+      _ ≤ Real.exp ((C + 1 / 2) * lam ^ 2) := by
+        apply Real.exp_le_exp.mpr
+        have hprod : 0 ≤ C * (lam ^ 2 - 1) :=
+          mul_nonneg hC (sub_nonneg.mpr hlam2)
+        nlinarith
+
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
@@ -362,5 +532,18 @@ theorem hdp_02_hlem_hsg_hmoment_hto_hsquare_hmgf
       (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
         Real.exp (4 * Real.exp 1 * (lam * K) ^ 2) :=
   NumStability.HDP.Scalar.SubGaussian.momentToSquareMGF hK hLp lam hsmall
+
+/-- Stable Chapter 2 alias for the square-MGF-to-MGF implication. -/
+theorem hdp_02_hlem_hsg_hsquare_hmgf_hto_hmgf
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {C : ℝ} (hC : 0 ≤ C)
+    (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    (hSquare : NumStability.HDP.Scalar.SubGaussian.SquareMGFLocal μ X C)
+    (lam : ℝ) :
+    Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+      (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+        Real.exp ((C + 1 / 2) * lam ^ 2) :=
+  NumStability.HDP.Scalar.SubGaussian.squareMGFToMGF hC hCenter hSquare lam
 
 end NumStability.HDP.Contract
