@@ -65,6 +65,20 @@ theorem strongLaw
       (nhds (∫ ω, X 0 ω ∂μ)) := by
   exact foundation_ext_slln hInt hIndep hIdent
 
+/-! ## Variance of a finite independent sum -/
+
+theorem independentVarianceSum
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ι → Ω → ℝ} (hX : ∀ i, MemLp (X i) 2 μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X)) :
+    Var[∑ i, X i; μ] = ∑ i, Var[X i; μ] := by
+  simpa using (ProbabilityTheory.IndepFun.variance_sum
+    (μ := μ) (X := X) (s := Finset.univ)
+    (fun i _ => hX i) (by
+      intro i hi j hj hij
+      exact hIndep hij))
+
 /-! ## The standard normal law -/
 
 /--
@@ -420,5 +434,13 @@ namespace NumStability.HDP.Contract
 /-- Stable source-facing alias for the local Poisson law interface. -/
 noncomputable def hdp_01_hdef_hpoisson (rate : ℝ≥0) : Measure ℕ :=
   NumStability.HDP.Scalar.LimitTheorems.poissonLaw rate
+
+theorem hdp_01_hlem_hindependent_hvariance_hsum
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ι → Ω → ℝ} (hX : ∀ i, MemLp (X i) 2 μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X)) :
+    Var[∑ i, X i; μ] = ∑ i, Var[X i; μ] :=
+  NumStability.HDP.Scalar.LimitTheorems.independentVarianceSum hX hIndep
 
 end NumStability.HDP.Contract
