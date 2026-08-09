@@ -1,5 +1,6 @@
 import Mathlib.Probability.Independence.Integration
 import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Tactic
 
 /-!
@@ -87,6 +88,11 @@ theorem hoeffdingOptimization {v t : ℝ} (hv : 0 < v) (ht : 0 ≤ t) :
     nlinarith
   · field_simp
     ring
+
+/-! The coefficientwise hyperbolic-cosine estimate used by Rademacher MGF bounds. -/
+theorem coshLeExpHalfSq (x : ℝ) :
+    Real.cosh x ≤ Real.exp (x ^ 2 / 2) :=
+  Real.cosh_le_exp_half_sq x
 
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
