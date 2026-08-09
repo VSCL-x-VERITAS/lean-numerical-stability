@@ -949,9 +949,6 @@ lemma powerOrliczIntegral_eq
   have htR : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
   have hpE0 : (p : ℝ≥0∞) ≠ 0 := by exact_mod_cast hp.ne'
   have hpETop : (p : ℝ≥0∞) ≠ ∞ := by simp
-  have hLpEq : eLpNorm X (p : ℝ≥0∞) μ = eLpNorm' X (p : ℝ) μ := by
-    simpa using (eLpNorm_eq_eLpNorm' (p := (p : ℝ≥0∞)) hpE0 hpETop
-      (f := X) (μ := μ))
   have hpoint : (fun ω => ENNReal.ofReal (ψ (|X ω| / t.toReal))) =
       (fun ω => ‖X ω‖ₑ ^ (p : ℝ) / t ^ (p : ℝ)) := by
     funext ω
@@ -969,8 +966,19 @@ lemma powerOrliczIntegral_eq
   · rw [mul_comm (eLpNorm X (p : ℝ≥0∞) μ) t⁻¹]
     rw [← ENNReal.div_eq_inv_mul]
     rw [ENNReal.div_rpow_of_nonneg _ _ hpR0]
-    rw [lintegral_rpow_enorm_eq_rpow_eLpNorm' hpR]
-    rw [← hLpEq]
+    have hLp := eLpNorm_eq_lintegral_rpow_enorm hpE0 hpETop (f := X) (μ := μ)
+    have hLp' : eLpNorm X (p : ℝ≥0∞) μ =
+        (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹ := by
+      simpa [one_div] using hLp
+    have hLpPow := congrArg (fun z : ℝ≥0∞ => z ^ (p : ℝ)) hLp'
+    have hMoment : (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) =
+        eLpNorm X (p : ℝ≥0∞) μ ^ (p : ℝ) := by
+      change eLpNorm X (p : ℝ≥0∞) μ ^ (p : ℝ) =
+        ((∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹) ^ (p : ℝ) at hLpPow
+      rw [ENNReal.rpow_inv_rpow hpR.ne'
+        (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ)] at hLpPow
+      exact hLpPow.symm
+    rw [hMoment]
     rfl
   · simp [ht0]
 
