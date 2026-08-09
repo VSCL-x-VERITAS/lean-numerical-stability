@@ -4,6 +4,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Independence.Integration
 import Mathlib.Probability.Distributions.Poisson
+import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Tactic
@@ -22,6 +23,7 @@ noncomputable section
 open MeasureTheory
 open ProbabilityTheory
 open scoped BigOperators
+open scoped ENNReal
 open scoped NNReal
 open scoped Asymptotics
 
@@ -276,6 +278,167 @@ theorem poissonBinomialChernoffZeroCase
   rw [hset]
   simp
 
+private lemma poissonMeasure_mass (rate : ℝ≥0) (k : ℕ) :
+    ProbabilityTheory.poissonMeasure rate {k} =
+      ENNReal.ofReal (ProbabilityTheory.poissonPMFReal rate k) := by
+  rw [ProbabilityTheory.poissonMeasure,
+    PMF.toMeasure_apply_singleton _ k (measurableSet_singleton k)]
+  rfl
+
+private lemma poisson_add_fiber (n x : ℕ) :
+    Prod.mk x ⁻¹' ((fun p : ℕ × ℕ => p.1 + p.2) ⁻¹' ({n} : Set ℕ)) =
+      if x ≤ n then ({n - x} : Set ℕ) else ∅ := by
+  by_cases h : x ≤ n
+  · ext y
+    simp only [Set.mem_preimage, Set.mem_singleton_iff]
+    rw [if_pos h]
+    constructor
+    · intro heq
+      exact Nat.eq_sub_of_add_eq (by simpa [Nat.add_comm] using heq)
+    · intro heq
+      rw [heq]
+      exact Nat.add_sub_of_le h
+  · ext y
+    simp only [Set.mem_preimage, Set.mem_singleton_iff]
+    rw [if_neg h]
+    constructor
+    · intro heq
+      exact False.elim (h (by rw [← heq]; exact Nat.le_add_right x y))
+    · intro heq
+      exact False.elim heq
+
+private lemma finite_tsum_of_support_le (n : ℕ) (f : ℕ → ℝ≥0∞)
+    (hf : ∀ x, x > n → f x = 0) :
+    (∑' x : ℕ, f x) = ∑ x ∈ Finset.range (n + 1), f x := by
+  have hsupp : Function.support f ⊆ (↑(Finset.range (n + 1)) : Set ℕ) := by
+    intro x hx
+    simp only [Finset.mem_coe, Finset.mem_range]
+    by_contra hxn
+    apply hx
+    exact hf x (Nat.le_of_not_gt hxn)
+  rw [← tsum_subtype_eq_of_support_subset hsupp]
+  exact Finset.tsum_subtype' (Finset.range (n + 1)) f
+
+/-- The convolution of two Poisson measures is Poisson with the summed rate. -/
+theorem poissonMeasure_conv_poissonMeasure (r s : ℝ≥0) :
+    ProbabilityTheory.poissonMeasure r ∗ ProbabilityTheory.poissonMeasure s =
+      ProbabilityTheory.poissonMeasure (r + s) := by
+  apply Measure.ext_of_singleton
+  intro n
+  rw [Measure.conv, Measure.map_apply measurable_add (measurableSet_singleton n)]
+  rw [Measure.prod_apply]
+  rw [lintegral_countable']
+  have hinner (x : ℕ) :
+      ProbabilityTheory.poissonMeasure s
+          (Prod.mk x ⁻¹' ((fun p : ℕ × ℕ => p.1 + p.2) ⁻¹' ({n} : Set ℕ))) =
+        if x ≤ n then ENNReal.ofReal (ProbabilityTheory.poissonPMFReal s (n - x))
+        else 0 := by
+    rw [poisson_add_fiber]
+    split_ifs with h
+    · rw [poissonMeasure_mass]
+    · simp
+  simp_rw [hinner, poissonMeasure_mass]
+  let f : ℕ → ℝ≥0∞ := fun x =>
+    (if x ≤ n then ENNReal.ofReal (ProbabilityTheory.poissonPMFReal s (n - x)) else 0) *
+      ENNReal.ofReal (ProbabilityTheory.poissonPMFReal r x)
+  have hfinite : (∑' x : ℕ, f x) = ∑ x ∈ Finset.range (n + 1), f x := by
+    apply finite_tsum_of_support_le
+    intro x hx
+    simp [f, Nat.not_le_of_gt hx]
+  change (∑' x : ℕ, f x) = _
+  rw [hfinite]
+  have hsum_nonneg (x : ℕ) (hx : x ∈ Finset.range (n + 1)) :
+      0 ≤ ProbabilityTheory.poissonPMFReal s (n - x) *
+        ProbabilityTheory.poissonPMFReal r x :=
+    mul_nonneg ProbabilityTheory.poissonPMFReal_nonneg
+      ProbabilityTheory.poissonPMFReal_nonneg
+  have hsum :
+      (∑ x ∈ Finset.range (n + 1), f x) =
+        ENNReal.ofReal
+          (∑ x ∈ Finset.range (n + 1),
+            ProbabilityTheory.poissonPMFReal s (n - x) *
+              ProbabilityTheory.poissonPMFReal r x) := by
+    rw [ENNReal.ofReal_sum_of_nonneg hsum_nonneg]
+    apply Finset.sum_congr rfl
+    intro x hx
+    have hxn : x ≤ n := Nat.le_of_lt_succ (Finset.mem_range.1 hx)
+    simp only [f, if_pos hxn]
+    rw [← ENNReal.ofReal_mul ProbabilityTheory.poissonPMFReal_nonneg]
+  rw [hsum]
+  apply congrArg ENNReal.ofReal
+  calc
+    (∑ x ∈ Finset.range (n + 1),
+        ProbabilityTheory.poissonPMFReal s (n - x) *
+          ProbabilityTheory.poissonPMFReal r x) =
+      ∑ x ∈ Finset.range (n + 1),
+        Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) *
+          (n.choose x : ℝ) * (↑s : ℝ) ^ (n - x) * (↑r : ℝ) ^ x := by
+        apply Finset.sum_congr rfl
+        intro x hx
+        have hxn : x ≤ n := Nat.le_of_lt_succ (Finset.mem_range.1 hx)
+        have hfac_nat := Nat.choose_mul_factorial_mul_factorial hxn
+        have hfac : (n.choose x : ℝ) * (x.factorial : ℝ) *
+            ((n - x).factorial : ℝ) = (n.factorial : ℝ) := by
+          exact_mod_cast hfac_nat
+        simp only [ProbabilityTheory.poissonPMFReal]
+        have hexp : Real.exp (-↑s) * Real.exp (-↑r) =
+            Real.exp (-(↑r + ↑s)) := by
+          rw [← Real.exp_add]
+          congr 1
+          ring
+        field_simp [Nat.factorial_ne_zero, Real.exp_ne_zero]
+        calc
+          _ = Real.exp (-↑s) * Real.exp (-↑r) * (↑s : ℝ) ^ (n - x) *
+              (↑r : ℝ) ^ x * (n.factorial : ℝ) := by ring
+          _ = _ := by
+            rw [hexp]
+            rw [← hfac]
+            ring
+    _ = Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) * (↑r + ↑s) ^ n := by
+      calc
+        (∑ x ∈ Finset.range (n + 1),
+            Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) *
+              (n.choose x : ℝ) * (↑s : ℝ) ^ (n - x) * (↑r : ℝ) ^ x) =
+          Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) *
+            ∑ x ∈ Finset.range (n + 1),
+              (n.choose x : ℝ) * (↑s : ℝ) ^ (n - x) * (↑r : ℝ) ^ x := by
+            rw [Finset.mul_sum]
+            apply Finset.sum_congr rfl
+            intro x hx
+            ring
+        _ = Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) * (↑r + ↑s) ^ n := by
+          have hbin := add_pow (↑r : ℝ) (↑s : ℝ) n
+          calc
+            Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) *
+                ∑ x ∈ Finset.range (n + 1),
+                  (n.choose x : ℝ) * (↑s : ℝ) ^ (n - x) * (↑r : ℝ) ^ x =
+              Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) *
+                ∑ x ∈ Finset.range (n + 1),
+                  (↑r : ℝ) ^ x * (↑s : ℝ) ^ (n - x) * (n.choose x : ℝ) := by
+                    apply congrArg (fun z => Real.exp (-(↑r + ↑s)) /
+                      (n.factorial : ℝ) * z)
+                    apply Finset.sum_congr rfl
+                    intro x hx
+                    ring
+            _ = Real.exp (-(↑r + ↑s)) / (n.factorial : ℝ) * (↑r + ↑s) ^ n := by
+              rw [hbin]
+    _ = ProbabilityTheory.poissonPMFReal (r + s) n := by
+      simp only [ProbabilityTheory.poissonPMFReal, NNReal.coe_add]
+      ring
+  all_goals exact measurableSet_preimage measurable_add (measurableSet_singleton n)
+
+/-- The sum of independent Poisson variables has the Poisson law with summed rate. -/
+theorem poissonAddLaw
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X Y : Ω → ℕ} {r s : ℝ≥0}
+    (hX : HasLaw X (ProbabilityTheory.poissonMeasure r) μ)
+    (hY : HasLaw Y (ProbabilityTheory.poissonMeasure s) μ)
+    (hXY : X ⟂ᵢ[μ] Y) :
+    HasLaw (X + Y) (ProbabilityTheory.poissonMeasure (r + s)) μ := by
+  have h := hXY.hasLaw_add hX hY
+  rw [poissonMeasure_conv_poissonMeasure] at h
+  exact h
+
 /-! The point-mass sharpness calculation from Remark 2.3.4.  We state the
 asymptotic with its exact Stirling normalization; the book's `≍` notation is
 the corresponding two-sided constant-factor consequence. -/
@@ -379,6 +542,15 @@ instance erdosRenyiModel.isProbabilityMeasure
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
 
 namespace NumStability.HDP.Contract
+
+theorem hdp_02_hlem_hpoisson_hadd
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X Y : Ω → ℕ} {r s : ℝ≥0}
+    (hX : HasLaw X (ProbabilityTheory.poissonMeasure r) μ)
+    (hY : HasLaw Y (ProbabilityTheory.poissonMeasure s) μ)
+    (hXY : X ⟂ᵢ[μ] Y) :
+    HasLaw (X + Y) (ProbabilityTheory.poissonMeasure (r + s)) μ :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonAddLaw hX hY hXY
 
 theorem hdp_02_hrem_h2_d3_d4 (rate : ℝ≥0) (hrate : 0 < rate) :
     (fun k : ℕ => ProbabilityTheory.poissonPMFReal rate k) ~[Filter.atTop]
