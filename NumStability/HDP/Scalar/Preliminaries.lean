@@ -1,6 +1,7 @@
 import Mathlib.Probability.Moments.Variance
 import Mathlib.Probability.CDF
 import Mathlib.MeasureTheory.Integral.Bochner.Set
+import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 import Mathlib.Tactic
 
 /-!
@@ -269,6 +270,55 @@ theorem markovIndicatorBound {x t : ℝ} (hx : 0 ≤ x) (ht : 0 < t) :
   · have htx : x < t := lt_of_not_ge hxt
     simp [Set.indicator, not_le.mpr htx]
     exact hx
+
+/-! The extended and finite forms of Markov's inequality. -/
+theorem markovInequalityExtended
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ᵐ ω ∂μ, 0 ≤ X ω) {t : ℝ} (ht : 0 < t) :
+    μ (X ⁻¹' Set.Ici t) ≤
+      (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) / ENNReal.ofReal t := by
+  have hmarkov :=
+    MeasureTheory.meas_ge_le_lintegral_div
+      (μ := μ) (f := fun ω => ENNReal.ofReal (X ω))
+      hX.ennreal_ofReal.aemeasurable (ENNReal.ofReal_pos.mpr ht).ne'
+      ENNReal.ofReal_ne_top
+  have hsubset : X ⁻¹' Set.Ici t ⊆
+      {ω | ENNReal.ofReal t ≤ ENNReal.ofReal (X ω)} := by
+    intro ω hω
+    exact ENNReal.ofReal_le_ofReal hω
+  exact (measure_mono hsubset).trans hmarkov
+
+theorem markovInequalityFinite
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ᵐ ω ∂μ, 0 ≤ X ω) (hInt : Integrable X μ)
+    {t : ℝ} (ht : 0 < t) :
+    μ.real (X ⁻¹' Set.Ici t) ≤ expectation μ X / t := by
+  have hext := markovInequalityExtended hX hNonneg ht
+  have hIntegralTop :
+      (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) ≠ (⊤ : ENNReal) :=
+    hInt.lintegral_lt_top.ne
+  have hDenPos : 0 < ENNReal.ofReal t := ENNReal.ofReal_pos.mpr ht
+  have hRightTop :
+      (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) / ENNReal.ofReal t ≠ (⊤ : ENNReal) :=
+    ENNReal.div_ne_top hIntegralTop hDenPos.ne'
+  have hLeftTop : μ (X ⁻¹' Set.Ici t) ≠ (⊤ : ENNReal) :=
+    ne_top_of_le_ne_top hRightTop hext
+  have hreal :=
+    (ENNReal.toReal_le_toReal hLeftTop hRightTop).2 hext
+  have hIntegral :
+      (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) =
+        ENNReal.ofReal (expectation μ X) := by
+    symm
+    exact ofReal_integral_eq_lintegral_ofReal hInt hNonneg
+  have hExpectationNonneg : 0 ≤ expectation μ X := by
+    exact integral_nonneg_of_ae hNonneg
+  change (μ (X ⁻¹' Set.Ici t)).toReal ≤ expectation μ X / t
+  rw [hIntegral, ENNReal.toReal_div,
+    ENNReal.toReal_ofReal hExpectationNonneg,
+    ENNReal.toReal_ofReal ht.le] at hreal
+  exact hreal
 
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
