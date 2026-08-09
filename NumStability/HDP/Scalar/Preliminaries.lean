@@ -366,6 +366,36 @@ theorem markovInequality
     exact hreal
   exact ⟨hfinite, hext⟩
 
+/-! The squared-deviation derivation of Chebyshev's bound. -/
+theorem chebyshevEventBound
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X)
+    (hInt : Integrable X μ)
+    (hSqInt : Integrable (fun ω => (X ω - expectation μ X) ^ 2) μ)
+    {t : ℝ} (ht : 0 < t) :
+    μ.real {ω | |X ω - expectation μ X| ≥ t} ≤ variance μ X / t ^ 2 := by
+  have hY : Measurable (fun ω => (X ω - expectation μ X) ^ 2) :=
+    (hX.sub_const _).pow_const 2
+  have hMarkov :=
+    markovInequalityFinite (X := fun ω => (X ω - expectation μ X) ^ 2)
+      hY (ae_of_all μ (fun ω => sq_nonneg _)) hSqInt (sq_pos_of_pos ht)
+  have hEvent :
+      (fun ω => (X ω - expectation μ X) ^ 2) ⁻¹' Set.Ici (t ^ 2) =
+        {ω | |X ω - expectation μ X| ≥ t} := by
+    ext ω
+    constructor
+    · intro hω
+      have hs : t ^ 2 ≤ (X ω - expectation μ X) ^ 2 := hω
+      have hs' : t ^ 2 ≤ |X ω - expectation μ X| ^ 2 := by
+        simpa [sq_abs] using hs
+      exact (sq_le_sq₀ ht.le (abs_nonneg _)).mp hs'
+    · intro hω
+      have habs : t ≤ |X ω - expectation μ X| := hω
+      have hs' := (sq_le_sq₀ ht.le (abs_nonneg _)).mpr habs
+      simpa [sq_abs] using hs'
+  rw [← hEvent]
+  simpa [variance, expectation] using hMarkov
+
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
@@ -431,5 +461,16 @@ theorem hdp_01_hlem_hmarkov_hindicator_hbound {x t : ℝ}
     (hx : 0 ≤ x) (ht : 0 < t) :
     t * Set.indicator (Set.Ici t) (fun _ => (1 : ℝ)) x ≤ x :=
   NumStability.HDP.Scalar.Preliminaries.markovIndicatorBound hx ht
+
+theorem hdp_01_hex_h1_d2_d6
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X)
+    (hInt : Integrable X μ)
+    (hSqInt : Integrable
+      (fun ω => (X ω - NumStability.HDP.Scalar.Preliminaries.expectation μ X) ^ 2) μ)
+    {t : ℝ} (ht : 0 < t) :
+    μ.real {ω | |X ω - NumStability.HDP.Scalar.Preliminaries.expectation μ X| ≥ t} ≤
+      NumStability.HDP.Scalar.Preliminaries.variance μ X / t ^ 2 :=
+  NumStability.HDP.Scalar.Preliminaries.chebyshevEventBound hX hInt hSqInt ht
 
 end NumStability.HDP.Contract
