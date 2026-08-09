@@ -1,4 +1,6 @@
 import Mathlib.Probability.CDF
+import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.Probability.Independence.Basic
 import Mathlib.Topology.MetricSpace.Lipschitz
 import Mathlib.Topology.MetricSpace.HausdorffDistance
 import Mathlib.Analysis.Normed.MulAction
@@ -7,7 +9,12 @@ import Mathlib.Geometry.Manifold.Riemannian.Basic
 import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
 import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 import Mathlib.MeasureTheory.Measure.WithDensity
+import Mathlib.MeasureTheory.Measure.OpenPos
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
+import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.Logic.Equiv.Basic
+import Mathlib.Topology.Order.IntermediateValue
 import Mathlib.Probability.UniformOn
 import Mathlib.Tactic
 
@@ -285,6 +292,264 @@ theorem median_certificate_exists
     quantile_boundary := medianBoundary (medianLaw μ X)
     quantile_boundary_eq := rfl
   }⟩
+
+/-!
+  Exercise 5.2.11: the probability-integral transform for independent standard
+  normals.  The scalar proof is kept explicit: non-atomicity gives CDF
+  continuity, equivalence of Gaussian and Lebesgue measure gives strict
+  increase, and the CDF limits plus the intermediate-value theorem identify
+  every interior quantile.  The finite-dimensional statement then uses the
+  pinned product-map theorem.
+-/
+noncomputable def standardNormalLaw : Measure ℝ :=
+  ProbabilityTheory.gaussianReal 0 1
+
+noncomputable def standardNormalCdf : ℝ → ℝ :=
+  ProbabilityTheory.cdf standardNormalLaw
+
+noncomputable def uniformUnitIntervalLaw : Measure ℝ :=
+  volume.restrict (Icc 0 1)
+
+noncomputable def standardNormalProductLaw (n : ℕ) : Measure (Fin n → ℝ) :=
+  Measure.pi (fun _ : Fin n => standardNormalLaw)
+
+noncomputable def uniformUnitCubeLaw (n : ℕ) : Measure (Fin n → ℝ) :=
+  Measure.pi (fun _ : Fin n => uniformUnitIntervalLaw)
+
+noncomputable def coordinatewiseStandardNormalCdf (n : ℕ) :
+    (Fin n → ℝ) → (Fin n → ℝ) :=
+  fun z i => standardNormalCdf (z i)
+
+instance standardNormalLaw_isProbabilityMeasure :
+    IsProbabilityMeasure standardNormalLaw := by
+  dsimp [standardNormalLaw]
+  infer_instance
+
+instance standardNormalLaw_noAtoms : NoAtoms standardNormalLaw := by
+  dsimp [standardNormalLaw]
+  exact ProbabilityTheory.noAtoms_gaussianReal (by norm_num)
+
+instance standardNormalLaw_isOpenPosMeasure :
+    Measure.IsOpenPosMeasure standardNormalLaw := by
+  dsimp [standardNormalLaw]
+  exact (ProbabilityTheory.gaussianReal_absolutelyContinuous' 0 (by norm_num)).isOpenPosMeasure
+
+instance uniformUnitIntervalLaw_isProbabilityMeasure :
+    IsProbabilityMeasure uniformUnitIntervalLaw := by
+  constructor
+  simp [uniformUnitIntervalLaw, Real.volume_Icc]
+
+private lemma standardNormalCdf_continuous :
+    Continuous standardNormalCdf := by
+  change Continuous (ProbabilityTheory.cdf standardNormalLaw)
+  apply continuous_iff_continuousAt.2
+  intro x
+  apply (ProbabilityTheory.cdf standardNormalLaw).mono.continuousAt_iff_leftLim_eq_rightLim.2
+  have hzero : (ProbabilityTheory.cdf standardNormalLaw).measure {x} = 0 := by
+    rw [ProbabilityTheory.measure_cdf]
+    simp
+  have hdiff :
+      ProbabilityTheory.cdf standardNormalLaw x -
+          Function.leftLim (ProbabilityTheory.cdf standardNormalLaw) x = 0 := by
+    have h_of : ENNReal.ofReal
+        (ProbabilityTheory.cdf standardNormalLaw x -
+          Function.leftLim (ProbabilityTheory.cdf standardNormalLaw) x) = 0 := by
+      rw [← StieltjesFunction.measure_singleton]
+      exact hzero
+    have hle : ProbabilityTheory.cdf standardNormalLaw x -
+        Function.leftLim (ProbabilityTheory.cdf standardNormalLaw) x ≤ 0 :=
+      ENNReal.ofReal_eq_zero.mp h_of
+    have hge : 0 ≤ ProbabilityTheory.cdf standardNormalLaw x -
+        Function.leftLim (ProbabilityTheory.cdf standardNormalLaw) x :=
+      sub_nonneg.mpr ((ProbabilityTheory.cdf standardNormalLaw).mono.leftLim_le le_rfl)
+    linarith
+  calc
+    Function.leftLim (ProbabilityTheory.cdf standardNormalLaw) x =
+        ProbabilityTheory.cdf standardNormalLaw x := by linarith
+    _ = Function.rightLim (ProbabilityTheory.cdf standardNormalLaw) x :=
+      ((ProbabilityTheory.cdf standardNormalLaw).rightLim_eq x).symm
+
+private lemma standardNormalCdf_strictMono :
+    StrictMono standardNormalCdf := by
+  change StrictMono (ProbabilityTheory.cdf standardNormalLaw)
+  intro x y hxy
+  have hIoo : 0 < standardNormalLaw (Ioo x y) :=
+    (Measure.measure_Ioo_pos standardNormalLaw).2 hxy
+  have hIoc : 0 < standardNormalLaw (Ioc x y) :=
+    lt_of_lt_of_le hIoo (measure_mono Ioo_subset_Ioc_self)
+  have hmass : 0 < (ProbabilityTheory.cdf standardNormalLaw).measure (Ioc x y) := by
+    simpa [ProbabilityTheory.measure_cdf] using hIoc
+  rw [StieltjesFunction.measure_Ioc] at hmass
+  linarith [ENNReal.ofReal_pos.mp hmass]
+
+private lemma standardNormalCdf_pos (x : ℝ) : 0 < standardNormalCdf x := by
+  change 0 < ProbabilityTheory.cdf standardNormalLaw x
+  have h := standardNormalCdf_strictMono (by linarith : x - 1 < x)
+  exact (ProbabilityTheory.cdf_nonneg standardNormalLaw (x - 1)).trans_lt h
+
+private lemma standardNormalCdf_lt_one (x : ℝ) : standardNormalCdf x < 1 := by
+  change ProbabilityTheory.cdf standardNormalLaw x < 1
+  have h := standardNormalCdf_strictMono (by linarith : x < x + 1)
+  exact h.trans_le (ProbabilityTheory.cdf_le_one standardNormalLaw (x + 1))
+
+private lemma standardNormalCdf_surjective_on_unitInterval {u : ℝ}
+    (hu0 : 0 < u) (hu1 : u < 1) : ∃ x : ℝ, standardNormalCdf x = u := by
+  change ∃ x : ℝ, ProbabilityTheory.cdf standardNormalLaw x = u
+  have h := isPreconnected_univ.intermediate_value_Ioo
+      (show atBot ≤ (𝓟 (Set.univ : Set ℝ)) by simp)
+      (show atTop ≤ (𝓟 (Set.univ : Set ℝ)) by simp)
+      standardNormalCdf_continuous.continuousOn
+      (ProbabilityTheory.tendsto_cdf_atBot standardNormalLaw)
+      (ProbabilityTheory.tendsto_cdf_atTop standardNormalLaw)
+  rcases h ⟨hu0, hu1⟩ with ⟨x, -, hx⟩
+  exact ⟨x, hx⟩
+
+private lemma standardNormalCdf_preimage_Iic_zero :
+    standardNormalCdf ⁻¹' Iic 0 = (∅ : Set ℝ) := by
+  ext x
+  change ProbabilityTheory.cdf standardNormalLaw x ≤ 0 ↔ False
+  constructor
+  · intro h
+    exact (not_le_of_gt (standardNormalCdf_pos x)) h
+  · simp
+
+private lemma standardNormalCdf_preimage_Iic_one :
+    standardNormalCdf ⁻¹' Iic 1 = (Set.univ : Set ℝ) := by
+  ext x
+  change ProbabilityTheory.cdf standardNormalLaw x ≤ 1 ↔ True
+  constructor
+  · intro _
+    trivial
+  · intro _
+    exact (ProbabilityTheory.cdf_le_one standardNormalLaw x)
+
+private lemma standardNormalCdf_preimage_Iic_of_interior {u : ℝ}
+    (hu0 : 0 < u) (hu1 : u < 1) :
+    ∃ x : ℝ, standardNormalCdf x = u ∧
+      standardNormalCdf ⁻¹' Iic u = Iic x := by
+  rcases standardNormalCdf_surjective_on_unitInterval hu0 hu1 with ⟨x, hx⟩
+  refine ⟨x, hx, ?_⟩
+  ext z
+  constructor
+  · intro hz
+    by_contra hzx
+    have hxz : x < z := lt_of_not_ge hzx
+    have hstrict := standardNormalCdf_strictMono hxz
+    exact (not_lt_of_ge hz) (by simpa [hx] using hstrict)
+  · intro hz
+    exact (standardNormalCdf_strictMono.monotone hz).trans_eq hx
+
+private lemma standardNormalCdf_map_uniform :
+    Measure.map standardNormalCdf standardNormalLaw = uniformUnitIntervalLaw := by
+  let ν : Measure ℝ := Measure.map standardNormalCdf standardNormalLaw
+  have hcdf : Measurable standardNormalCdf := standardNormalCdf_strictMono.monotone.measurable
+  letI : IsProbabilityMeasure ν := Measure.isProbabilityMeasure_map hcdf.aemeasurable
+  refine Measure.ext_of_Iic ν uniformUnitIntervalLaw ?_
+  intro t
+  by_cases ht0 : t < 0
+  · have hpre : standardNormalCdf ⁻¹' Iic t = ∅ := by
+      ext x
+      change standardNormalCdf x ≤ t ↔ False
+      constructor
+      · intro h
+        linarith [standardNormalCdf_pos x]
+      · simp
+    rw [show ν = Measure.map standardNormalCdf standardNormalLaw by rfl,
+      Measure.map_apply hcdf measurableSet_Iic, hpre, measure_empty]
+    rw [uniformUnitIntervalLaw, Measure.restrict_apply measurableSet_Iic]
+    have hset : Iic t ∩ Icc (0 : ℝ) 1 = ∅ := by
+      ext x
+      simp only [mem_inter_iff, mem_Iic, mem_Icc, mem_empty_iff_false, iff_false]
+      rintro ⟨hxt, hx0, _⟩
+      linarith
+    rw [hset, measure_empty]
+  by_cases ht1 : 1 < t
+  · have hpre : standardNormalCdf ⁻¹' Iic t = Set.univ := by
+      ext x
+      change standardNormalCdf x ≤ t ↔ True
+      constructor
+      · intro _
+        trivial
+      · intro _
+        exact (ProbabilityTheory.cdf_le_one standardNormalLaw x).trans (le_of_lt ht1)
+    rw [show ν = Measure.map standardNormalCdf standardNormalLaw by rfl,
+      Measure.map_apply hcdf measurableSet_Iic, hpre, measure_univ]
+    rw [uniformUnitIntervalLaw, Measure.restrict_apply measurableSet_Iic]
+    have hset : Iic t ∩ Icc (0 : ℝ) 1 = Icc (0 : ℝ) 1 := by
+      ext x
+      constructor
+      · rintro ⟨_, hx0, hx1⟩
+        exact ⟨hx0, hx1⟩
+      · intro hx
+        exact ⟨hx.2.trans (le_of_lt ht1), hx.1, hx.2⟩
+    rw [hset, Real.volume_Icc]
+    norm_num
+    exact ENNReal.ofReal_one.symm
+  have ht0' : 0 ≤ t := le_of_not_gt ht0
+  have ht1' : t ≤ 1 := le_of_not_gt ht1
+  by_cases htzero : t = 0
+  · subst t
+    rw [show ν = Measure.map standardNormalCdf standardNormalLaw by rfl,
+      Measure.map_apply hcdf measurableSet_Iic,
+      standardNormalCdf_preimage_Iic_zero, measure_empty]
+    rw [uniformUnitIntervalLaw, Measure.restrict_apply measurableSet_Iic]
+    have hset : Iic (0 : ℝ) ∩ Icc (0 : ℝ) 1 = ({0} : Set ℝ) := by
+      ext x
+      simp only [mem_inter_iff, mem_Iic, mem_Icc, mem_singleton_iff]
+      constructor
+      · rintro ⟨h0, hx0, _⟩
+        exact le_antisymm h0 hx0
+      · intro hx
+        subst x
+        norm_num
+    rw [hset, measure_singleton]
+  by_cases htone : t = 1
+  · subst t
+    rw [show ν = Measure.map standardNormalCdf standardNormalLaw by rfl,
+      Measure.map_apply hcdf measurableSet_Iic,
+      standardNormalCdf_preimage_Iic_one, measure_univ]
+    rw [uniformUnitIntervalLaw, Measure.restrict_apply measurableSet_Iic]
+    have hset : Iic (1 : ℝ) ∩ Icc (0 : ℝ) 1 = Icc (0 : ℝ) 1 := by
+      ext x
+      constructor
+      · rintro ⟨_, hx0, hx1⟩
+        exact ⟨hx0, hx1⟩
+      · intro hx
+        exact ⟨hx.2, hx.1, hx.2⟩
+    rw [hset, Real.volume_Icc]
+    norm_num
+    exact ENNReal.ofReal_one.symm
+  obtain ⟨x, hx, hpre⟩ := standardNormalCdf_preimage_Iic_of_interior
+    (lt_of_le_of_ne ht0' (Ne.symm htzero)) (lt_of_le_of_ne ht1' htone)
+  change ProbabilityTheory.cdf standardNormalLaw x = t at hx
+  rw [show ν = Measure.map standardNormalCdf standardNormalLaw by rfl,
+    Measure.map_apply hcdf measurableSet_Iic, hpre,
+    ← ProbabilityTheory.ofReal_cdf standardNormalLaw x, hx]
+  rw [uniformUnitIntervalLaw, Measure.restrict_apply measurableSet_Iic]
+  have hset : Iic t ∩ Icc (0 : ℝ) 1 = Icc (0 : ℝ) t := by
+    ext z
+    constructor
+    · rintro ⟨hzt, hz0, hz1⟩
+      exact ⟨hz0, hzt⟩
+    · intro hz
+      exact ⟨hz.2, hz.1, hz.2.trans ht1'⟩
+  rw [hset, Real.volume_Icc]
+  simp [hx, ht0']
+
+theorem standardNormalCdfProductUniform (n : ℕ) :
+    Measure.map (coordinatewiseStandardNormalCdf n) (standardNormalProductLaw n) =
+      uniformUnitCubeLaw n := by
+  letI : ∀ i : Fin n, SigmaFinite
+      (Measure.map standardNormalCdf standardNormalLaw) := fun i => by
+    rw [standardNormalCdf_map_uniform]
+    infer_instance
+  change Measure.map (fun z i => standardNormalCdf (z i))
+      (Measure.pi (fun _ : Fin n => standardNormalLaw)) =
+      Measure.pi (fun _ : Fin n => uniformUnitIntervalLaw)
+  rw [Measure.pi_map_pi]
+  · simp only [standardNormalCdf_map_uniform]
+  · intro i
+    exact standardNormalCdf_strictMono.monotone.measurable.aemeasurable
 
 theorem median_interval_of_tail_bounds
     {μ : Measure ℝ} {a b : ℝ}
@@ -573,5 +838,19 @@ def hdp_05_hdef_h5_d2_hsymmetric_hgroup
       (NumStability.HDP.Concentration.MetricMeasure.symmetricGroup n)) :
     Type _ :=
   NumStability.HDP.Concentration.MetricMeasure.SymmetricGroupData n hn m
+
+theorem hdp_05_hex_h5_d2_d11 (n : ℕ) :
+    Measure.map
+        (fun z i => ProbabilityTheory.cdf (ProbabilityTheory.gaussianReal 0 1) (z i))
+        (Measure.pi (fun _ : Fin n => ProbabilityTheory.gaussianReal 0 1)) =
+      Measure.pi (fun _ : Fin n =>
+        (MeasureTheory.volume : Measure ℝ).restrict (Set.Icc 0 1) ) := by
+  simpa [NumStability.HDP.Concentration.MetricMeasure.coordinatewiseStandardNormalCdf,
+    NumStability.HDP.Concentration.MetricMeasure.standardNormalProductLaw,
+    NumStability.HDP.Concentration.MetricMeasure.uniformUnitCubeLaw,
+    NumStability.HDP.Concentration.MetricMeasure.standardNormalCdf,
+    NumStability.HDP.Concentration.MetricMeasure.standardNormalLaw,
+    NumStability.HDP.Concentration.MetricMeasure.uniformUnitIntervalLaw] using
+    NumStability.HDP.Concentration.MetricMeasure.standardNormalCdfProductUniform n
 
 end NumStability.HDP.Contract
