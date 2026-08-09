@@ -653,12 +653,6 @@ def hdp_01_hdef_hlp_hnorm_hspace
     NumStability.HDP.Scalar.Preliminaries.LpNormSpaceModelData μ p :=
   NumStability.HDP.Scalar.Preliminaries.lpNormSpaceModel μ p
 
-def hdp_01_hdef_hl2_hgeometry
-    {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (X Y : Ω → ℝ) :
-    NumStability.HDP.Scalar.Preliminaries.L2GeometryModelData μ X Y :=
-  NumStability.HDP.Scalar.Preliminaries.l2GeometryModel μ X Y
-
 theorem hdp_01_hthm_hlp_hbanach_hquasinorm
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ENNReal) [Fact (1 ≤ p)] :
