@@ -1118,4 +1118,19 @@ theorem hdp_02_hlem_hse_hmgf_hto_hmoment
 theorem hdp_02_hrem_h2_d7_d9 : hdp_02_hrem_h2_d7_d9__contract_type := by
   exact NumStability.HDP.Scalar.SubExponential.remark279_contract
 
+/-! Stable Chapter 2 alias for Example 2.7.12. -/
+theorem hdp_02_hexample_h2_d7_d12 :
+    ∀ {Ω : Type*} [MeasurableSpace Ω]
+      (ψ : NumStability.HDP.Scalar.SubExponential.OrliczFunction)
+      (μ : Measure Ω) (p : NNReal),
+      0 < p →
+      (∀ x : ℝ, 0 ≤ x → ψ x = x ^ (p : ℝ)) →
+      (∀ X : Ω → ℝ,
+        NumStability.HDP.Scalar.SubExponential.orliczGauge ψ μ X =
+          eLpNorm X (p : ENNReal) μ) ∧
+      (∀ X : Ω → ℝ, AEStronglyMeasurable X μ →
+        (NumStability.HDP.Scalar.SubExponential.orliczMember ψ μ X ↔
+          MemLp X (p : ENNReal) μ)) := by
+  exact NumStability.HDP.Scalar.SubExponential.powerOrliczCoincidence
+
 end NumStability.HDP.Contract

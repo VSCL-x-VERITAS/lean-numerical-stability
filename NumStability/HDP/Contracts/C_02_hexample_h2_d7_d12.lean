@@ -21,8 +21,7 @@ def hdp_02_hexample_h2_d7_d12__contract_type : Prop :=
       (NumStability.HDP.Scalar.SubExponential.orliczMember ψ μ X ↔
         MemLp X (p : ENNReal) μ))
 
-theorem hdp_02_hexample_h2_d7_d12 :
-    hdp_02_hexample_h2_d7_d12__contract_type := by
+example : hdp_02_hexample_h2_d7_d12__contract_type := by
   exact NumStability.HDP.Scalar.SubExponential.powerOrliczCoincidence
 
 end NumStability.HDP.Contract
