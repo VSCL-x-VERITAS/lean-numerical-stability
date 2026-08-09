@@ -1164,6 +1164,193 @@ theorem mgfToTail
         Real.exp (-t ^ 2 / (4 * K ^ 2)) := add_le_add hupper hlower
     _ = 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) := by ring
 
+/-! Exercise 2.6.9: a finite two-point sub-Gaussian witness for the strict
+inequality between the centered and uncentered `ψ₂` gauges.  The gauge below
+is the exact Orlicz gauge for a two-point law, written after evaluating its
+finite expectation. -/
+def twoPointPsiTwoAdmissible (a b q t : ℝ) : Prop :=
+  0 < t ∧ (1 - q) * Real.exp ((a / t) ^ 2) + q * Real.exp ((b / t) ^ 2) ≤ 2
+
+def twoPointPsiTwoNorm (a b q : ℝ) : ℝ :=
+  sInf {t : ℝ | twoPointPsiTwoAdmissible a b q t}
+
+lemma twoPointPsiTwoNorm_le_of_admissible {a b q t : ℝ}
+    (ht : twoPointPsiTwoAdmissible a b q t) :
+    twoPointPsiTwoNorm a b q ≤ t := by
+  unfold twoPointPsiTwoNorm
+  apply csInf_le
+  · exact ⟨0, by intro s hs; exact le_of_lt hs.1⟩
+  · exact ht
+
+lemma twoPointPsiTwoNorm_ge_of_lower {a b q r : ℝ}
+    (hS : Set.Nonempty {t : ℝ | twoPointPsiTwoAdmissible a b q t})
+    (hLower : ∀ t, twoPointPsiTwoAdmissible a b q t → r ≤ t) :
+    r ≤ twoPointPsiTwoNorm a b q := by
+  unfold twoPointPsiTwoNorm
+  apply le_csInf hS
+  intro t ht
+  exact hLower t ht
+
+def exercise269Law : Measure ℝ :=
+  (999 / 1000 : ENNReal) • Measure.dirac (-1) +
+    (1 / 1000 : ENNReal) • Measure.dirac 4
+
+def exercise269Mean : ℝ :=
+  (999 / 1000 : ℝ) * (-1) + (1 / 1000 : ℝ) * 4
+
+lemma exercise269Law_probability : IsProbabilityMeasure exercise269Law := by
+  apply isProbabilityMeasure_iff.mpr
+  simp [exercise269Law, ENNReal.div_eq_inv_mul]
+  calc
+    (1000 : ENNReal)⁻¹ * 999 + 1000⁻¹ = 1000⁻¹ * 999 + 1000⁻¹ * 1 := by
+      rw [mul_one]
+    _ = 1000⁻¹ * (999 + 1) := by rw [mul_add]
+    _ = (1000 : ENNReal)⁻¹ * 1000 := by norm_num
+    _ = 1 := by exact ENNReal.inv_mul_cancel (by norm_num) (by norm_num)
+
+lemma exercise269Law_integral (f : ℝ → ℝ) :
+    ∫ x, f x ∂exercise269Law = (999 / 1000 : ℝ) * f (-1) +
+      (1 / 1000 : ℝ) * f 4 := by
+  rw [exercise269Law, MeasureTheory.integral_add_measure]
+  · rw [MeasureTheory.integral_smul_measure, MeasureTheory.integral_smul_measure,
+      MeasureTheory.integral_dirac, MeasureTheory.integral_dirac]
+    norm_num
+  · apply Integrable.smul_measure
+    · exact integrable_dirac (by simp)
+    · apply ENNReal.mul_ne_top <;> simp
+  · apply Integrable.smul_measure
+    · exact integrable_dirac (by simp)
+    · simp [ENNReal.div_eq_inv_mul]
+
+lemma exercise269_raw_nonempty :
+    Set.Nonempty {t : ℝ | twoPointPsiTwoAdmissible (-1) 4 (1 / 1000) t} := by
+  refine ⟨10, ?_⟩
+  constructor
+  · norm_num
+  have h₁ : Real.exp ((-1 / 10 : ℝ) ^ 2) ≤ 1 / (1 - (1 / 100 : ℝ)) := by
+    convert Real.exp_bound_div_one_sub_of_interval (x := (1 / 100 : ℝ)) (by norm_num)
+      (by norm_num) using 1 <;> norm_num
+  have h₂ : Real.exp ((4 / 10 : ℝ) ^ 2) ≤ 1 / (1 - (16 / 100 : ℝ)) := by
+    convert Real.exp_bound_div_one_sub_of_interval (x := (16 / 100 : ℝ)) (by norm_num)
+      (by norm_num) using 1 <;> norm_num
+  calc
+    (1 - (1 / 1000 : ℝ)) * Real.exp ((-1 / 10 : ℝ) ^ 2) +
+        (1 / 1000 : ℝ) * Real.exp ((4 / 10 : ℝ) ^ 2) ≤
+        (1 - (1 / 1000 : ℝ)) * (1 / (1 - (1 / 100 : ℝ))) +
+        (1 / 1000 : ℝ) * (1 / (1 - (16 / 100 : ℝ))) := by
+          gcongr
+    _ ≤ 2 := by norm_num
+
+lemma exercise269_centered_nonempty :
+    Set.Nonempty {t : ℝ | twoPointPsiTwoAdmissible (-1 / 200) (999 / 200)
+      (1 / 1000) t} := by
+  refine ⟨10, ?_⟩
+  constructor
+  · norm_num
+  have h₁ : Real.exp ((-1 / 200 / 10 : ℝ) ^ 2) ≤
+      1 / (1 - (1 / 4000000 : ℝ)) := by
+    convert Real.exp_bound_div_one_sub_of_interval (x := (1 / 4000000 : ℝ)) (by norm_num)
+      (by norm_num) using 1 <;> norm_num
+  have h₂ : Real.exp ((999 / 200 / 10 : ℝ) ^ 2) ≤
+      1 / (1 - (998001 / 4000000 : ℝ)) := by
+    convert Real.exp_bound_div_one_sub_of_interval (x := (998001 / 4000000 : ℝ))
+      (by norm_num) (by norm_num) using 1 <;> norm_num
+  calc
+    (1 - (1 / 1000 : ℝ)) * Real.exp ((-1 / 200 / 10 : ℝ) ^ 2) +
+        (1 / 1000 : ℝ) * Real.exp ((999 / 200 / 10 : ℝ) ^ 2) ≤
+        (1 - (1 / 1000 : ℝ)) * (1 / (1 - (1 / 4000000 : ℝ))) +
+        (1 / 1000 : ℝ) * (1 / (1 - (998001 / 4000000 : ℝ))) := by
+          gcongr
+    _ ≤ 2 := by norm_num
+
+lemma exercise269_exp_small : Real.exp (9 / 25 : ℝ) ≤ 3 / 2 := by
+  apply (Real.le_log_iff_exp_le (by norm_num : (0 : ℝ) < 3 / 2)).mp
+  have h := Real.le_log_one_add_of_nonneg (x := (1 / 2 : ℝ)) (by norm_num)
+  norm_num at h ⊢
+  linarith
+
+lemma exercise269_exp_six : Real.exp (6 : ℝ) < 405 := by
+  have hbase : Real.exp 1 < (2719 / 1000 : ℝ) := by
+    exact lt_trans Real.exp_one_lt_d9 (by norm_num)
+  have hpow : Real.exp 1 ^ 6 < (2719 / 1000 : ℝ) ^ 6 := by
+    exact pow_lt_pow_left₀ hbase (by positivity) (by norm_num)
+  calc
+    Real.exp (6 : ℝ) = Real.exp 1 ^ 6 := by
+      rw [← Real.exp_nat_mul 1 6]
+      norm_num
+    _ < (2719 / 1000 : ℝ) ^ 6 := hpow
+    _ < 405 := by norm_num
+
+lemma exercise269_raw_admissible :
+    twoPointPsiTwoAdmissible (-1) 4 (1 / 1000) (5 / 3) := by
+  constructor
+  · norm_num
+  have hsmall := exercise269_exp_small
+  have hlarge : Real.exp (144 / 25 : ℝ) < 405 := by
+    exact lt_of_le_of_lt ((Real.exp_le_exp).2 (by norm_num)) exercise269_exp_six
+  norm_num only [one_div, sub_eq_add_neg]
+  convert (show (999 / 1000 : ℝ) * Real.exp (9 / 25) +
+      (1 / 1000 : ℝ) * Real.exp (144 / 25) ≤ 2 by
+    nlinarith [hsmall, hlarge]) using 1 <;> norm_num
+
+lemma exercise269_centered_lower :
+    ∀ t, twoPointPsiTwoAdmissible (-1 / 200) (999 / 200) (1 / 1000) t →
+      9 / 5 ≤ t := by
+  intro t ht
+  by_contra hnot
+  have htpos : 0 < t := ht.1
+  have htle : t ≤ 9 / 5 := le_of_not_ge hnot
+  have ht_sq : t ^ 2 ≤ (9 / 5 : ℝ) ^ 2 := by
+    have hnonneg : 0 ≤ (9 / 5 : ℝ) - t := by linarith
+    have hsum : 0 ≤ (9 / 5 : ℝ) + t := by positivity
+    nlinarith [mul_nonneg hnonneg hsum]
+  have hfrac : (999 / 200 : ℝ) ^ 2 / (9 / 5 : ℝ) ^ 2 ≤
+      (999 / 200 : ℝ) ^ 2 / t ^ 2 := by
+    exact div_le_div_of_nonneg_left (sq_nonneg _) (sq_pos_of_pos htpos) ht_sq
+  have hratio : (7 : ℝ) ≤ (999 / 200 / t) ^ 2 := by
+    calc
+      (7 : ℝ) ≤ (999 / 200 : ℝ) ^ 2 / (9 / 5 : ℝ) ^ 2 := by norm_num
+      _ ≤ (999 / 200 : ℝ) ^ 2 / t ^ 2 := hfrac
+      _ = (999 / 200 / t) ^ 2 := by field_simp
+  have hexp7 : (1001 : ℝ) < Real.exp 7 := by
+    have hbase : (27 / 10 : ℝ) < Real.exp 1 := by
+      exact lt_trans (by norm_num) Real.exp_one_gt_d9
+    have hpow : (27 / 10 : ℝ) ^ 7 < Real.exp 1 ^ 7 := by
+      exact pow_lt_pow_left₀ hbase (by norm_num) (by norm_num)
+    calc
+      (1001 : ℝ) < (27 / 10 : ℝ) ^ 7 := by norm_num
+      _ < Real.exp 1 ^ 7 := hpow
+      _ = Real.exp 7 := by
+        rw [← Real.exp_nat_mul 1 7]
+        norm_num
+  have hexp : (1001 : ℝ) < Real.exp ((999 / 200 / t) ^ 2) := by
+    exact lt_of_lt_of_le hexp7 ((Real.exp_le_exp).2 hratio)
+  have hsmall : (1 : ℝ) ≤ Real.exp ((-1 / 200 / t) ^ 2) :=
+    Real.one_le_exp (sq_nonneg _)
+  have hcontra : 2 <
+      (1 - (1 / 1000 : ℝ)) * Real.exp ((-1 / 200 / t) ^ 2) +
+        (1 / 1000 : ℝ) * Real.exp ((999 / 200 / t) ^ 2) := by
+    nlinarith
+  linarith [ht.2, hcontra]
+
+theorem exercise269_counterexample :
+    ∃ (μ : Measure ℝ) (X : ℝ → ℝ),
+      IsProbabilityMeasure μ ∧
+      μ = exercise269Law ∧
+      X = (fun x : ℝ => x) ∧
+      ∫ x, X x ∂μ = exercise269Mean ∧
+      twoPointPsiTwoNorm (-1) 4 (1 / 1000) <
+        twoPointPsiTwoNorm (-1 / 200) (999 / 200) (1 / 1000) := by
+  have hraw := twoPointPsiTwoNorm_le_of_admissible exercise269_raw_admissible
+  have hcenter := twoPointPsiTwoNorm_ge_of_lower exercise269_centered_nonempty
+    exercise269_centered_lower
+  have hmean : ∫ x, (fun x : ℝ => x) x ∂exercise269Law = exercise269Mean := by
+    rw [exercise269Law_integral]
+    norm_num [exercise269Mean]
+  refine ⟨exercise269Law, (fun x : ℝ => x), exercise269Law_probability, rfl, rfl, ?_, ?_⟩
+  · exact hmean
+  · exact lt_of_le_of_lt hraw (lt_of_lt_of_le (by norm_num) hcenter)
+
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
