@@ -2,13 +2,16 @@ import Mathlib.Probability.CDF
 import Mathlib.Topology.MetricSpace.Lipschitz
 import Mathlib.Topology.MetricSpace.HausdorffDistance
 import Mathlib.Analysis.Normed.MulAction
+import Mathlib.Geometry.Manifold.Riemannian.Basic
+import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 import Mathlib.Tactic
 
 noncomputable section
 
 open Filter Set TopologicalSpace
 open MeasureTheory
-open scoped ENNReal Topology
+open Bundle
+open scoped Bundle ENNReal Manifold Topology
 
 namespace NumStability.HDP.Concentration.MetricMeasure
 
@@ -268,6 +271,97 @@ theorem median_unique_of_crossing
   · rfl
   · exact False.elim ((not_lt_of_ge hn.2) (habove n hmn))
 
+/-- The source-facing Riemannian metric-measure interface from §5.2.4.
+
+The geodesic distance is tied to Mathlib's path-length infimum, while the
+finite volume measure is normalized through Mathlib's probability-measure
+constructor.  Ricci curvature is kept as explicit law-level data because the
+current Mathlib substrate supplies the metric/path construction but not a
+Ricci tensor or its comparison theorem.
+-/
+structure RiemannianManifoldData
+    {E H M : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [TopologicalSpace H]
+    (I : ModelWithCorners ℝ E H)
+    [TopologicalSpace M] [PseudoEMetricSpace M] [ChartedSpace H M]
+    [MeasurableSpace M] [Nonempty M]
+    [∀ x : M, ENorm (TangentSpace I x)]
+    [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
+    [Bundle.RiemannianBundle (fun x : M => TangentSpace I x)] where
+  compact : IsCompact (Set.univ : Set M)
+  connected : IsConnected (Set.univ : Set M)
+  smooth : IsManifold I (⊤ : WithTop ℕ∞) M
+  distance : M → M → ENNReal
+  distance_eq_geodesic :
+    ∀ x y, distance x y = Manifold.riemannianEDist I x y
+  volume : FiniteMeasure M
+  normalized_volume : ProbabilityMeasure M
+  normalized_volume_eq :
+    normalized_volume = MeasureTheory.FiniteMeasure.normalize volume
+  lipschitz_observable : (M → ℝ) → Prop
+  lipschitz_observable_eq :
+    ∀ f, lipschitz_observable f ↔ ∃ K : NNReal, LipschitzWith K f
+  ricci : ∀ x : M, TangentSpace I x → TangentSpace I x → ℝ
+  ricci_lower_bound : ℝ
+  ricci_lower_bound_pos : 0 < ricci_lower_bound
+  ricci_lower_bound_bound :
+    ∀ (x : M) (v : TangentSpace I x),
+      ricci_lower_bound * ‖v‖ ^ 2 ≤ ricci x v v
+
+theorem riemannian_distance_self
+    {E H M : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [TopologicalSpace H]
+    (I : ModelWithCorners ℝ E H)
+    [TopologicalSpace M] [PseudoEMetricSpace M] [ChartedSpace H M]
+    [MeasurableSpace M] [Nonempty M]
+    [∀ x : M, ENorm (TangentSpace I x)]
+    [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
+    [Bundle.RiemannianBundle (fun x : M => TangentSpace I x)]
+    (x : M) :
+    Manifold.riemannianEDist I x x = 0 := by
+  exact Manifold.riemannianEDist_self
+
+def riemannianManifoldData_mk
+    {E H M : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [TopologicalSpace H]
+    (I : ModelWithCorners ℝ E H)
+    [TopologicalSpace M] [PseudoEMetricSpace M] [ChartedSpace H M]
+    [MeasurableSpace M] [Nonempty M]
+    [∀ x : M, ENorm (TangentSpace I x)]
+    [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
+    [Bundle.RiemannianBundle (fun x : M => TangentSpace I x)]
+    (hcompact : IsCompact (Set.univ : Set M))
+    (hconnected : IsConnected (Set.univ : Set M))
+    (hsmooth : IsManifold I (⊤ : WithTop ℕ∞) M)
+    (hvolume : FiniteMeasure M)
+    (hnormalized : ProbabilityMeasure M)
+    (hnormalized_eq :
+      hnormalized = MeasureTheory.FiniteMeasure.normalize hvolume)
+    (hL : (M → ℝ) → Prop)
+    (hL_eq : ∀ f, hL f ↔ ∃ K : NNReal, LipschitzWith K f)
+    (hRicci : ∀ x : M, TangentSpace I x → TangentSpace I x → ℝ)
+    (hc : ℝ) (hc_pos : 0 < hc)
+    (hc_bound :
+      ∀ (x : M) (v : TangentSpace I x), hc * ‖v‖ ^ 2 ≤ hRicci x v v) :
+    RiemannianManifoldData (M := M) I where
+  compact := hcompact
+  connected := hconnected
+  smooth := hsmooth
+  distance := Manifold.riemannianEDist I
+  distance_eq_geodesic := fun _ _ => rfl
+  volume := hvolume
+  normalized_volume := hnormalized
+  normalized_volume_eq := hnormalized_eq
+  lipschitz_observable := hL
+  lipschitz_observable_eq := hL_eq
+  ricci := hRicci
+  ricci_lower_bound := hc
+  ricci_lower_bound_pos := hc_pos
+  ricci_lower_bound_bound := hc_bound
+
 end NumStability.HDP.Concentration.MetricMeasure
 
 namespace NumStability.HDP.Contract
@@ -277,5 +371,18 @@ def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (X : ℝ → ℝ) :
 
 def hdp_05_hiface_hlipschitz (f : ℝ → ℝ) :
     Type := NumStability.HDP.Concentration.MetricMeasure.LipschitzInterface f
+
+def hdp_05_hdef_h5_d2_hriemannian_hmms
+    {E H M : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [TopologicalSpace H]
+    (I : ModelWithCorners ℝ E H)
+    [TopologicalSpace M] [PseudoEMetricSpace M] [ChartedSpace H M]
+    [MeasurableSpace M] [Nonempty M]
+    [∀ x : M, ENorm (TangentSpace I x)]
+    [∀ x : M, ENormSMulClass ℝ (TangentSpace I x)]
+    [Bundle.RiemannianBundle (fun x : M => TangentSpace I x)] :
+    Type _ :=
+  NumStability.HDP.Concentration.MetricMeasure.RiemannianManifoldData (M := M) I
 
 end NumStability.HDP.Contract
