@@ -1352,6 +1352,74 @@ theorem exercise269_counterexample :
   · exact hmean
   · exact lt_of_le_of_lt hraw (lt_of_lt_of_le (by norm_num) hcenter)
 
+/-! The `L²` interpolation estimate used in Exercise 2.6.6. -/
+theorem lpExtrapolation
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {Z : Ω → ℝ}
+    (hZ1 : MemLp Z 1 μ) (hZ3 : MemLp Z 3 μ) :
+    (∫ ω, |Z ω| ^ (2 : ℝ) ∂μ) ^ (1 / 2 : ℝ) ≤
+      (∫ ω, |Z ω| ∂μ) ^ (1 / 4 : ℝ) *
+        (∫ ω, |Z ω| ^ (3 : ℕ) ∂μ) ^ (1 / 4 : ℝ) := by
+  have hf0 := hZ1.norm_rpow_div (q := (1 / 2 : ENNReal))
+  have hg0 := hZ3.norm_rpow_div (q := (3 / 2 : ENNReal))
+  have hq : (3 : ENNReal) / (3 / 2 : ENNReal) = 2 := by
+    rw [ENNReal.div_eq_inv_mul, ENNReal.div_eq_inv_mul]
+    rw [ENNReal.mul_inv (by norm_num) (by norm_num)]
+    simp only [inv_inv]
+    rw [mul_assoc, ENNReal.inv_mul_cancel (by norm_num) (by norm_num), mul_one]
+  have hf : MemLp (fun ω => |Z ω| ^ (1 / 2 : ℝ)) 2 μ := by
+    convert hf0 using 1 <;> norm_num
+  have hg : MemLp (fun ω => |Z ω| ^ (3 / 2 : ℝ)) 2 μ := by
+    rw [hq] at hg0
+    convert hg0 using 1 <;> norm_num
+  have hc := integral_mul_le_Lp_mul_Lq_of_nonneg
+    (μ := μ) (p := (2 : ℝ)) (q := (2 : ℝ))
+    (f := fun ω => |Z ω| ^ (1 / 2 : ℝ))
+    (g := fun ω => |Z ω| ^ (3 / 2 : ℝ)) Real.HolderConjugate.two_two
+    (Filter.Eventually.of_forall (fun ω => Real.rpow_nonneg (abs_nonneg _) _))
+    (Filter.Eventually.of_forall (fun ω => Real.rpow_nonneg (abs_nonneg _) _))
+    (by simpa using hf) (by simpa using hg)
+  have hfg : (fun ω =>
+      (|Z ω| ^ (1 / 2 : ℝ)) * (|Z ω| ^ (3 / 2 : ℝ))) =
+      (fun ω => |Z ω| ^ (2 : ℝ)) := by
+    funext ω
+    rw [← Real.rpow_add_of_nonneg (abs_nonneg _) (by positivity) (by positivity)]
+    have h : (1 / 2 : ℝ) + 3 / 2 = 2 := by ring
+    rw [h]
+  have hff : (fun ω =>
+      (|Z ω| ^ (1 / 2 : ℝ)) ^ (2 : ℝ)) =
+      (fun ω => |Z ω|) := by
+    funext ω
+    rw [← Real.rpow_mul (abs_nonneg _)]
+    have h : (1 / 2 : ℝ) * 2 = 1 := by ring
+    rw [h, Real.rpow_one]
+  have hgg : (fun ω =>
+      (|Z ω| ^ (3 / 2 : ℝ)) ^ (2 : ℝ)) =
+      (fun ω => |Z ω| ^ (3 : ℕ)) := by
+    funext ω
+    rw [← Real.rpow_mul (abs_nonneg _)]
+    have h : (3 / 2 : ℝ) * 2 = 3 := by ring
+    rw [h]
+    exact Real.rpow_natCast _ 3
+  rw [hfg, hff, hgg] at hc
+  have hpow := Real.rpow_le_rpow
+    (integral_nonneg_of_ae (Filter.Eventually.of_forall (fun ω => by positivity)))
+    hc (by norm_num : (0 : ℝ) ≤ 1 / 2)
+  have hA : 0 ≤ ∫ ω, |Z ω| ∂μ :=
+    integral_nonneg_of_ae (Filter.Eventually.of_forall (fun ω => by positivity))
+  have hB : 0 ≤ ∫ ω, |Z ω| ^ (3 : ℕ) ∂μ :=
+    integral_nonneg_of_ae (Filter.Eventually.of_forall (fun ω => by positivity))
+  calc
+    (∫ ω, |Z ω| ^ (2 : ℝ) ∂μ) ^ (1 / 2 : ℝ) ≤
+        ((∫ ω, |Z ω| ∂μ) ^ (1 / 2 : ℝ) *
+          (∫ ω, |Z ω| ^ (3 : ℕ) ∂μ) ^ (1 / 2 : ℝ)) ^ (1 / 2 : ℝ) := hpow
+    _ = (∫ ω, |Z ω| ∂μ) ^ (1 / 4 : ℝ) *
+        (∫ ω, |Z ω| ^ (3 : ℕ) ∂μ) ^ (1 / 4 : ℝ) := by
+      rw [← Real.mul_rpow hA hB]
+      rw [← Real.rpow_mul (mul_nonneg hA hB)]
+      norm_num
+      rw [Real.mul_rpow hA hB]
+
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
@@ -1444,5 +1512,15 @@ theorem hdp_02_hex_h2_d6_d9 : hdp_02_hex_h2_d6_d9__contract_type := by
     NumStability.HDP.Scalar.SubGaussian.twoPointPsiTwoNorm,
     NumStability.HDP.Scalar.SubGaussian.twoPointPsiTwoAdmissible] using
     NumStability.HDP.Scalar.SubGaussian.exercise269_counterexample
+
+/-! Stable Chapter 2 alias for the `L²` interpolation estimate. -/
+theorem hdp_02_hlem_hlp_hextrapolation
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {Z : Ω → ℝ}
+    (hZ1 : MemLp Z 1 μ) (hZ3 : MemLp Z 3 μ) :
+    (∫ ω, |Z ω| ^ (2 : ℝ) ∂μ) ^ (1 / 2 : ℝ) ≤
+      (∫ ω, |Z ω| ∂μ) ^ (1 / 4 : ℝ) *
+        (∫ ω, |Z ω| ^ (3 : ℕ) ∂μ) ^ (1 / 4 : ℝ) :=
+  NumStability.HDP.Scalar.SubGaussian.lpExtrapolation hZ1 hZ3
 
 end NumStability.HDP.Contract
