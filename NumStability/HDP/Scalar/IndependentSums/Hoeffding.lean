@@ -297,7 +297,8 @@ theorem rademacherHoeffding
     {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
     (hX : ∀ i, Measurable (X i))
     (hIndep : iIndepFun X μ)
-    (hLaw : ∀ i, Measure.map (X i) μ = rademacherPMF.toMeasure)
+    (hLaw : ∀ i, Measure.map (X i) μ =
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherPMF.toMeasure)
     (hExp : ∀ (lam : ℝ) (i : ι),
       Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
     (ht : 0 ≤ t) (hv : 0 < ∑ i, (a i) ^ 2) :
@@ -380,21 +381,6 @@ theorem rademacherHoeffding
         field_simp [ne_of_gt (by simpa [v] using hv)]
         ring
       _ = Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by rfl
-
-/-! Stable source-facing alias for Theorem 2.2.2. -/
-theorem hdp_02_hthm_h2_d2_d2
-    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
-    (hX : ∀ i, Measurable (X i))
-    (hIndep : iIndepFun X μ)
-    (hLaw : ∀ i, Measure.map (X i) μ = rademacherPMF.toMeasure)
-    (hExp : ∀ (lam : ℝ) (i : ι),
-      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
-    (ht : 0 ≤ t) (hv : 0 < ∑ i, (a i) ^ 2) :
-    μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤
-      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
-  rademacherHoeffding hX hIndep hLaw hExp ht hv
 
 /-- Zero coefficient energy is the deterministic zero-sum branch. -/
 theorem rademacherHoeffdingZero
@@ -615,6 +601,23 @@ theorem smallBallProbability
 end NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
 namespace NumStability.HDP.Contract
+
+/-! Stable source-facing alias for Theorem 2.2.2. -/
+theorem hdp_02_hthm_h2_d2_d2
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hLaw : ∀ i, Measure.map (X i) μ =
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
+    (ht : 0 ≤ t) (hv : 0 < ∑ i, (a i) ^ 2) :
+    μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤
+      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherHoeffding
+    hX hIndep hLaw hExp ht hv
 
 /-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
 theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
