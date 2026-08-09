@@ -1,4 +1,5 @@
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Independence
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 import Mathlib.Analysis.SpecialFunctions.Stirling
@@ -27,6 +28,7 @@ open MeasureTheory
 open ProbabilityTheory
 open Filter
 open scoped Topology
+open scoped BigOperators
 
 namespace NumStability.HDP.Scalar.SubGaussian
 
@@ -1420,6 +1422,91 @@ theorem lpExtrapolation
       norm_num
       rw [Real.mul_rpow hA hB]
 
+/-! The Gaussian sum law in equation (2.18), together with its weighted form. -/
+theorem independentGaussianSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {σ : ι → ℝ≥0}
+    (hLaw : ∀ i, HasLaw (X i) (gaussianReal 0 (σ i)) μ)
+    (hIndep : iIndepFun X μ) :
+    HasLaw (fun ω => ∑ i, X i ω)
+      (gaussianReal 0 (∑ i, σ i)) μ := by
+  have hGaussian : ∀ i, HasGaussianLaw (X i) μ := fun i =>
+    (hLaw i).hasGaussianLaw
+  have hSumGaussian : HasGaussianLaw (fun ω => ∑ i, X i ω) μ :=
+    hIndep.hasGaussianLaw_fun_sum hGaussian
+  have hLp : ∀ i, MemLp (X i) 2 μ := fun i => (hGaussian i).memLp_two
+  have hPair : (↑(Finset.univ : Finset ι) : Set ι).Pairwise
+      (fun i j => X i ⟂ᵢ[μ] X j) := by
+    intro i hi j hj hij
+    exact hIndep.indepFun hij
+  have hVar_i : ∀ i, Var[X i; μ] = (σ i : ℝ) := by
+    intro i
+    calc
+      Var[X i; μ] = Var[id; μ.map (X i)] := by
+        symm
+        simpa using (variance_map (X := id) (Y := X i)
+          (μ := μ) (by fun_prop) (hLaw i).aemeasurable)
+      _ = Var[id; gaussianReal 0 (σ i)] := by rw [hLaw i |>.map_eq]
+      _ = (σ i : ℝ) := by simp [variance_id_gaussianReal]
+  have hsum_fun : (fun ω => ∑ i, X i ω) = ∑ i, X i := by
+    funext ω
+    simp
+  have hVar : Var[fun ω => ∑ i, X i ω; μ] = ∑ i, (σ i : ℝ) := by
+    have hVar' := IndepFun.variance_sum (s := Finset.univ) (fun i _ => hLp i) hPair
+    calc
+      Var[fun ω => ∑ i, X i ω; μ] = Var[∑ i, X i; μ] := by rw [hsum_fun]
+      _ = ∑ i, Var[X i; μ] := by simpa using hVar'
+      _ = ∑ i, (σ i : ℝ) := by simp [hVar_i]
+  have hMean_i : ∀ i, (∫ ω, X i ω ∂μ) = 0 := by
+    intro i
+    calc
+      (∫ ω, X i ω ∂μ) = ∫ x, id x ∂(μ.map (X i)) := by
+        symm
+        simpa using (integral_map (hLaw i).aemeasurable aestronglyMeasurable_id)
+      _ = ∫ x, id x ∂(gaussianReal 0 (σ i)) := by rw [hLaw i |>.map_eq]
+      _ = 0 := by simp
+  have hMean : (∫ ω, (∑ i, X i ω) ∂μ) = 0 := by
+    rw [integral_finset_sum]
+    · simp [hMean_i]
+    · intro i hi
+      exact (hGaussian i).integrable
+  have hEq := hSumGaussian.isGaussian_map.eq_gaussianReal (μ.map (fun ω => ∑ i, X i ω))
+  refine { aemeasurable := hSumGaussian.aemeasurable, map_eq := ?_ }
+  calc
+    μ.map (fun ω => ∑ i, X i ω) =
+        gaussianReal (∫ x, id x ∂μ.map (fun ω => ∑ i, X i ω))
+          Var[id; μ.map (fun ω => ∑ i, X i ω)].toNNReal := hEq
+    _ = gaussianReal 0 (∑ i, σ i) := by
+      rw [integral_map hSumGaussian.aemeasurable aestronglyMeasurable_id]
+      rw [variance_map aemeasurable_id hSumGaussian.aemeasurable]
+      simp only [id_eq, Function.id_comp]
+      rw [hMean, hVar]
+      congr 2
+      apply NNReal.eq
+      have hnonneg : 0 ≤ ∑ i, (σ i : ℝ) :=
+        Finset.sum_nonneg fun i _ => (σ i).property
+      rw [Real.coe_toNNReal _ hnonneg]
+      simp
+
+theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
+    (hLaw : ∀ i, HasLaw (X i) (gaussianReal 0 (σ i)) μ)
+    (hIndep : iIndepFun X μ) :
+    HasLaw (fun ω => ∑ i, a i * X i ω)
+      (gaussianReal 0 (∑ i, Real.toNNReal ((a i) ^ 2) * σ i)) μ := by
+  let Y : ι → Ω → ℝ := fun i ω => a i * X i ω
+  let τ : ι → ℝ≥0 := fun i => Real.toNNReal ((a i) ^ 2) * σ i
+  have hLawY : ∀ i, HasLaw (Y i) (gaussianReal 0 (τ i)) μ := by
+    intro i
+    simpa [Y, τ, Real.toNNReal_of_nonneg (sq_nonneg (a i))] using
+      ProbabilityTheory.gaussianReal_const_mul (hLaw i) (a i)
+  have hIndepY : iIndepFun Y μ := by
+    have h := hIndep.comp (fun i x => a i * x) (fun i => by fun_prop)
+    simpa [Y, Function.comp_def] using h
+  have h := independentGaussianSumLaw hLawY hIndepY
+  simpa [Y, τ] using h
+
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
@@ -1522,5 +1609,15 @@ theorem hdp_02_hlem_hlp_hextrapolation
       (∫ ω, |Z ω| ∂μ) ^ (1 / 4 : ℝ) *
         (∫ ω, |Z ω| ^ (3 : ℕ) ∂μ) ^ (1 / 4 : ℝ) :=
   NumStability.HDP.Scalar.SubGaussian.lpExtrapolation hZ1 hZ3
+
+/-! Stable Chapter 2 alias for the Gaussian sum law in equation (2.18). -/
+theorem hdp_02_heq_h2_d18 {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
+    (hLaw : ∀ i, HasLaw (X i) (gaussianReal 0 (σ i)) μ)
+    (hIndep : iIndepFun X μ) :
+    HasLaw (fun ω => ∑ i, a i * X i ω)
+      (gaussianReal 0 (∑ i, Real.toNNReal ((a i) ^ 2) * σ i)) μ :=
+  NumStability.HDP.Scalar.SubGaussian.independentGaussianWeightedSumLaw a hLaw hIndep
 
 end NumStability.HDP.Contract
