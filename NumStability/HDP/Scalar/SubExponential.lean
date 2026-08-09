@@ -805,6 +805,25 @@ lemma remark279_exp_mgf_not_integrable {lam : ℝ} (hl : 1 ≤ lam) :
       exact Real.one_le_exp (mul_nonneg (sub_nonneg.mpr hl) (le_of_lt hx))
   exact not_integrableOn_Ioi_rpow 0 (by simpa using hconst)
 
+theorem remark279_contract :
+    NumStability.HDP.Contract.hdp_02_hrem_h2_d7_d9__contract_type := by
+  refine ⟨remark279Law, (fun x : ℝ => x), remark279Law_probability, ?_⟩
+  constructor
+  · rfl
+  constructor
+  · rfl
+  constructor
+  · simpa using remark279_mean
+  constructor
+  · simpa using remark279_second_moment
+  constructor
+  · simpa using remark279_local_taylor
+  constructor
+  · intro lam
+    exact remark279_exp_mgf_lt_one
+  · intro lam
+    exact remark279_exp_mgf_not_integrable
+
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
@@ -837,22 +856,6 @@ theorem hdp_02_hlem_hse_hmgf_hto_hmoment
 
 /-! Stable Chapter 2 alias for Remark 2.7.9. -/
 theorem hdp_02_hrem_h2_d7_d9 : hdp_02_hrem_h2_d7_d9__contract_type := by
-  refine ⟨NumStability.HDP.Scalar.SubExponential.remark279Law,
-    (fun x : ℝ => x), NumStability.HDP.Scalar.SubExponential.remark279Law_probability, ?_⟩
-  constructor
-  · rfl
-  constructor
-  · rfl
-  constructor
-  · simpa using NumStability.HDP.Scalar.SubExponential.remark279_mean
-  constructor
-  · simpa using NumStability.HDP.Scalar.SubExponential.remark279_second_moment
-  constructor
-  · simpa using NumStability.HDP.Scalar.SubExponential.remark279_local_taylor
-  constructor
-  · intro lam
-    exact NumStability.HDP.Scalar.SubExponential.remark279_exp_mgf_lt_one
-  · intro lam
-    exact NumStability.HDP.Scalar.SubExponential.remark279_exp_mgf_not_integrable
+  exact NumStability.HDP.Scalar.SubExponential.remark279_contract
 
 end NumStability.HDP.Contract
