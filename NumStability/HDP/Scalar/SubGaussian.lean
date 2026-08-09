@@ -29,6 +29,7 @@ open ProbabilityTheory
 open Filter
 open scoped Topology
 open scoped BigOperators
+open scoped NNReal
 
 namespace NumStability.HDP.Scalar.SubGaussian
 
