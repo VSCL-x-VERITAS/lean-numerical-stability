@@ -1,5 +1,8 @@
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.Analysis.SpecialFunctions.Stirling
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Tactic
 
 /-!
@@ -76,4 +79,288 @@ theorem standardNormalMGF (lam : ℝ) :
   norm_num [Real.sqrt_eq_rpow]
   field_simp
 
+/-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
+
+/- The root-free integral form of the usual `Lᵖ` moment-growth hypothesis. -/
+def LpMomentGrowth {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (X : Ω → ℝ) (K : ℝ) : Prop :=
+  AEMeasurable X μ ∧
+    ∀ p : ℝ, 1 ≤ p →
+      Integrable (fun ω => |X ω| ^ p) μ ∧
+        (∫ ω, |X ω| ^ p ∂μ) ≤ (K * Real.sqrt p) ^ p
+
+private def EvenMomentBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (X : Ω → ℝ) (K : ℝ) : Prop :=
+  ∀ n : ℕ, 1 ≤ n →
+    Integrable (fun ω => |X ω| ^ (2 * n)) μ ∧
+      (∫ ω, |X ω| ^ (2 * n) ∂μ) ≤ K ^ (2 * n) * (2 * n : ℝ) ^ n
+
+private def squareMGFTerm {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) : ENNReal :=
+  ENNReal.ofReal (((lam ^ 2 * X ω ^ 2) ^ n) / (n.factorial : ℝ))
+
+private lemma squareMGFTerm_aemeasurable
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ}
+    (hX : AEMeasurable X μ) (lam : ℝ) (n : ℕ) :
+    AEMeasurable (squareMGFTerm X lam n) μ := by
+  unfold squareMGFTerm
+  fun_prop
+
+private lemma exp_series_pointwise (x : ℝ) (hx : 0 ≤ x) :
+    ENNReal.ofReal (Real.exp x) =
+      ∑' n : ℕ, ENNReal.ofReal (x ^ n / (n.factorial : ℝ)) := by
+  rw [← ENNReal.ofReal_tsum_of_nonneg (fun n => by positivity)
+    (NormedSpace.expSeries_div_summable x)]
+  rw [NormedSpace.expSeries_div_hasSum_exp x |>.tsum_eq]
+  rw [← Real.exp_eq_exp_ℝ]
+
+private lemma geom_bound (q : ℝ) (hq0 : 0 ≤ q) (hq : q ≤ 1 / 2) :
+    (∑' n : ℕ, q ^ n) ≤ Real.exp (2 * q) := by
+  have hqlt : q < 1 := lt_of_le_of_lt hq (by norm_num)
+  have hsum := (hasSum_geometric_of_lt_one hq0 hqlt).tsum_eq
+  rw [hsum]
+  have hden : 0 < 1 - q := sub_pos.mpr hqlt
+  have hrat : (1 - q)⁻¹ ≤ 1 + 2 * q := by
+    rw [inv_eq_one_div]
+    apply (div_le_iff₀ hden).2
+    nlinarith [mul_nonneg hq0 (sub_nonneg.mpr (by linarith : q ≤ 1 / 2))]
+  exact hrat.trans (by simpa [add_comm] using Real.add_one_le_exp (2 * q))
+
+private lemma factorial_ratio_bound (n : ℕ) (hn : 1 ≤ n) :
+    ((2 * n : ℝ) ^ n) / (n.factorial : ℝ) ≤ (2 * Real.exp 1) ^ n := by
+  have hfac := Stirling.le_factorial_stirling n
+  have hroot : 1 ≤ Real.sqrt (2 * Real.pi * (n : ℝ)) := by
+    rw [Real.one_le_sqrt]
+    have hpi : (2 : ℝ) ≤ Real.pi := by
+      nlinarith [Real.one_le_pi_div_two]
+    have hnpos : (0 : ℝ) < (n : ℝ) := by
+      exact_mod_cast (show 0 < n by omega)
+    have hn1' : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+    have hpn : 2 * (n : ℝ) ≤ Real.pi * n :=
+      mul_le_mul_of_nonneg_right hpi (le_of_lt hnpos)
+    have hn1 : (1 : ℝ) ≤ 2 * (n : ℝ) := by nlinarith
+    have hprod : (1 : ℝ) ≤ Real.pi * n := hn1.trans hpn
+    nlinarith [hprod]
+  have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+  have hepos : 0 < Real.exp 1 := Real.exp_pos _
+  have hbase : 0 ≤ (n : ℝ) / Real.exp 1 := by positivity
+  have hfac' : (n : ℝ) ^ n / (Real.exp 1) ^ n ≤ (n.factorial : ℝ) := by
+    have hfac'' := (le_trans (mul_le_mul_of_nonneg_right hroot
+      (by positivity : 0 ≤ ((n : ℝ) / Real.exp 1) ^ n)) hfac)
+    simpa [div_pow] using hfac''
+  have hmul : (n : ℝ) ^ n ≤ (n.factorial : ℝ) * (Real.exp 1) ^ n := by
+    rw [← div_le_iff₀ (by positivity : 0 < (Real.exp 1) ^ n)]
+    simpa [div_pow] using hfac'
+  have hmul' : (2 * n : ℝ) ^ n ≤ (n.factorial : ℝ) * (2 * Real.exp 1) ^ n := by
+    rw [mul_pow]
+    calc
+      2 ^ n * (n : ℝ) ^ n ≤ 2 ^ n * ((n.factorial : ℝ) * (Real.exp 1) ^ n) :=
+        mul_le_mul_of_nonneg_left hmul (by positivity)
+      _ = (n.factorial : ℝ) * (2 * Real.exp 1) ^ n := by
+        rw [mul_pow]
+        ring
+  exact (div_le_iff₀ (by positivity : (0 : ℝ) < (n.factorial : ℝ))).2
+    (by simpa [mul_comm] using hmul')
+
+private lemma squareMGFTerm_eq_mul
+    {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) :
+    squareMGFTerm X lam n ω =
+      ENNReal.ofReal ((lam ^ 2) ^ n / (n.factorial : ℝ)) *
+        ENNReal.ofReal (|X ω| ^ (2 * n)) := by
+  unfold squareMGFTerm
+  rw [← ENNReal.ofReal_mul (by positivity :
+    0 ≤ (lam ^ 2) ^ n / (n.factorial : ℝ))]
+  congr 1
+  rw [mul_pow]
+  have hXsq : X ω ^ 2 = |X ω| ^ 2 := (sq_abs _).symm
+  rw [hXsq, ← pow_mul]
+  ring
+
+private lemma evenMomentBound_of_lpMomentGrowth
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ} {K : ℝ}
+    (hLp : LpMomentGrowth μ X K) : EvenMomentBound μ X K := by
+  intro n hn
+  have hp := hLp.2 (2 * (n : ℝ)) (by
+    have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
+    nlinarith)
+  have hpn : 2 * (n : ℝ) = ((2 * n : ℕ) : ℝ) := by norm_num
+  have hfun : (fun ω => |X ω| ^ (2 * (n : ℝ))) =
+      (fun ω => |X ω| ^ (2 * n : ℕ)) := by
+    funext ω
+    rw [hpn, Real.rpow_natCast]
+  rw [hfun] at hp
+  have heq : (K * Real.sqrt (2 * (n : ℝ))) ^ (2 * (n : ℕ)) =
+      K ^ (2 * (n : ℕ)) * (2 * (n : ℝ)) ^ n := by
+    rw [mul_pow, pow_mul, pow_mul]
+    rw [Real.sq_sqrt (by positivity : (0 : ℝ) ≤ 2 * (n : ℝ))]
+  constructor
+  · exact hp.1
+  · calc
+      (∫ ω, |X ω| ^ (2 * n) ∂μ) ≤
+          (K * Real.sqrt (2 * (n : ℝ))) ^ (2 * (n : ℝ)) := hp.2
+      _ = (K * Real.sqrt (2 * (n : ℝ))) ^ (2 * n : ℕ) := by
+        rw [hpn, Real.rpow_natCast]
+      _ = K ^ (2 * n) * (2 * (n : ℝ)) ^ n := heq
+
+private lemma squareMGFTerm_lintegral_le_geom
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ} {K lam : ℝ}
+    (hMom : EvenMomentBound μ X K) {n : ℕ} (hn : 1 ≤ n) :
+    (∫⁻ ω, squareMGFTerm X lam n ω ∂μ) ≤
+      ENNReal.ofReal ((2 * Real.exp 1 * (lam * K) ^ 2) ^ n) := by
+  have hm := hMom n hn
+  have hterm := squareMGFTerm_eq_mul X lam n
+  rw [lintegral_congr_ae (Filter.Eventually.of_forall (fun ω => hterm ω))]
+  rw [lintegral_const_mul' _ _ (by simp)]
+  rw [← ofReal_integral_eq_lintegral_ofReal hm.1
+    (Filter.Eventually.of_forall (fun ω => by positivity))]
+  have hscalar : 0 ≤ (lam ^ 2) ^ n / (n.factorial : ℝ) := by positivity
+  have hbound := mul_le_mul_of_nonneg_left hm.2 hscalar
+  rw [← ENNReal.ofReal_mul hscalar]
+  apply ENNReal.ofReal_le_ofReal
+  calc
+    (lam ^ 2) ^ n / (n.factorial : ℝ) *
+          (∫ ω, |X ω| ^ (2 * n) ∂μ) ≤
+        (lam ^ 2) ^ n / (n.factorial : ℝ) *
+          (K ^ (2 * n) * (2 * n : ℝ) ^ n) := hbound
+    _ = ((lam * K) ^ (2 * n) * (2 * n : ℝ) ^ n) /
+          (n.factorial : ℝ) := by ring
+    _ ≤ (2 * Real.exp 1 * (lam * K) ^ 2) ^ n := by
+      have hratio := factorial_ratio_bound n hn
+      have hnonneg : 0 ≤ (lam * K) ^ (2 * n) := by
+        rw [pow_mul]
+        positivity
+      apply (div_le_iff₀ (by positivity : (0 : ℝ) < (n.factorial : ℝ))).2
+      have hratio' : (2 * n : ℝ) ^ n ≤ (2 * Real.exp 1) ^ n * (n.factorial : ℝ) :=
+        (div_le_iff₀ (by positivity : (0 : ℝ) < (n.factorial : ℝ))).mp hratio
+      calc
+        (lam * K) ^ (2 * n) * (2 * n : ℝ) ^ n ≤
+            (lam * K) ^ (2 * n) * ((2 * Real.exp 1) ^ n * (n.factorial : ℝ)) := by
+              gcongr
+        _ = (2 * Real.exp 1 * (lam * K) ^ 2) ^ n * (n.factorial : ℝ) := by
+              calc
+                (lam * K) ^ (2 * n) * ((2 * Real.exp 1) ^ n * (n.factorial : ℝ)) =
+                    ((lam * K) ^ 2) ^ n * (2 * Real.exp 1) ^ n * (n.factorial : ℝ) := by
+                      rw [pow_mul]
+                      ring
+                _ = (2 * Real.exp 1 * (lam * K) ^ 2) ^ n * (n.factorial : ℝ) := by
+                      rw [← mul_pow]
+                      ring
+
+private lemma squareMGF_lintegral_le
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K lam : ℝ}
+    (hX : AEMeasurable X μ) (hK : 0 ≤ K)
+    (hMom : EvenMomentBound μ X K) (hsmall : |lam| * K ≤ 1 / 4) :
+    (∫⁻ ω, ENNReal.ofReal (Real.exp (lam ^ 2 * X ω ^ 2)) ∂μ) ≤
+      ENNReal.ofReal (Real.exp (4 * Real.exp 1 * (lam * K) ^ 2)) := by
+  let q : ℝ := 2 * Real.exp 1 * (lam * K) ^ 2
+  have hprod : |lam * K| ≤ 1 / 4 := by
+    rw [abs_mul, abs_of_nonneg hK]
+    exact hsmall
+  have hsq : (lam * K) ^ 2 ≤ (1 / 4 : ℝ) ^ 2 := by
+    apply (sq_le_sq (a := lam * K) (b := (1 / 4 : ℝ))).2
+    simpa using hprod
+  have hq0 : 0 ≤ q := by positivity
+  have hqhalf : q ≤ 1 / 2 := by
+    have hfirst : q ≤ 2 * Real.exp 1 * (1 / 4 : ℝ) ^ 2 := by
+      dsimp [q]
+      exact mul_le_mul_of_nonneg_left hsq (by positivity)
+    have hexp : Real.exp 1 ≤ 3 := Real.exp_one_lt_three.le
+    nlinarith [hfirst]
+  have hqsum : Summable (fun n : ℕ => q ^ n) := by
+    exact (hasSum_geometric_of_lt_one hq0
+      (lt_of_le_of_lt hqhalf (by norm_num))).summable
+  have hterm_sum :
+      (∑' n : ℕ, ∫⁻ ω, squareMGFTerm X lam n ω ∂μ) ≤
+        ∑' n : ℕ, ENNReal.ofReal (q ^ n) := by
+    apply ENNReal.tsum_le_tsum
+    intro n
+    cases n with
+    | zero => simp [squareMGFTerm]
+    | succ n =>
+        simpa [q] using
+          (squareMGFTerm_lintegral_le_geom hMom (n := n + 1) (by omega))
+  calc
+    (∫⁻ ω, ENNReal.ofReal (Real.exp (lam ^ 2 * X ω ^ 2)) ∂μ) =
+        ∫⁻ ω, ∑' n : ℕ, squareMGFTerm X lam n ω ∂μ := by
+          apply lintegral_congr_ae
+          filter_upwards [] with ω
+          exact exp_series_pointwise (lam ^ 2 * X ω ^ 2) (by positivity)
+    _ = ∑' n : ℕ, ∫⁻ ω, squareMGFTerm X lam n ω ∂μ := by
+          apply lintegral_tsum
+          intro n
+          exact squareMGFTerm_aemeasurable hX lam n
+    _ ≤ ∑' n : ℕ, ENNReal.ofReal (q ^ n) := hterm_sum
+    _ = ENNReal.ofReal (∑' n : ℕ, q ^ n) := by
+          symm
+          exact ENNReal.ofReal_tsum_of_nonneg (fun n => by positivity) hqsum
+    _ ≤ ENNReal.ofReal (Real.exp (2 * q)) :=
+          ENNReal.ofReal_le_ofReal (geom_bound q hq0 hqhalf)
+    _ = ENNReal.ofReal (Real.exp (4 * Real.exp 1 * (lam * K) ^ 2)) := by
+          congr 2
+          dsimp [q]
+          ring
+
+private lemma squareMGF_real_le
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K lam : ℝ}
+    (hX : AEMeasurable X μ) (hK : 0 ≤ K)
+    (hMom : EvenMomentBound μ X K) (hsmall : |lam| * K ≤ 1 / 4) :
+    Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ ∧
+      (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
+        Real.exp (4 * Real.exp 1 * (lam * K) ^ 2) := by
+  have hbound := squareMGF_lintegral_le hX hK hMom hsmall
+  have hmeas : AEMeasurable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ := by
+    fun_prop
+  have hfinite :
+      (∫⁻ ω, ‖Real.exp (lam ^ 2 * X ω ^ 2)‖ₑ ∂μ) < (⊤ : ENNReal) := by
+    have htop : ENNReal.ofReal (Real.exp (4 * Real.exp 1 * (lam * K) ^ 2)) <
+        (⊤ : ENNReal) :=
+      ENNReal.ofReal_lt_top
+    refine lt_of_le_of_lt ?_ htop
+    simpa only [← ofReal_norm_eq_enorm, Real.norm_eq_abs,
+      abs_of_pos (Real.exp_pos _)] using hbound
+  have hInt : Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ :=
+    ⟨hmeas.aestronglyMeasurable, (hasFiniteIntegral_iff_enorm).2 hfinite⟩
+  refine ⟨hInt, ?_⟩
+  have hEq := ofReal_integral_eq_lintegral_ofReal hInt
+    (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))
+  rw [← hEq] at hbound
+  exact (ENNReal.ofReal_le_ofReal_iff (Real.exp_nonneg _)).mp hbound
+
+/-! If the `Lᵖ` moments grow like `K * sqrt p`, then the square-exponential
+MGF is bounded on the source's local scale. The displayed constants come from
+the Stirling lower bound and the resulting geometric series. -/
+theorem momentToSquareMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hK : 0 < K)
+    (hLp : LpMomentGrowth μ X K) (lam : ℝ)
+    (hsmall : |lam| ≤ (4 * K)⁻¹) :
+    Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ ∧
+      (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
+        Real.exp (4 * Real.exp 1 * (lam * K) ^ 2) := by
+  have hsmall' : |lam| * K ≤ 1 / 4 := by
+    calc
+      |lam| * K ≤ (4 * K)⁻¹ * K :=
+        mul_le_mul_of_nonneg_right hsmall hK.le
+      _ = 1 / 4 := by field_simp
+  exact squareMGF_real_le hLp.1 hK.le
+    (evenMomentBound_of_lpMomentGrowth hLp) hsmall'
+
 end NumStability.HDP.Scalar.SubGaussian
+
+namespace NumStability.HDP.Contract
+
+/-- Stable Chapter 2 alias for the moment-to-square-MGF implication. -/
+theorem hdp_02_hlem_hsg_hmoment_hto_hsquare_hmgf
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hK : 0 < K)
+    (hLp : NumStability.HDP.Scalar.SubGaussian.LpMomentGrowth μ X K)
+    (lam : ℝ) (hsmall : |lam| ≤ (4 * K)⁻¹) :
+    Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ ∧
+      (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
+        Real.exp (4 * Real.exp 1 * (lam * K) ^ 2) :=
+  NumStability.HDP.Scalar.SubGaussian.momentToSquareMGF hK hLp lam hsmall
+
+end NumStability.HDP.Contract
