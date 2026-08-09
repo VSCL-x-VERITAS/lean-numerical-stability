@@ -395,6 +395,78 @@ theorem rademacherHoeffdingZero
   rw [hevent]
   simp
 
+/-! Two-sided Rademacher Hoeffding, using the explicit sign-symmetry law. -/
+theorem rademacherTwoSidedHoeffding
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hLaw : ∀ i, Measure.map (X i) μ = rademacherPMF.toMeasure)
+    (hNegLaw : ∀ i, Measure.map (fun ω => -X i ω) μ = rademacherPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
+    (ht : 0 < t) (hv : 0 < ∑ i, (a i) ^ 2) :
+    μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+      2 * Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by
+  let S : Ω → ℝ := fun ω => ∑ i, a i * X i ω
+  let A : Set Ω := {ω | S ω ≥ t}
+  let B : Set Ω := {ω | -S ω ≥ t}
+  have hupper := rademacherHoeffding hX hIndep hLaw hExp ht.le hv
+  let Y : ι → Ω → ℝ := fun i ω => -X i ω
+  have hY_meas : ∀ i, Measurable (Y i) := by
+    intro i
+    simpa [Y] using (hX i).neg
+  have hY_indep : iIndepFun Y μ := by
+    have hcomp := hIndep.comp (fun _ x => -x) (fun _ => by fun_prop)
+    simpa [Y, Function.comp_def] using hcomp
+  have hY_exp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * Y i ω))) μ := by
+    intro lam i
+    simpa [Y, mul_assoc, mul_left_comm, mul_comm] using hExp (-lam) i
+  have hY_law : ∀ i, Measure.map (Y i) μ = rademacherPMF.toMeasure := by
+    intro i
+    simpa [Y] using hNegLaw i
+  have hlower := rademacherHoeffding hY_meas hY_indep hY_law hY_exp ht.le hv
+  have measureReal_mono_prob {C D : Set Ω} (hCD : C ⊆ D) :
+      μ.real C ≤ μ.real D := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ D) (measure_mono hCD)
+  have hsubset : {ω | |S ω| ≥ t} ⊆ A ∪ B := by
+    intro ω hω
+    change t ≤ |S ω| at hω
+    change t ≤ S ω ∨ t ≤ -S ω
+    by_cases hupperS : t ≤ S ω
+    · exact Or.inl hupperS
+    · right
+      have hSlt : S ω < t := lt_of_not_ge hupperS
+      by_contra hnot
+      have hneglt : -S ω < t := lt_of_not_ge hnot
+      exact (not_lt_of_ge hω) ((abs_lt).2 (by constructor <;> linarith))
+  have hmeasure_union : μ.real (A ∪ B) ≤ μ.real A + μ.real B := by
+    rw [Measure.real_def, Measure.real_def, Measure.real_def]
+    calc
+      (μ (A ∪ B)).toReal ≤ (μ A + μ B).toReal := by
+        apply ENNReal.toReal_mono
+        · exact ENNReal.add_ne_top.mpr ⟨measure_ne_top μ A, measure_ne_top μ B⟩
+        · exact measure_union_le A B
+      _ = (μ A).toReal + (μ B).toReal :=
+        ENNReal.toReal_add (measure_ne_top μ A) (measure_ne_top μ B)
+  have hupperA : μ.real A ≤
+      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by
+    simpa [A, S] using hupper
+  have hlowerB : μ.real B ≤
+      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by
+    simpa [B, S, Y, Finset.sum_neg_distrib] using hlower
+  calc
+    μ.real {ω | |∑ i, a i * X i ω| ≥ t} = μ.real {ω | |S ω| ≥ t} := by rfl
+    _ ≤ μ.real (A ∪ B) := measureReal_mono_prob hsubset
+    _ ≤ μ.real A + μ.real B := hmeasure_union
+    _ ≤ Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) +
+        Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
+      add_le_add hupperA hlowerB
+    _ = 2 * Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by ring
+
 /-- A probability density supported on the nonnegative half-line and bounded by one. -/
 structure BoundedDensityOnNonnegative (f : ℝ → ℝ) : Prop where
   nonnegative : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ f x
@@ -618,6 +690,25 @@ theorem hdp_02_hthm_h2_d2_d2
       Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherHoeffding
     hX hIndep hLaw hExp ht hv
+
+/-! Stable source-facing alias for Theorem 2.2.5. -/
+theorem hdp_02_hthm_h2_d2_d5
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hLaw : ∀ i, Measure.map (X i) μ =
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherPMF.toMeasure)
+    (hNegLaw : ∀ i, Measure.map (fun ω => -X i ω) μ =
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
+    (ht : 0 < t) (hv : 0 < ∑ i, (a i) ^ 2) :
+    μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+      2 * Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherTwoSidedHoeffding
+    hX hIndep hLaw hNegLaw hExp ht hv
 
 /-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
 theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
