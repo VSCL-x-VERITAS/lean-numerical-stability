@@ -459,20 +459,6 @@ theorem minkowskiEpnorm
     eLpNorm (X + Y) p μ ≤ eLpNorm X p μ + eLpNorm Y p μ := by
   exact eLpNorm_add_le hX hY hp
 
-/-! The `p ≥ 1` branch of the source-facing Banach-space statement. -/
-structure LpQuotientBanachModelData
-    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (p : ENNReal)
-    [Fact (1 ≤ p)] where
-  normed : NormedAddCommGroup (MeasureTheory.Lp ℝ p μ)
-  complete : CompleteSpace (MeasureTheory.Lp ℝ p μ)
-
-def lpQuotientBanach
-    {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (p : ENNReal) [Fact (1 ≤ p)] :
-    LpQuotientBanachModelData μ p :=
-  { normed := inferInstance
-    complete := inferInstance }
-
 /-! A concrete two-point witness that the displayed `Lᵖ` functional need not
 be subadditive below one. -/
 theorem twoPointLpTriangleFailure :
@@ -523,6 +509,26 @@ theorem twoPointLpTriangleFailure :
     (2 : ENNReal)⁻¹ ^ 2 + 2⁻¹ ^ 2 < 2⁻¹ + 2⁻¹ :=
       ENNReal.add_lt_add hquarter hquarter
     _ = 1 := ENNReal.inv_two_add_inv_two
+
+/-! The `p ≥ 1` branch of the source-facing Banach-space statement. -/
+structure LpQuotientBanachModelData
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (p : ENNReal)
+    [Fact (1 ≤ p)] : Prop where
+  normed : Nonempty (NormedAddCommGroup (MeasureTheory.Lp ℝ p μ))
+  complete : Nonempty (CompleteSpace (MeasureTheory.Lp ℝ p μ))
+  counterexample :
+    ∃ (μ : Measure (Fin 2)) (f g : Fin 2 → ℝ),
+      IsProbabilityMeasure μ ∧
+        ¬ eLpNorm (f + g) (1 / 2 : ENNReal) μ ≤
+          eLpNorm f (1 / 2 : ENNReal) μ + eLpNorm g (1 / 2 : ENNReal) μ
+
+theorem lpQuotientBanach
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ENNReal) [Fact (1 ≤ p)] :
+    LpQuotientBanachModelData μ p :=
+  { normed := ⟨inferInstance⟩
+    complete := ⟨inferInstance⟩
+    counterexample := twoPointLpTriangleFailure }
 
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
@@ -577,7 +583,7 @@ def hdp_01_hdef_hlp_hnorm_hspace
     NumStability.HDP.Scalar.Preliminaries.LpNormSpaceModelData μ p :=
   NumStability.HDP.Scalar.Preliminaries.lpNormSpaceModel μ p
 
-def hdp_01_hthm_hlp_hbanach_hquasinorm
+theorem hdp_01_hthm_hlp_hbanach_hquasinorm
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ENNReal) [Fact (1 ≤ p)] :
     NumStability.HDP.Scalar.Preliminaries.LpQuotientBanachModelData μ p :=
