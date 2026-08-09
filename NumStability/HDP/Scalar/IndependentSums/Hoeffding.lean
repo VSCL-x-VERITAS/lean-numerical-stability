@@ -540,6 +540,120 @@ theorem fairCoinHoeffding
       field_simp [ne_of_gt hNreal]
       ring
 
+/-! The positive-total-width branch of the bounded-variable Hoeffding theorem. -/
+theorem boundedIndependentHoeffding
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {m M : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hbound : ∀ i, ∀ᵐ ω ∂μ, X i ω ∈ Set.Icc (m i) (M i))
+    (ht : 0 < t) (hv : 0 < ∑ i, ‖M i - m i‖ ^ 2) :
+    μ.real {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} ≤
+      Real.exp (-2 * t ^ 2 / (∑ i, ‖M i - m i‖ ^ 2)) := by
+  let b : ι → ℝ := fun i => ∫ y, X i y ∂μ
+  let Y : ι → Ω → ℝ := fun i ω => X i ω - b i
+  let S : Ω → ℝ := fun ω => ∑ i, Y i ω
+  let v : ℝ := ∑ i, ‖M i - m i‖ ^ 2
+  have hY_meas : ∀ i, Measurable (Y i) := by
+    intro i
+    simpa [Y, b] using (hX i).sub measurable_const
+  have hY_indep : iIndepFun Y μ := by
+    have hcomp := hIndep.comp (fun i x => x - b i)
+      (fun _ => by fun_prop)
+    simpa [Y, b, Function.comp_def] using hcomp
+  have hY_sub : ∀ i, HasSubgaussianMGF (Y i)
+      ((‖M i - m i‖₊ / 2) ^ 2) μ := by
+    intro i
+    simpa [Y, b] using
+      (hoeffdingCenteredMGF (μ := μ) (X := X i) (a := m i) (b := M i)
+        (hX i).aemeasurable (hbound i))
+  have hY_exp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * Y i ω)) μ := by
+    intro lam i
+    simpa using (hY_sub i).integrable_exp_mul lam
+  have hS_meas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ (fun i _ => hY_meas i)
+  have hS_exp (lam : ℝ) :
+      Integrable (fun ω => Real.exp (lam * S ω)) μ := by
+    have h := hY_indep.integrable_exp_mul_sum hY_meas
+      (s := Finset.univ) (fun i _ => hY_exp lam i)
+    simpa [S] using h
+  have hmgf (lam : ℝ) :
+      (∫ ω, Real.exp (lam * S ω) ∂μ) =
+        ∏ i, ∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ := by
+    simpa [S] using
+      (mgfIndependentSum (μ := μ) (X := Y) lam (fun _ => (1 : ℝ))
+        hY_indep (fun i => by simpa using hY_exp lam i))
+  have hfactor (lam : ℝ) (i : ι) :
+      (∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ) ≤
+        Real.exp ((lam * ‖M i - m i‖) ^ 2 / 8) := by
+    have hle := (hY_sub i).mgf_le lam
+    convert hle using 1 <;>
+      simp [ProbabilityTheory.mgf, Y, b, div_eq_mul_inv] <;> ring
+  have hmgf_upper (lam : ℝ) :
+      (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
+        Real.exp (lam ^ 2 * v / 8) := by
+    have hprod :
+        (∏ i, ∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ) ≤
+          ∏ i, Real.exp ((lam * ‖M i - m i‖) ^ 2 / 8) := by
+      apply Finset.prod_le_prod
+      · intro i hi
+        exact MeasureTheory.integral_nonneg (fun ω => Real.exp_nonneg _)
+      · intro i hi
+        exact hfactor lam i
+    rw [hmgf]
+    calc
+      (∏ i, ∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ) ≤
+          ∏ i, Real.exp ((lam * ‖M i - m i‖) ^ 2 / 8) := hprod
+      _ = Real.exp (lam ^ 2 * v / 8) := by
+        rw [← Real.exp_sum]
+        congr 1
+        dsimp [v]
+        ring_nf
+        rw [Finset.mul_sum, Finset.sum_mul]
+  have hupper (lam : ℝ) (hlam : 0 < lam) :
+      μ.real (S ⁻¹' Set.Ici t) ≤
+        Real.exp (-(lam * t)) * Real.exp (lam ^ 2 * v / 8) := by
+    calc
+      μ.real (S ⁻¹' Set.Ici t) ≤
+          Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) :=
+        exponentialMarkovUpper hS_meas hlam (hS_exp lam)
+      _ ≤ Real.exp (-(lam * t)) * Real.exp (lam ^ 2 * v / 8) :=
+        mul_le_mul_of_nonneg_left (hmgf_upper lam) (Real.exp_nonneg _)
+  have hv' : 0 < v := by simpa [v] using hv
+  let lam : ℝ := 4 * t / v
+  have hlam : 0 < lam := div_pos (by positivity) hv'
+  have hupper' := hupper lam hlam
+  calc
+    μ.real {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} =
+        μ.real (S ⁻¹' Set.Ici t) := by rfl
+    _ ≤ Real.exp (-(lam * t)) * Real.exp (lam ^ 2 * v / 8) := hupper'
+    _ = Real.exp (-2 * t ^ 2 / v) := by
+      rw [← Real.exp_add]
+      congr 1
+      dsimp [lam]
+      field_simp [ne_of_gt hv']
+      ring
+    _ = Real.exp (-2 * t ^ 2 / (∑ i, ‖M i - m i‖ ^ 2)) := by rfl
+
+/-! Deterministic zero-width companion for the bounded-variable theorem. -/
+theorem boundedIndependentHoeffdingZero
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {m : ι → ℝ} {t : ℝ}
+    (hconst : ∀ i ω, X i ω = m i) (ht : 0 < t) :
+    μ.real {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} = 0 := by
+  have hmean : ∀ i, (∫ y, X i y ∂μ) = m i := by
+    intro i
+    simp [hconst i]
+  have hevent : {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} = (∅ : Set Ω) := by
+    ext ω
+    simp [hconst, hmean, ht]
+  rw [hevent]
+  simp
+
 /-- A probability density supported on the nonnegative half-line and bounded by one. -/
 structure BoundedDensityOnNonnegative (f : ℝ → ℝ) : Prop where
   nonnegative : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ f x
@@ -802,6 +916,20 @@ theorem hdp_02_hex_hfair_hcoin_hhoeffding
       Real.exp (-(Fintype.card ι : ℝ) / 8) :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.fairCoinHoeffding
     hB hIndep hLaw hExp hN
+
+/-! Stable Chapter 2 alias for the bounded-variable Hoeffding theorem. -/
+theorem hdp_02_hthm_h2_d2_d6
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {m M : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hbound : ∀ i, ∀ᵐ ω ∂μ, X i ω ∈ Set.Icc (m i) (M i))
+    (ht : 0 < t) (hv : 0 < ∑ i, ‖M i - m i‖ ^ 2) :
+    μ.real {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} ≤
+      Real.exp (-2 * t ^ 2 / (∑ i, ‖M i - m i‖ ^ 2)) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.boundedIndependentHoeffding
+    hX hIndep hbound ht hv
 
 /-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
 theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
