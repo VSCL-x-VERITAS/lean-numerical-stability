@@ -162,6 +162,15 @@ def momentModelData
   finite_absolute := hfinite_absolute
   source_obstruction := no_real_square_root_neg_one
 
+/-- Whole-domain convexity interface reused by Jensen's inequality. -/
+def convexFunctionInterface (φ : ℝ → ℝ) : Prop :=
+  ConvexOn ℝ Set.univ φ
+
+theorem convexFunction_sublevel_convex
+    {φ : ℝ → ℝ} (hφ : convexFunctionInterface φ) (r : ℝ) :
+    Convex ℝ {x : ℝ | x ∈ (Set.univ : Set ℝ) ∧ φ x ≤ r} := by
+  exact hφ.convex_le r
+
 /-- The book's variance, represented by the centered second moment. -/
 def variance {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
@@ -224,5 +233,8 @@ def hdp_01_hdef_hmoments
     (μ : Measure Ω) (X : Ω → ℝ) :
     Type :=
   NumStability.HDP.Scalar.Preliminaries.MomentModelData μ X
+
+def hdp_01_hdef_hconvex_hfunction (φ : ℝ → ℝ) : Prop :=
+  NumStability.HDP.Scalar.Preliminaries.convexFunctionInterface φ
 
 end NumStability.HDP.Contract
