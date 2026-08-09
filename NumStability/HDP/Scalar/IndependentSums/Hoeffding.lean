@@ -654,6 +654,69 @@ theorem boundedIndependentHoeffdingZero
   rw [hevent]
   simp
 
+/-! Majority-vote amplification from the bounded Hoeffding theorem. -/
+theorem majorityVoteHoeffding
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {W : ι → Ω → ℝ} {δ ε : ℝ}
+    (hW : ∀ i, Measurable (W i))
+    (hIndep : iIndepFun W μ)
+    (hbound : ∀ i, ∀ᵐ ω ∂μ, W i ω ∈ Set.Icc 0 1)
+    (hmean : ∀ i, (∫ y, W i y ∂μ) ≤ 1 / 2 - δ)
+    (hδ : 0 < δ) (hε0 : 0 < ε) (hε1 : ε < 1)
+    (hN : 0 < Fintype.card ι)
+    (hNlarge : Real.log (1 / ε) / (2 * δ ^ 2) ≤ (Fintype.card ι : ℝ)) :
+    μ.real {ω | ∑ i, W i ω ≥ (Fintype.card ι : ℝ) / 2} ≤ ε := by
+  let N : ℝ := Fintype.card ι
+  let A : Set Ω := {ω | ∑ i, W i ω ≥ N / 2}
+  let C : Set Ω := {ω | ∑ i, (W i ω - ∫ y, W i y ∂μ) ≥ N * δ}
+  have hNpos : 0 < N := by simpa [N] using hN
+  have htail := boundedIndependentHoeffding (X := W)
+    (m := fun _ => (0 : ℝ)) (M := fun _ => (1 : ℝ)) (t := N * δ)
+    hW hIndep hbound (by positivity)
+    (by simpa [N] using hN)
+  have hsum_mean : ∑ i, (∫ y, W i y ∂μ) ≤ N * (1 / 2 - δ) := by
+    calc
+      ∑ i, (∫ y, W i y ∂μ) ≤ ∑ i, (1 / 2 - δ) := by
+        exact Finset.sum_le_sum (fun i hi => hmean i)
+      _ = N * (1 / 2 - δ) := by simp [N]; ring
+  have hAC : A ⊆ C := by
+    intro ω hω
+    have hsum : ∑ i, (W i ω - ∫ y, W i y ∂μ) =
+        (∑ i, W i ω) - ∑ i, (∫ y, W i y ∂μ) := by
+      rw [Finset.sum_sub_distrib]
+    change N * δ ≤ ∑ i, (W i ω - ∫ y, W i y ∂μ)
+    rw [hsum]
+    change N / 2 ≤ ∑ i, W i ω at hω
+    linarith
+  have hmeasure : μ.real A ≤ μ.real C := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ C) (measure_mono hAC)
+  have htailC : μ.real C ≤ Real.exp (-2 * (N * δ) ^ 2 / N) := by
+    simpa [C, N] using htail
+  have htailN : μ.real C ≤ Real.exp (-2 * N * δ ^ 2) := by
+    calc
+      μ.real C ≤ Real.exp (-2 * (N * δ) ^ 2 / N) := htailC
+      _ = Real.exp (-2 * N * δ ^ 2) := by
+        congr 1
+        field_simp [ne_of_gt hNpos]
+  have hlog_bound : -2 * N * δ ^ 2 ≤ Real.log ε := by
+    have hden : 0 < 2 * δ ^ 2 := by positivity
+    have hscaled := (div_le_iff₀ hden).1 hNlarge
+    have hscaled' : -Real.log ε ≤ N * (2 * δ ^ 2) := by
+      simpa [N, one_div, Real.log_inv] using hscaled
+    linarith
+  have hexp : Real.exp (-2 * N * δ ^ 2) ≤ ε := by
+    calc
+      Real.exp (-2 * N * δ ^ 2) ≤ Real.exp (Real.log ε) :=
+        (Real.exp_le_exp).2 hlog_bound
+      _ = ε := Real.exp_log hε0
+  calc
+    μ.real {ω | ∑ i, W i ω ≥ (Fintype.card ι : ℝ) / 2} = μ.real A := by rfl
+    _ ≤ μ.real C := hmeasure
+    _ ≤ Real.exp (-2 * N * δ ^ 2) := htailN
+    _ ≤ ε := hexp
+
 /-- A probability density supported on the nonnegative half-line and bounded by one. -/
 structure BoundedDensityOnNonnegative (f : ℝ → ℝ) : Prop where
   nonnegative : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ f x
@@ -930,6 +993,22 @@ theorem hdp_02_hthm_h2_d2_d6
       Real.exp (-2 * t ^ 2 / (∑ i, ‖M i - m i‖ ^ 2)) :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.boundedIndependentHoeffding
     hX hIndep hbound ht hv
+
+/-! Stable Chapter 2 alias for the majority-vote amplification exercise. -/
+theorem hdp_02_hex_h2_d2_d8
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {W : ι → Ω → ℝ} {δ ε : ℝ}
+    (hW : ∀ i, Measurable (W i))
+    (hIndep : iIndepFun W μ)
+    (hbound : ∀ i, ∀ᵐ ω ∂μ, W i ω ∈ Set.Icc 0 1)
+    (hmean : ∀ i, (∫ y, W i y ∂μ) ≤ 1 / 2 - δ)
+    (hδ : 0 < δ) (hε0 : 0 < ε) (hε1 : ε < 1)
+    (hN : 0 < Fintype.card ι)
+    (hNlarge : Real.log (1 / ε) / (2 * δ ^ 2) ≤ (Fintype.card ι : ℝ)) :
+    μ.real {ω | ∑ i, W i ω ≥ (Fintype.card ι : ℝ) / 2} ≤ ε :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.majorityVoteHoeffding
+    hW hIndep hbound hmean hδ hε0 hε1 hN hNlarge
 
 /-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
 theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
