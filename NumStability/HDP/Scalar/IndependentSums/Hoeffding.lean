@@ -467,6 +467,79 @@ theorem rademacherTwoSidedHoeffding
       add_le_add hupperA hlowerB
     _ = 2 * Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by ring
 
+/-! The fair-coin application before Remark 2.2.4. -/
+theorem fairCoinHoeffding
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {B : ι → Ω → Bool}
+    (hB : ∀ i, Measurable (B i))
+    (hIndep : iIndepFun B μ)
+    (hLaw : ∀ i, Measure.map (B i) μ = fairBernoulliPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * rademacherValue (B i ω))) μ)
+    (hN : 0 < Fintype.card ι) :
+    μ.real {ω | ∑ i, bernoulliIndicator (B i ω) ≥
+      (3 / 4 : ℝ) * (Fintype.card ι : ℝ)} ≤
+      Real.exp (-(Fintype.card ι : ℝ) / 8) := by
+  let R : ι → Ω → ℝ := fun i ω => rademacherValue (B i ω)
+  have hR : ∀ i, Measurable (R i) := by
+    intro i
+    simpa [R, Function.comp_def] using
+      (measurable_of_countable rademacherValue).comp (hB i)
+  have hR_indep : iIndepFun R μ := by
+    have hcomp := hIndep.comp (fun _ b => rademacherValue b)
+      (fun _ => measurable_of_countable rademacherValue)
+    simpa [R, Function.comp_def] using hcomp
+  have hR_law : ∀ i, Measure.map (R i) μ = rademacherPMF.toMeasure := by
+    intro i
+    rw [show R i = rademacherValue ∘ B i by rfl]
+    rw [← MeasureTheory.Measure.map_map
+      (measurable_of_countable rademacherValue) (hB i)]
+    rw [hLaw i]
+    change Measure.map rademacherValue fairBernoulliPMF.toMeasure =
+      (PMF.map rademacherValue fairBernoulliPMF).toMeasure
+    exact PMF.toMeasure_map rademacherValue fairBernoulliPMF
+      (measurable_of_countable rademacherValue)
+  have hR_exp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (1 * R i ω))) μ := by
+    intro lam i
+    simpa [R] using hExp lam i
+  have htail := rademacherHoeffding (X := R) (a := fun _ => (1 : ℝ))
+    (t := (Fintype.card ι : ℝ) / 2) hR hR_indep hR_law hR_exp
+    (by positivity) (by simpa using hN)
+  let A : Set Ω := {ω | ∑ i, bernoulliIndicator (B i ω) ≥
+    (3 / 4 : ℝ) * (Fintype.card ι : ℝ)}
+  let C : Set Ω := {ω | ∑ i, R i ω ≥ (Fintype.card ι : ℝ) / 2}
+  have hAC : A ⊆ C := by
+    intro ω hω
+    have hsum : ∑ i, R i ω =
+        2 * ∑ i, bernoulliIndicator (B i ω) - (Fintype.card ι : ℝ) := by
+      simp_rw [R, rademacherValue_eq_affine]
+      rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
+      simp
+    change (Fintype.card ι : ℝ) / 2 ≤ ∑ i, R i ω
+    rw [hsum]
+    change (3 / 4 : ℝ) * (Fintype.card ι : ℝ) ≤
+      ∑ i, bernoulliIndicator (B i ω) at hω
+    linarith
+  have hmeasure : μ.real A ≤ μ.real C := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ C) (measure_mono hAC)
+  calc
+    μ.real {ω | ∑ i, bernoulliIndicator (B i ω) ≥
+        (3 / 4 : ℝ) * (Fintype.card ι : ℝ)} = μ.real A := by rfl
+    _ ≤ μ.real C := hmeasure
+    _ ≤ Real.exp (-((Fintype.card ι : ℝ) / 2) ^ 2 /
+        (2 * ∑ i, (1 : ℝ) ^ 2)) := by
+      simpa [C] using htail
+    _ = Real.exp (-(Fintype.card ι : ℝ) / 8) := by
+      congr 1
+      have hNreal : 0 < (Fintype.card ι : ℝ) := by exact_mod_cast hN
+      simp only [one_pow]
+      rw [show (∑ i : ι, (1 : ℝ)) = (Fintype.card ι : ℝ) by simp]
+      field_simp [ne_of_gt hNreal]
+      ring
+
 /-- A probability density supported on the nonnegative half-line and bounded by one. -/
 structure BoundedDensityOnNonnegative (f : ℝ → ℝ) : Prop where
   nonnegative : ∀ᵐ x ∂(volume : Measure ℝ), 0 ≤ f x
@@ -709,6 +782,26 @@ theorem hdp_02_hthm_h2_d2_d5
       2 * Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
   NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherTwoSidedHoeffding
     hX hIndep hLaw hNegLaw hExp ht hv
+
+/-! Stable Chapter 2 alias for the fair-coin Hoeffding application. -/
+theorem hdp_02_hex_hfair_hcoin_hhoeffding
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {B : ι → Ω → Bool}
+    (hB : ∀ i, Measurable (B i))
+    (hIndep : iIndepFun B μ)
+    (hLaw : ∀ i, Measure.map (B i) μ =
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.fairBernoulliPMF.toMeasure)
+    (hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam *
+        NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherValue (B i ω))) μ)
+    (hN : 0 < Fintype.card ι) :
+    μ.real {ω | ∑ i,
+        NumStability.HDP.Scalar.IndependentSums.Hoeffding.bernoulliIndicator (B i ω) ≥
+      (3 / 4 : ℝ) * (Fintype.card ι : ℝ)} ≤
+      Real.exp (-(Fintype.card ι : ℝ) / 8) :=
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.fairCoinHoeffding
+    hB hIndep hLaw hExp hN
 
 /-- Stable Chapter 2 alias for the centered bounded-variable Hoeffding lemma. -/
 theorem hdp_02_hlem_hhoeffding_hbounded_hmgf
