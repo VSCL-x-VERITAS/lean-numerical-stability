@@ -287,6 +287,31 @@ noncomputable def l2Norm {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
   Real.sqrt (expectation μ (fun ω => (X ω) ^ 2))
 
+/-- The source-facing standard deviation, with the square root made explicit. -/
+def standardDeviation {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
+  Real.sqrt (variance μ X)
+
+/-- The representative-level covariance of two real random variables. -/
+def covariance {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) : ℝ :=
+  expectation μ (fun ω =>
+    (X ω - expectation μ X) * (Y ω - expectation μ Y))
+
+/-! The two geometric identities from Remark 1.1.1 are definitional once the
+source quantities are represented by the centered expectation formulas. -/
+theorem stdevCovarianceIdentities
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X Y : Ω → ℝ) :
+    (l2Norm μ (fun ω => X ω - expectation μ X) = standardDeviation μ X) ∧
+      (covariance μ X Y =
+        l2InnerProduct μ
+          (fun ω => X ω - expectation μ X)
+          (fun ω => Y ω - expectation μ Y)) := by
+  constructor
+  · rfl
+  · rfl
+
 structure L2GeometryModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X Y : Ω → ℝ) where
