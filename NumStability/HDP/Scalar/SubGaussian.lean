@@ -126,7 +126,7 @@ private theorem standardNormalSquareMGF_integrable
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring]
-    exact (integrable_exp_neg_mul_sq hb).const_mul _
+    exact (_root_.integrable_exp_neg_mul_sq hb).const_mul _
   simpa only [mul_comm] using htarget
 
 private theorem standardNormalSquareMGF_value
@@ -168,7 +168,7 @@ private theorem standardNormalSquareMGF_value
           Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2) := by
             congr 2
             ring]
-  rw [integral_const_mul, integral_gaussian]
+  rw [integral_const_mul, _root_.integral_gaussian]
   apply (sq_eq_sq₀ (by positivity) (by positivity)).1
   rw [mul_pow]
   simp only [inv_pow]
@@ -220,7 +220,7 @@ private theorem standardNormalSquareMGF_not_integrable
   rw [hrew] at hvol'
   have hbad : ¬ Integrable (fun x : ℝ =>
       Real.exp (-((1 / 2 : ℝ) - lam ^ 2) * x ^ 2)) := by
-    rw [integrable_exp_neg_mul_sq_iff]
+    rw [_root_.integrable_exp_neg_mul_sq_iff]
     exact not_lt_of_ge (sub_nonpos.mpr hsq)
   have hc : (Real.sqrt (2 * Real.pi))⁻¹ ≠ 0 := by positivity
   exact hbad ((integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc) _).mp hvol')
