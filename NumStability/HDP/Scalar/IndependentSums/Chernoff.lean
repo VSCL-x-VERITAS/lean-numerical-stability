@@ -170,6 +170,89 @@ theorem poissonBinomialChernoffBound
       field_simp
       ring
 
+theorem poissonBinomialLowerChernoffBound
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {B : ι → Ω → Bool} {p : ι → ℝ≥0}
+    (hp : ∀ i, p i ≤ 1)
+    (hB : iIndepFun B μ)
+    (hLaw : ∀ i, HasLaw (B i) (PMF.bernoulli (p i) (hp i)).toMeasure μ)
+    (hMeas : ∀ i, Measurable (B i))
+    {t : ℝ}
+    (hExp : ∀ i, Integrable
+      (fun ω => Real.exp ((-Real.log ((∑ i, (p i : ℝ)) / t)) *
+        (if B i ω then 1 else 0))) μ)
+    (ht : 0 < t)
+    (htμ : t < ∑ i, (p i : ℝ))
+    (hExpS : Integrable
+      (fun ω => Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) *
+        (-∑ i, (if B i ω then 1 else 0)))) μ) :
+    μ.real {ω | ∑ i, (if B i ω then 1 else 0) ≤ t} ≤
+      Real.exp (-(∑ i, (p i : ℝ))) *
+        ((Real.exp 1 * (∑ i, (p i : ℝ)) / t) ^ t) := by
+  let S : Ω → ℝ := fun ω => ∑ i, (if B i ω then 1 else 0)
+  have hS : Measurable S := by
+    dsimp [S]
+    refine Finset.measurable_fun_sum Finset.univ ?_
+    intro i hi
+    exact Measurable.ite
+      (measurableSet_preimage (hMeas i) (measurableSet_singleton (true : Bool)))
+      measurable_const measurable_const
+  have hμpos : 0 < ∑ i, (p i : ℝ) := lt_trans ht htμ
+  have hratio : 0 < (∑ i, (p i : ℝ)) / t := div_pos hμpos ht
+  have hlogpos : 0 < Real.log ((∑ i, (p i : ℝ)) / t) := by
+    apply Real.log_pos
+    rw [one_lt_div ht]
+    exact htμ
+  have hmgf := poissonBinomialMgfBound hp hB hLaw
+    (-Real.log ((∑ i, (p i : ℝ)) / t)) hExp
+  have hmarkov :=
+    NumStability.HDP.Scalar.IndependentSums.Hoeffding.exponentialMarkovUpper
+      (S := fun ω => -S ω)
+      (lam := Real.log ((∑ i, (p i : ℝ)) / t)) (t := -t)
+      hS.neg hlogpos hExpS
+  have hbound :
+      (∫ ω, Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * (-S ω)) ∂μ) ≤
+        Real.exp ((Real.exp (-Real.log ((∑ i, (p i : ℝ)) / t)) - 1) *
+          (∑ i, (p i : ℝ))) := by
+    simpa [S, mul_neg] using hmgf
+  have hmul :
+      Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * t) *
+          (∫ ω, Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * (-S ω)) ∂μ) ≤
+        Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * t) *
+          Real.exp ((Real.exp (-Real.log ((∑ i, (p i : ℝ)) / t)) - 1) *
+            (∑ i, (p i : ℝ))) :=
+    mul_le_mul_of_nonneg_left hbound (Real.exp_nonneg _)
+  calc
+    μ.real {ω | ∑ i, (if B i ω then 1 else 0) ≤ t} =
+        μ.real ((fun ω => -S ω) ⁻¹' Set.Ici (-t)) := by
+      congr 1
+      ext ω
+      simp [S, le_neg]
+    _ ≤ Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * t) *
+        (∫ ω, Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * (-S ω)) ∂μ) := by
+      simpa [mul_neg, mul_comm] using hmarkov
+    _ ≤ Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) * t) *
+        Real.exp ((Real.exp (-Real.log ((∑ i, (p i : ℝ)) / t)) - 1) *
+          (∑ i, (p i : ℝ))) := hmul
+    _ = Real.exp (-(∑ i, (p i : ℝ))) *
+        ((Real.exp 1 * (∑ i, (p i : ℝ)) / t) ^ t) := by
+      have hμpos : 0 < ∑ i, (p i : ℝ) := lt_trans ht htμ
+      have hbase : 0 < Real.exp 1 * (∑ i, (p i : ℝ)) / t :=
+        div_pos (mul_pos (Real.exp_pos _) hμpos) ht
+      rw [Real.exp_neg, Real.exp_log hratio]
+      rw [Real.rpow_def_of_pos hbase]
+      rw [Real.log_div (mul_ne_zero (ne_of_gt (Real.exp_pos (1 : ℝ)))
+        (ne_of_gt hμpos)) (ne_of_gt ht)]
+      rw [Real.log_mul (ne_of_gt (Real.exp_pos (1 : ℝ))) (ne_of_gt hμpos)]
+      rw [Real.log_exp]
+      rw [← Real.exp_add]
+      rw [← Real.exp_add]
+      congr 1
+      rw [Real.log_div (ne_of_gt hμpos) (ne_of_gt ht)]
+      field_simp
+      ring
+
 theorem poissonBinomialChernoffZeroCase
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -257,6 +340,29 @@ theorem hdp_02_hthm_h2_d3_d1
         ((Real.exp 1 * (∑ i, (p i : ℝ)) / t) ^ t) :=
   NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonBinomialChernoffBound
     hp hB hLaw hMeas hExp ht hμ hExpS
+
+theorem hdp_02_hex_h2_d3_d2
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {B : ι → Ω → Bool} {p : ι → ℝ≥0}
+    (hp : ∀ i, p i ≤ 1)
+    (hB : iIndepFun B μ)
+    (hLaw : ∀ i, HasLaw (B i) (PMF.bernoulli (p i) (hp i)).toMeasure μ)
+    (hMeas : ∀ i, Measurable (B i))
+    {t : ℝ}
+    (hExp : ∀ i, Integrable
+      (fun ω => Real.exp ((-Real.log ((∑ i, (p i : ℝ)) / t)) *
+        (if B i ω then 1 else 0))) μ)
+    (ht : 0 < t)
+    (htμ : t < ∑ i, (p i : ℝ))
+    (hExpS : Integrable
+      (fun ω => Real.exp (Real.log ((∑ i, (p i : ℝ)) / t) *
+        (-∑ i, (if B i ω then 1 else 0)))) μ) :
+    μ.real {ω | ∑ i, (if B i ω then 1 else 0) ≤ t} ≤
+      Real.exp (-(∑ i, (p i : ℝ))) *
+        ((Real.exp 1 * (∑ i, (p i : ℝ)) / t) ^ t) :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonBinomialLowerChernoffBound
+    hp hB hLaw hMeas hExp ht htμ hExpS
 
 theorem hdp_02_hlem_hbernoulli_hmgf_hbound :
     NumStability.HDP.Scalar.IndependentSums.Chernoff.BernoulliMgfModelData :=
