@@ -8,6 +8,7 @@ import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Convex.Continuous
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
+import Mathlib.MeasureTheory.Integral.Layercake
 import Mathlib.Tactic
 
 /-!
@@ -313,6 +314,41 @@ theorem layerCakePointwise {x : ℝ} (hx : 0 ≤ x) :
           (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume := by
         symm
         rw [MeasureTheory.setLIntegral_indicator measurableSet_Iio]
+
+/-! The expectation/tail identity from Lemma 1.2.1. -/
+theorem layerCakeExpectationExtended
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ ω, 0 ≤ X ω) :
+    (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) =
+      ∫⁻ t in Set.Ioi 0, μ {ω | t < X ω} := by
+  exact MeasureTheory.lintegral_eq_lintegral_meas_lt μ
+    (Filter.Eventually.of_forall hNonneg) hX.aemeasurable
+
+theorem layerCakeExpectationFinite
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ ω, 0 ≤ X ω) (hInt : Integrable X μ) :
+    expectation μ X =
+      ∫ t in Set.Ioi 0, μ.real {ω | t < X ω} := by
+  exact hInt.integral_eq_integral_meas_lt
+    (Filter.Eventually.of_forall hNonneg)
+
+theorem layerCakeExpectation
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ ω, 0 ≤ X ω) :
+    ((∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < X ω}) ∧
+      (∀ hInt : Integrable X μ,
+        expectation μ X =
+          ∫ t in Set.Ioi 0, μ.real {ω | t < X ω}) := by
+  refine ⟨layerCakeExpectationExtended hX hNonneg, ?_⟩
+  intro hInt
+  exact layerCakeExpectationFinite hX hNonneg hInt
 
 /-! The pointwise indicator inequality used in the proof of Markov's bound. -/
 theorem markovIndicatorBound {x t : ℝ} (hx : 0 ≤ x) (ht : 0 < t) :
@@ -621,6 +657,18 @@ theorem hdp_01_hlem_hlayer_hcake_hpointwise {x : ℝ} (hx : 0 ≤ x) :
         ∫⁻ t in Set.Ioi 0,
           (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume :=
   NumStability.HDP.Scalar.Preliminaries.layerCakePointwise hx
+
+theorem hdp_01_hlem_h1_d2_d1
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X)
+    (hNonneg : ∀ ω, 0 ≤ X ω) :
+    ((∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < X ω}) ∧
+      (∀ hInt : Integrable X μ,
+        NumStability.HDP.Scalar.Preliminaries.expectation μ X =
+          ∫ t in Set.Ioi 0, μ.real {ω | t < X ω}) :=
+  NumStability.HDP.Scalar.Preliminaries.layerCakeExpectation hX hNonneg
 
 theorem hdp_01_hlem_hmarkov_hindicator_hbound {x t : ℝ}
     (hx : 0 ≤ x) (ht : 0 < t) :
