@@ -5,6 +5,8 @@ import Mathlib.Topology.MetricSpace.Lipschitz
 import Mathlib.Topology.MetricSpace.HausdorffDistance
 import Mathlib.Analysis.Normed.MulAction
 import Mathlib.Analysis.Calculus.FDeriv.Basic
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.Deriv.Abs
 import Mathlib.Geometry.Manifold.Riemannian.Basic
 import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
 import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
@@ -145,6 +147,97 @@ theorem distance_to_set_lipschitz (s : Set ℝ) :
 theorem distance_to_set_le_add (s : Set ℝ) (x y : ℝ) :
     Metric.infDist x s ≤ Metric.infDist y s + dist x y :=
   Metric.infDist_le_infDist_add_dist
+
+/-!
+  Exercise 5.1.2 is a source discrepancy: differentiability alone does not
+  imply global Lipschitz continuity.  The corrected package below records the
+  counterexample, the valid bounded-derivative theorem, and explicit examples
+  separating uniform continuity from Lipschitz continuity and differentiability
+  on the printed compact intervals.
+-/
+def sqrtUnitIntervalExample (x : ℝ) : ℝ := Real.sqrt x
+
+def absUnitIntervalExample (x : ℝ) : ℝ := |x|
+
+theorem exercise512Corrected :
+    (∀ {α β : Type} [PseudoEMetricSpace α] [PseudoEMetricSpace β]
+      {K : NNReal} {f : α → β}, LipschitzWith K f → UniformContinuous f) ∧
+    (¬ ∃ K : NNReal, LipschitzWith K (fun x : ℝ => x ^ 2)) ∧
+    (∀ {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E]
+      {f : E → ℝ} (hf : Differentiable ℝ f) (C : NNReal),
+      (∀ x, ‖fderiv ℝ f x‖₊ ≤ C) → LipschitzWith C f) ∧
+    UniformContinuousOn sqrtUnitIntervalExample (Icc (0 : ℝ) 1) ∧
+    (¬ ∃ K : NNReal,
+      LipschitzOnWith K sqrtUnitIntervalExample (Icc (0 : ℝ) 1)) ∧
+    LipschitzOnWith 1 absUnitIntervalExample (Icc (-1 : ℝ) 1) ∧
+    ¬ DifferentiableWithinAt ℝ absUnitIntervalExample (Icc (-1 : ℝ) 1) 0 := by
+  have huniform :
+      ∀ {α β : Type} [PseudoEMetricSpace α] [PseudoEMetricSpace β]
+        {K : NNReal} {f : α → β}, LipschitzWith K f → UniformContinuous f := by
+    intro α β _ _ K f hf
+    exact hf.uniformContinuous
+  have hsquare : ¬ ∃ K : NNReal, LipschitzWith K (fun x : ℝ => x ^ 2) := by
+    rintro ⟨K, hK⟩
+    have h := hK.norm_sub_le 0 (K + 1)
+    norm_num [Real.norm_eq_abs] at h
+    have hK0 : (0 : ℝ) ≤ K := K.2
+    have habs : |-1 + -(K : ℝ)| = (K : ℝ) + 1 := by
+      rw [abs_of_nonpos]
+      · ring
+      · linarith
+    rw [habs] at h
+    nlinarith
+  have hsqrt_uniform :
+      UniformContinuousOn sqrtUnitIntervalExample (Icc (0 : ℝ) 1) := by
+    exact isCompact_Icc.uniformContinuousOn_of_continuous
+      Real.continuous_sqrt.continuousOn
+  have hsqrt_not_lipschitz :
+      ¬ ∃ K : NNReal,
+        LipschitzOnWith K sqrtUnitIntervalExample (Icc (0 : ℝ) 1) := by
+    rintro ⟨K, hK⟩
+    let a : ℝ := ((K : ℝ) + 1)⁻¹
+    have ha0 : 0 ≤ a := by
+      dsimp [a]
+      positivity
+    have ha1 : a ≤ 1 := by
+      dsimp [a]
+      have hK1 : (1 : ℝ) ≤ (K : ℝ) + 1 := by linarith [K.2]
+      exact (inv_le_one₀ (by positivity)).2 hK1
+    have ha_mem : a ^ 2 ∈ Icc (0 : ℝ) 1 := by
+      constructor
+      · positivity
+      · have hsqa : a ^ 2 ≤ (1 : ℝ) ^ 2 :=
+          (sq_le_sq₀ (by positivity : (0 : ℝ) ≤ a) (by norm_num)).2 ha1
+        simpa using hsqa
+    have h0_mem : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := by norm_num
+    have h := hK.dist_le_mul (a ^ 2) ha_mem 0 h0_mem
+    have hsqrt : Real.sqrt (a ^ 2) = a := Real.sqrt_sq ha0
+    dsimp [sqrtUnitIntervalExample, a] at h hsqrt ⊢
+    rw [hsqrt] at h
+    have hpos : 0 < (K : ℝ) + 1 := by linarith [K.2]
+    rw [Real.dist_eq, Real.dist_eq] at h
+    simp only [Real.sqrt_zero, sub_zero] at h
+    have hdivpos : 0 < ((K : ℝ) + 1)⁻¹ := inv_pos.mpr hpos
+    have hdivsqpos : 0 < ((K : ℝ) + 1)⁻¹ ^ 2 := sq_pos_of_pos hdivpos
+    rw [abs_of_pos hdivpos, abs_of_pos hdivsqpos] at h
+    field_simp [hpos.ne'] at h
+    nlinarith [K.2]
+  have habs_lipschitz :
+      LipschitzOnWith 1 absUnitIntervalExample (Icc (-1 : ℝ) 1) := by
+    simpa [absUnitIntervalExample, Real.norm_eq_abs] using
+      (lipschitzWith_one_norm (E := ℝ)).lipschitzOnWith
+  have habs_not_differentiable :
+      ¬ DifferentiableWithinAt ℝ absUnitIntervalExample (Icc (-1 : ℝ) 1) 0 := by
+    intro h
+    apply not_differentiableAt_abs_zero
+    apply h.differentiableAt
+    exact Icc_mem_nhds (by norm_num) (by norm_num)
+  refine ⟨huniform, hsquare, ?_, hsqrt_uniform, hsqrt_not_lipschitz,
+    habs_lipschitz, habs_not_differentiable⟩
+  intro E _ _ f hf C hC
+  rw [← lipschitzOnWith_univ]
+  exact Convex.lipschitzOnWith_of_nnnorm_fderiv_le
+    (fun x _ => hf x) (fun x _ => hC x) convex_univ
 
 /-!
   The general metric-space definition from Chapter 5, §5.1.1.  The
@@ -921,5 +1014,27 @@ theorem hdp_05_hex_h5_d2_d11 (n : ℕ) :
     NumStability.HDP.Concentration.MetricMeasure.standardNormalLaw,
     NumStability.HDP.Concentration.MetricMeasure.uniformUnitIntervalLaw] using
     NumStability.HDP.Concentration.MetricMeasure.standardNormalCdfProductUniform n
+
+theorem hdp_05_hex_h5_d1_d2 :
+    (∀ {α β : Type} [PseudoEMetricSpace α] [PseudoEMetricSpace β]
+      {K : NNReal} {f : α → β}, LipschitzWith K f → UniformContinuous f) ∧
+    (¬ ∃ K : NNReal, LipschitzWith K (fun x : ℝ => x ^ 2)) ∧
+    (∀ {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E]
+      {f : E → ℝ} (hf : Differentiable ℝ f) (C : NNReal),
+      (∀ x, ‖fderiv ℝ f x‖₊ ≤ C) → LipschitzWith C f) ∧
+    UniformContinuousOn
+      NumStability.HDP.Concentration.MetricMeasure.sqrtUnitIntervalExample
+      (Set.Icc (0 : ℝ) 1) ∧
+    (¬ ∃ K : NNReal,
+      LipschitzOnWith K
+        NumStability.HDP.Concentration.MetricMeasure.sqrtUnitIntervalExample
+        (Set.Icc (0 : ℝ) 1)) ∧
+    LipschitzOnWith 1
+      NumStability.HDP.Concentration.MetricMeasure.absUnitIntervalExample
+      (Set.Icc (-1 : ℝ) 1) ∧
+    ¬ DifferentiableWithinAt ℝ
+      NumStability.HDP.Concentration.MetricMeasure.absUnitIntervalExample
+      (Set.Icc (-1 : ℝ) 1) 0 :=
+  NumStability.HDP.Concentration.MetricMeasure.exercise512Corrected
 
 end NumStability.HDP.Contract
