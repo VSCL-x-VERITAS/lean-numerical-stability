@@ -1,5 +1,6 @@
 import Mathlib.Probability.Moments.Variance
 import Mathlib.Probability.CDF
+import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.Tactic
 
 /-!
@@ -88,6 +89,20 @@ def expectation {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
   ∫ ω, X ω ∂μ
 
+/- The source notation `1_E`, represented as the real-valued indicator. -/
+def indicatorFunction {Ω : Type*} [MeasurableSpace Ω]
+    (E : Set Ω) : Ω → ℝ :=
+  Set.indicator E (fun _ => 1)
+
+/- The expectation identity is stated with `Measure.real`, the real-valued
+  form of a measure, because the Bochner integral is real-valued. -/
+theorem indicatorExpectation
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (E : Set Ω) (hE : MeasurableSet E) :
+    expectation μ (indicatorFunction E) = μ.real E := by
+  unfold expectation indicatorFunction
+  exact integral_indicator_one hE
+
 /-- The book's variance, represented by the centered second moment. -/
 def variance {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
@@ -135,3 +150,14 @@ def expectationVarianceModel
       simpa using expectation_centered hX }
 
 end NumStability.HDP.Scalar.Preliminaries
+
+namespace NumStability.HDP.Contract
+
+def hdp_01_hdef_hindicator
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (E : Set Ω) (hE : MeasurableSet E) :
+    NumStability.HDP.Scalar.Preliminaries.expectation μ
+        (NumStability.HDP.Scalar.Preliminaries.indicatorFunction E) = μ.real E :=
+  NumStability.HDP.Scalar.Preliminaries.indicatorExpectation μ E hE
+
+end NumStability.HDP.Contract
