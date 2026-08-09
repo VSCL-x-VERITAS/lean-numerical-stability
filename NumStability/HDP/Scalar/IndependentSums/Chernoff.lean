@@ -3,6 +3,9 @@ import Mathlib.Combinatorics.SimpleGraph.Finite
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Independence.Integration
+import Mathlib.Probability.Distributions.Poisson
+import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
+import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.IndependentSums.Hoeffding
 
@@ -20,6 +23,7 @@ open MeasureTheory
 open ProbabilityTheory
 open scoped BigOperators
 open scoped NNReal
+open scoped Asymptotics
 
 namespace NumStability.HDP.Scalar.IndependentSums.Chernoff
 
@@ -272,6 +276,64 @@ theorem poissonBinomialChernoffZeroCase
   rw [hset]
   simp
 
+/-! The point-mass sharpness calculation from Remark 2.3.4.  We state the
+asymptotic with its exact Stirling normalization; the book's `≍` notation is
+the corresponding two-sided constant-factor consequence. -/
+theorem poissonPointMass_isEquivalent_stirling (rate : ℝ≥0) (hrate : 0 < rate) :
+    (fun k : ℕ => ProbabilityTheory.poissonPMFReal rate k) ~[Filter.atTop]
+      (fun k : ℕ =>
+        Real.exp (-(rate : ℝ)) *
+          (Real.exp 1 * (rate : ℝ) / (k : ℝ)) ^ k /
+            Real.sqrt (2 * (k : ℝ) * Real.pi)) := by
+  have _hrate_real : 0 < (rate : ℝ) := by exact_mod_cast hrate
+  have hfactorial := Stirling.factorial_isEquivalent_stirling
+  have hnumerator :
+      (fun k : ℕ => Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k) ~[Filter.atTop]
+        (fun k : ℕ => Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k) :=
+    Asymptotics.IsEquivalent.refl
+  have hinverse :
+      (fun k : ℕ => ((k.factorial : ℝ)⁻¹)) ~[Filter.atTop]
+        (fun k : ℕ =>
+          (Real.sqrt (2 * (k : ℝ) * Real.pi) *
+          ((k : ℝ) / Real.exp 1) ^ k)⁻¹) := by
+    simpa only [Pi.inv_apply] using hfactorial.inv
+  have hproduct :
+      (fun k : ℕ =>
+        Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k *
+          ((k.factorial : ℝ)⁻¹)) ~[Filter.atTop]
+        (fun k : ℕ =>
+          Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k *
+            (Real.sqrt (2 * (k : ℝ) * Real.pi) *
+            ((k : ℝ) / Real.exp 1) ^ k)⁻¹) := by
+    simpa only [Pi.mul_apply] using hnumerator.mul hinverse
+  have hleft :
+      (fun k : ℕ =>
+        Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k *
+          ((k.factorial : ℝ)⁻¹)) =ᶠ[Filter.atTop]
+        (fun k : ℕ => ProbabilityTheory.poissonPMFReal rate k) := by
+    filter_upwards [] with k
+    simp [ProbabilityTheory.poissonPMFReal, div_eq_mul_inv]
+  have hright :
+      (fun k : ℕ =>
+        Real.exp (-(rate : ℝ)) * (rate : ℝ) ^ k *
+          (Real.sqrt (2 * (k : ℝ) * Real.pi) *
+            ((k : ℝ) / Real.exp 1) ^ k)⁻¹) =ᶠ[Filter.atTop]
+        (fun k : ℕ =>
+          Real.exp (-(rate : ℝ)) *
+            (Real.exp 1 * (rate : ℝ) / (k : ℝ)) ^ k /
+              Real.sqrt (2 * (k : ℝ) * Real.pi)) := by
+    have hlarge : ∀ᶠ k : ℕ in Filter.atTop, 1 ≤ k :=
+      Filter.eventually_atTop.2 ⟨1, fun _ hk => hk⟩
+    filter_upwards [hlarge] with k hk
+    have hk0 : (k : ℝ) ≠ 0 := by
+      exact_mod_cast (Nat.ne_of_gt hk)
+    have hscale : Real.sqrt (2 * (k : ℝ) * Real.pi) ≠ 0 := by
+      positivity
+    rw [div_pow, div_pow]
+    field_simp [hk0, hscale, Real.exp_ne_zero]
+    rw [mul_pow]
+  exact (hproduct.congr_left hleft).congr_right hright
+
 structure BernoulliMgfModelData : Prop where
   scalar : ∀ (p : ℝ≥0), (hp : p ≤ 1) → ∀ lam : ℝ,
     ((∫ b : Bool, Real.exp (lam * (if b then 1 else 0)) ∂
@@ -317,6 +379,15 @@ instance erdosRenyiModel.isProbabilityMeasure
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
 
 namespace NumStability.HDP.Contract
+
+theorem hdp_02_hrem_h2_d3_d4 (rate : ℝ≥0) (hrate : 0 < rate) :
+    (fun k : ℕ => ProbabilityTheory.poissonPMFReal rate k) ~[Filter.atTop]
+      (fun k : ℕ =>
+        Real.exp (-(rate : ℝ)) *
+          (Real.exp 1 * (rate : ℝ) / (k : ℝ)) ^ k /
+            Real.sqrt (2 * (k : ℝ) * Real.pi)) :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonPointMass_isEquivalent_stirling
+    rate hrate
 
 theorem hdp_02_hthm_h2_d3_d1
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
