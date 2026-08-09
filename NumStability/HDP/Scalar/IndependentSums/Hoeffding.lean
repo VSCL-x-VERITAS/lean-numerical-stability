@@ -159,6 +159,10 @@ theorem exponentialMarkov
   have hY_markov :=
     NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
       hY hY_nonneg hY_int (Real.exp_pos (lam * t))
+  have measureReal_mono_prob {A B : Set Ω} (hAB : A ⊆ B) :
+      μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
   have hupper_subset : S ⁻¹' Set.Ici t ⊆
       Y ⁻¹' Set.Ici (Real.exp (lam * t)) := by
     intro ω hω
@@ -169,7 +173,7 @@ theorem exponentialMarkov
       Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
     calc
       μ.real (S ⁻¹' Set.Ici t) ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (lam * t))) :=
-        measureReal_mono hupper_subset
+        measureReal_mono_prob hupper_subset
       _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (lam * t) := by
         simpa [Preliminaries.expectation] using hY_markov
       _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * S ω) ∂μ) := by
@@ -198,7 +202,7 @@ theorem exponentialMarkov
       Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * (-S ω)) ∂μ) := by
     calc
       μ.real (Z ⁻¹' Set.Ici t) ≤ μ.real (W ⁻¹' Set.Ici (Real.exp (lam * t))) :=
-        measureReal_mono hlower_subset
+        measureReal_mono_prob hlower_subset
       _ ≤ (∫ ω, W ω ∂μ) / Real.exp (lam * t) := by
         simpa [Preliminaries.expectation] using hW_markov
       _ = Real.exp (-(lam * t)) * (∫ ω, Real.exp (lam * (-S ω)) ∂μ) := by
