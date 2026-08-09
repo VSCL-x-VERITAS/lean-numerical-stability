@@ -757,6 +757,19 @@ instance erdosRenyiModel.isProbabilityMeasure
   dsimp [erdosRenyiModel]
   infer_instance
 
+theorem erdosRenyiDegreeLaw
+    (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (v : Fin n) :
+    HasLaw ((erdosRenyiModel n p).degree v)
+      (graphBinomialLaw n p)
+      (erdosRenyiModel n p).graphLaw := by
+  have h := graphDegreeSum_hasLaw p v
+  have hcongr :
+      (erdosRenyiModel n p).degree v = graphDegreeSum v := by
+    funext G
+    exact erdosRenyiModel_degree_eq_graphDegreeSum n p v G
+  have h' := h.congr (Filter.Eventually.of_forall (fun G => congrFun hcongr G))
+  simpa [erdosRenyiModel] using h'
+
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
 
 namespace NumStability.HDP.Contract
@@ -842,15 +855,7 @@ theorem hdp_02_hlem_her_hdegree_hlaw
     (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (v : Fin n) :
     HasLaw ((NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).degree v)
       (NumStability.HDP.Scalar.IndependentSums.Chernoff.graphBinomialLaw n p)
-      (NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).graphLaw := by
-  have h := NumStability.HDP.Scalar.IndependentSums.Chernoff.graphDegreeSum_hasLaw p v
-  have hcongr :
-      (NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).degree v =
-        NumStability.HDP.Scalar.IndependentSums.Chernoff.graphDegreeSum v := by
-    funext G
-    exact NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel_degree_eq_graphDegreeSum
-      n p v G
-  have h' := h.congr (Filter.Eventually.of_forall (fun G => congrFun hcongr G))
-  simpa [NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel] using h'
+      (NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p).graphLaw :=
+  NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiDegreeLaw n p v
 
 end NumStability.HDP.Contract
