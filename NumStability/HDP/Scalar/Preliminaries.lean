@@ -1,6 +1,9 @@
 import Mathlib.Probability.Moments.Variance
 import Mathlib.Probability.CDF
 import Mathlib.MeasureTheory.Function.LpSpace.Basic
+import Mathlib.MeasureTheory.Function.LpSpace.Complete
+import Mathlib.MeasureTheory.Function.LpSeminorm.Indicator
+import Mathlib.Probability.UniformOn
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Convex.Continuous
 import Mathlib.MeasureTheory.Integral.Bochner.Set
@@ -456,6 +459,71 @@ theorem minkowskiEpnorm
     eLpNorm (X + Y) p μ ≤ eLpNorm X p μ + eLpNorm Y p μ := by
   exact eLpNorm_add_le hX hY hp
 
+/-! The `p ≥ 1` branch of the source-facing Banach-space statement. -/
+structure LpQuotientBanachModelData
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (p : ENNReal)
+    [Fact (1 ≤ p)] where
+  normed : NormedAddCommGroup (MeasureTheory.Lp ℝ p μ)
+  complete : CompleteSpace (MeasureTheory.Lp ℝ p μ)
+
+def lpQuotientBanach
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ENNReal) [Fact (1 ≤ p)] :
+    LpQuotientBanachModelData μ p :=
+  { normed := inferInstance
+    complete := inferInstance }
+
+/-! A concrete two-point witness that the displayed `Lᵖ` functional need not
+be subadditive below one. -/
+theorem twoPointLpTriangleFailure :
+    ∃ (μ : Measure (Fin 2)) (f g : Fin 2 → ℝ),
+      IsProbabilityMeasure μ ∧
+        ¬ eLpNorm (f + g) (1 / 2 : ENNReal) μ ≤
+          eLpNorm f (1 / 2 : ENNReal) μ + eLpNorm g (1 / 2 : ENNReal) μ := by
+  let μ : Measure (Fin 2) := ProbabilityTheory.uniformOn Set.univ
+  let f : Fin 2 → ℝ := Set.indicator ({0} : Set (Fin 2)) (fun _ => 1)
+  let g : Fin 2 → ℝ := Set.indicator ({1} : Set (Fin 2)) (fun _ => 1)
+  have hμ : IsProbabilityMeasure μ := by
+    dsimp [μ]
+    infer_instance
+  have hμ0 : μ ({0} : Set (Fin 2)) = (1 / 2 : ENNReal) := by
+    dsimp [μ]
+    rw [ProbabilityTheory.uniformOn_univ]
+    simp [Measure.count_apply]
+  have hμ1 : μ ({1} : Set (Fin 2)) = (1 / 2 : ENNReal) := by
+    dsimp [μ]
+    rw [ProbabilityTheory.uniformOn_univ]
+    simp [Measure.count_apply]
+  refine ⟨μ, f, g, hμ, ?_⟩
+  have hf : eLpNorm f (1 / 2 : ENNReal) μ = (2 : ENNReal)⁻¹ ^ 2 := by
+    dsimp [f]
+    rw [eLpNorm_indicator_const (s := ({0} : Set (Fin 2)))
+      (c := (1 : ℝ)) (measurableSet_singleton (0 : Fin 2)) (by norm_num) (by norm_num)]
+    rw [hμ0]
+    norm_num
+  have hg : eLpNorm g (1 / 2 : ENNReal) μ = (2 : ENNReal)⁻¹ ^ 2 := by
+    dsimp [g]
+    rw [eLpNorm_indicator_const (s := ({1} : Set (Fin 2)))
+      (c := (1 : ℝ)) (measurableSet_singleton (1 : Fin 2)) (by norm_num) (by norm_num)]
+    rw [hμ1]
+    norm_num
+  have hsum : f + g = (fun _ : Fin 2 => (1 : ℝ)) := by
+    funext x
+    fin_cases x <;> simp [f, g]
+  rw [hsum, eLpNorm_const _ (by norm_num) (by simp [μ]), hf, hg]
+  simp [hμ.measure_univ]
+  have hquarter : (2 : ENNReal)⁻¹ ^ 2 < (2 : ENNReal)⁻¹ := by
+    rw [pow_two]
+    calc
+      (2 : ENNReal)⁻¹ * 2⁻¹ < 1 * 2⁻¹ :=
+        ENNReal.mul_lt_mul_left (by norm_num) (by norm_num)
+          ENNReal.one_half_lt_one
+      _ = (2 : ENNReal)⁻¹ := one_mul _
+  calc
+    (2 : ENNReal)⁻¹ ^ 2 + 2⁻¹ ^ 2 < 2⁻¹ + 2⁻¹ :=
+      ENNReal.add_lt_add hquarter hquarter
+    _ = 1 := ENNReal.inv_two_add_inv_two
+
 /-- A source-facing package of mean, variance, and the centered-variable fact. -/
 structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
@@ -508,6 +576,20 @@ def hdp_01_hdef_hlp_hnorm_hspace
     (μ : Measure Ω) (p : ENNReal) :
     NumStability.HDP.Scalar.Preliminaries.LpNormSpaceModelData μ p :=
   NumStability.HDP.Scalar.Preliminaries.lpNormSpaceModel μ p
+
+def hdp_01_hthm_hlp_hbanach_hquasinorm
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ENNReal) [Fact (1 ≤ p)] :
+    NumStability.HDP.Scalar.Preliminaries.LpQuotientBanachModelData μ p :=
+  NumStability.HDP.Scalar.Preliminaries.lpQuotientBanach μ p
+
+theorem hdp_01_hthm_hlp_hbanach_hquasinorm_counterexample :
+    ∃ (μ : Measure (Fin 2)) (f g : Fin 2 → ℝ),
+      IsProbabilityMeasure μ ∧
+        ¬ MeasureTheory.eLpNorm (f + g) (1 / 2 : ENNReal) μ ≤
+          MeasureTheory.eLpNorm f (1 / 2 : ENNReal) μ +
+            MeasureTheory.eLpNorm g (1 / 2 : ENNReal) μ :=
+  NumStability.HDP.Scalar.Preliminaries.twoPointLpTriangleFailure
 
 theorem hdp_01_hdef_hconvex_hfunction
     {φ : ℝ → ℝ}
