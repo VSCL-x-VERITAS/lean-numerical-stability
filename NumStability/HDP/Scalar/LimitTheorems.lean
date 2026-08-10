@@ -79,6 +79,41 @@ theorem independentVarianceSum
       intro i hi j hj hij
       exact hIndep hij))
 
+/-! ## Variance of an iid sample mean -/
+
+/--
+The finite-sample variance identity from Chapter 1, equation (1.5).
+The explicit `Fin N` index and `0 < N` hypothesis make the textbook's
+`N ≥ 1` condition and the distinguished reference sample unambiguous.
+-/
+theorem iidSampleMeanVariance
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsFiniteMeasure μ]
+    (N : ℕ) (hN : 0 < N)
+    {X : Fin N → Ω → ℝ}
+    (hX : ∀ i, MemLp (X i) 2 μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
+    (hIdent : ∀ i, IdentDistrib (X i) (X ⟨0, hN⟩) μ μ) :
+    Var[fun ω => (N : ℝ)⁻¹ * ∑ i, X i ω; μ] =
+      (N : ℝ)⁻¹ * Var[X ⟨0, hN⟩; μ] := by
+  have hsum := independentVarianceSum hX hIndep
+  have hscale := ProbabilityTheory.variance_const_mul
+    (μ := μ) (N : ℝ)⁻¹ (fun ω => ∑ i, X i ω)
+  calc
+    Var[fun ω => (N : ℝ)⁻¹ * ∑ i, X i ω; μ] =
+        (N : ℝ)⁻¹ ^ 2 * Var[fun ω => ∑ i, X i ω; μ] := by
+          simpa using hscale
+    _ = (N : ℝ)⁻¹ ^ 2 * ∑ i, Var[X i; μ] := by
+      have hfun : (fun ω => ∑ i, X i ω) = ∑ i, X i := by
+        funext ω
+        simp
+      rw [hfun, hsum]
+    _ = (N : ℝ)⁻¹ * Var[X ⟨0, hN⟩; μ] := by
+      simp_rw [fun i => (hIdent i).variance_eq]
+      rw [Finset.sum_const, Finset.card_fin]
+      field_simp
+      simp [nsmul_eq_mul]
+
 /-! ## The standard normal law -/
 
 /--
@@ -442,5 +477,19 @@ theorem hdp_01_hlem_hindependent_hvariance_hsum
     (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X)) :
     Var[∑ i, X i; μ] = ∑ i, Var[X i; μ] :=
   NumStability.HDP.Scalar.LimitTheorems.independentVarianceSum hX hIndep
+
+/-- Stable source-facing alias for the iid sample-mean variance identity. -/
+theorem hdp_01_heq_h1_d5
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsFiniteMeasure μ]
+    (N : ℕ) (hN : 0 < N)
+    {X : Fin N → Ω → ℝ}
+    (hX : ∀ i, MemLp (X i) 2 μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
+    (hIdent : ∀ i, IdentDistrib (X i) (X ⟨0, hN⟩) μ μ) :
+    Var[fun ω => (N : ℝ)⁻¹ * ∑ i, X i ω; μ] =
+      (N : ℝ)⁻¹ * Var[X ⟨0, hN⟩; μ] :=
+  NumStability.HDP.Scalar.LimitTheorems.iidSampleMeanVariance
+    N hN hX hIndep hIdent
 
 end NumStability.HDP.Contract
