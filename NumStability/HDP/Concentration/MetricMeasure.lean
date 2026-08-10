@@ -19,6 +19,7 @@ import Mathlib.Logic.Equiv.Basic
 import Mathlib.Topology.Order.IntermediateValue
 import Mathlib.Probability.UniformOn
 import Mathlib.Tactic
+import NumStability.HDP.Scalar.SubGaussian
 
 noncomputable section
 
@@ -385,6 +386,103 @@ theorem median_certificate_exists
     quantile_boundary := medianBoundary (medianLaw μ X)
     quantile_boundary_eq := rfl
   }⟩
+
+/-!
+  The Chapter 5 concentration interface fixes the conventions that are shared
+  by the metric, Gaussian, and matrix concentration packages.  In particular,
+  tails are two-sided, use the closed event `|X| ≥ t`, and carry the factor
+  `2 * exp (-t^2 / K^2)`.  The interface is deliberately a certificate rather
+  than a competing norm or probability law: the scalar Chapter 2 predicates,
+  gauge, centering theorem, and Chapter 1 layer-cake identity remain the
+  semantic producers.
+-/
+
+def concentrationTailScale (K : ℝ) : ℝ := 16 * K
+
+def concentrationPsiTwoScale (K : ℝ) : ℝ :=
+  4096 * Real.exp 1 * K
+
+def concentrationMeanScale (K : ℝ) : ℝ :=
+  65536 * (Real.exp 1) ^ 2 * K
+
+def concentrationMedianScale (K : ℝ) : ℝ :=
+  4 * K
+
+def MeanConcentrationBound
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBound μ
+    (fun ω => X ω - ∫ x, X x ∂μ) K
+
+def MedianConcentrationBound
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (m K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω - m| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2)
+
+structure ConcentrationInterfaceData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : Ω → ℝ) where
+  property_kind :
+    NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind
+  property_scale : ℝ
+  property_scale_pos : 0 < property_scale
+  property :
+    NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X
+      property_kind property_scale
+  center : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0
+  psi_two_characterization :
+    ∃ C : ℝ, 1 ≤ C ∧
+      (∀ i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+        ∀ {K : ℝ}, 0 < K →
+          NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K →
+            NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ≤
+              ENNReal.ofReal (C * K)) ∧
+      (∀ i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+        ((∃ K : ℝ, 0 < K ∧
+          NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K) ↔
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞))
+  centering_characterization :
+    ∃ C : ℝ, 1 ≤ C ∧
+      Integrable X μ ∧
+      ∃ K' : ℝ, 0 < K' ∧ K' ≤ C * property_scale ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ
+          (fun ω => X ω - ∫ x, X x ∂μ)
+          NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind.squarePoint K' ∧
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun ω => X ω - ∫ x, X x ∂μ) ≤
+          ENNReal.ofReal (C * property_scale)
+  tail_scale : ℝ
+  tail_scale_eq : tail_scale = concentrationTailScale property_scale
+  tail_bound :
+    NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBound μ X tail_scale
+  mean_scale : ℝ
+  mean_scale_eq : mean_scale = concentrationMeanScale property_scale
+  mean_bound : MeanConcentrationBound μ X mean_scale
+  median : ℝ
+  median_certificate : IsMedian (Measure.map X μ) median
+  median_scale : ℝ
+  median_scale_eq : median_scale = concentrationMedianScale property_scale
+  median_bound : MedianConcentrationBound μ X median median_scale
+  psi_two_scale_bound :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ≤
+      ENNReal.ofReal (concentrationPsiTwoScale property_scale)
+  layer_cake :
+    ∀ {Y : Ω → ℝ} (hY : Measurable Y)
+      (hNonneg : ∀ ω, 0 ≤ Y ω),
+      ((∫⁻ ω, ENNReal.ofReal (Y ω) ∂μ) =
+          ∫⁻ t in Set.Ioi 0, μ {ω | t < Y ω}) ∧
+        (∀ hInt : Integrable Y μ,
+          NumStability.HDP.Scalar.Preliminaries.expectation μ Y =
+            ∫ t in Set.Ioi 0, μ.real {ω | t < Y ω})
+
+noncomputable def concentrationInterface
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : Ω → ℝ) : Type :=
+  ConcentrationInterfaceData μ X
 
 /-!
   Exercise 5.2.11: the probability-integral transform for independent standard
@@ -968,6 +1066,12 @@ def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (X : ℝ → ℝ) :
 
 def hdp_05_hiface_hlipschitz (f : ℝ → ℝ) :
     Type := NumStability.HDP.Concentration.MetricMeasure.LipschitzInterface f
+
+def hdp_05_hiface_hconcentration
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : Ω → ℝ) : Type :=
+  NumStability.HDP.Concentration.MetricMeasure.concentrationInterface μ X
 
 def hdp_05_hdef_h5_d1_d1
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
