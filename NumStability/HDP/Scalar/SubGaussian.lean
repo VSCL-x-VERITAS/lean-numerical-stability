@@ -2432,6 +2432,102 @@ theorem psiTwoGauge_finite_iff
       sInf_le htAdmissible
     exact lt_of_le_of_lt hInf ENNReal.ofReal_lt_top
 
+/-! Example 2.5.8(a): Gaussian variables have finite `ψ₂` gauge. -/
+theorem gaussianPsiTwoGauge_finite :
+    PsiTwoGauge (gaussianReal 0 1) id < ∞ ∧
+      ∀ σ : ℝ, 0 ≤ σ →
+        PsiTwoGauge (gaussianReal 0 (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id < ∞ := by
+  have hsqrt2 : 0 < Real.sqrt (2 : ℝ) := by positivity
+  have hsqrt2_sq : (Real.sqrt (2 : ℝ)) ^ 2 = 2 := by
+    exact Real.sq_sqrt (by norm_num)
+  have hsmall : |(1 / 2 : ℝ)| < (Real.sqrt 2)⁻¹ := by
+    rw [abs_of_nonneg (by norm_num)]
+    field_simp
+    nlinarith
+  have hstd := (standardNormalSquareMGF (1 / 2)).1 hsmall
+  have hsqrt2_bound : (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ ≤ 2 := by
+    norm_num [hsqrt2_sq]
+    nlinarith
+  have hstdInt :
+      Integrable (fun x : ℝ => Real.exp (x ^ 2 / (2 : ℝ) ^ 2))
+        (gaussianReal 0 1) := by
+    convert hstd.1 using 1 <;> funext x <;> field_simp
+  have hstdIntegral :
+      (∫ x : ℝ, Real.exp (x ^ 2 / (2 : ℝ) ^ 2) ∂(gaussianReal 0 1)) =
+        (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ := by
+    calc
+      (∫ x : ℝ, Real.exp (x ^ 2 / (2 : ℝ) ^ 2) ∂(gaussianReal 0 1)) =
+          ∫ x : ℝ, Real.exp ((1 / 2 : ℝ) ^ 2 * x ^ 2) ∂(gaussianReal 0 1) := by
+            apply integral_congr_ae
+            filter_upwards [] with x
+            congr 1
+            field_simp
+      _ = (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ := hstd.2
+  constructor
+  · rw [psiTwoGauge_finite_iff]
+    refine ⟨2, by norm_num, ?_⟩
+    refine ⟨measurable_id, by norm_num, ?_, ?_⟩
+    · simpa [id_eq] using hstdInt
+    · simpa [id_eq] using hstdIntegral.trans_le hsqrt2_bound
+  · intro σ hσ
+    rw [psiTwoGauge_finite_iff]
+    by_cases hzero : σ = 0
+    · subst σ
+      refine ⟨1, by norm_num, ?_⟩
+      have hvzero : (⟨(0 : ℝ) ^ 2, sq_nonneg (0 : ℝ)⟩ : ℝ≥0) = 0 := by
+        apply NNReal.eq
+        norm_num
+      have hgauss : gaussianReal 0
+          (⟨(0 : ℝ) ^ 2, sq_nonneg (0 : ℝ)⟩ : ℝ≥0) = Measure.dirac 0 := by
+        rw [hvzero]
+        exact ProbabilityTheory.gaussianReal_zero_var 0
+      refine ⟨measurable_id, by norm_num, ?_, ?_⟩
+      · rw [hgauss]
+        simpa [id_eq] using
+          (integrable_dirac (f := fun x : ℝ => Real.exp (x ^ 2))
+            (a := (0 : ℝ)) (by simp))
+      · rw [hgauss]
+        simpa [id_eq] using
+          (show (∫ x : ℝ, Real.exp (x ^ 2) ∂Measure.dirac (0 : ℝ)) ≤ 2 by
+            rw [integral_dirac]
+            norm_num)
+    · have hσpos : 0 < σ := lt_of_le_of_ne hσ (Ne.symm hzero)
+      let v : ℝ≥0 := ⟨σ ^ 2, sq_nonneg σ⟩
+      have hLaw : HasLaw (fun x : ℝ => σ * x) (gaussianReal 0 v)
+          (gaussianReal 0 1) := by
+        simpa [v] using
+          (ProbabilityTheory.gaussianReal_const_mul
+            (ProbabilityTheory.HasLaw.id (μ := gaussianReal 0 1)) σ)
+      let f : ℝ → ℝ := fun x => Real.exp (x ^ 2 / (2 * σ) ^ 2)
+      have hcomp : (f ∘ (fun x : ℝ => σ * x)) =
+          (fun x : ℝ => Real.exp ((1 / 2 : ℝ) ^ 2 * x ^ 2)) := by
+        funext x
+        dsimp [f]
+        congr 1
+        field_simp [hzero]
+      have hfInt : Integrable f (gaussianReal 0 v) := by
+        rw [← hLaw.map_eq]
+        apply (integrable_map_measure
+          (Continuous.aestronglyMeasurable (by fun_prop : Continuous f))
+          hLaw.aemeasurable).2
+        rw [hcomp]
+        exact hstd.1
+      have hfBound : (∫ x, f x ∂(gaussianReal 0 v)) ≤ 2 := by
+        calc
+          (∫ x, f x ∂(gaussianReal 0 v)) =
+              ∫ x, f (σ * x) ∂(gaussianReal 0 1) := by
+                symm
+                exact hLaw.integral_comp
+                  (Continuous.aestronglyMeasurable (by fun_prop : Continuous f))
+          _ = ∫ x, (f ∘ (fun x : ℝ => σ * x)) x ∂(gaussianReal 0 1) := by rfl
+          _ = ∫ x, Real.exp ((1 / 2 : ℝ) ^ 2 * x ^ 2) ∂(gaussianReal 0 1) := by
+            rw [hcomp]
+          _ = (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ := by
+            simpa using hstd.2
+          _ ≤ 2 := hsqrt2_bound
+      refine ⟨2 * σ, mul_pos (by norm_num) hσpos, ?_⟩
+      exact ⟨measurable_id, by positivity, hfInt, by simpa [f] using hfBound⟩
+
 /-! Example 2.5.8(c): an essentially bounded variable has finite `ψ₂` gauge.
 
 The positive real `B` is an arbitrary essential bound for `|X|`; taking the
@@ -2647,6 +2743,16 @@ theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [Measurab
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
+
+/-! Stable Chapter 2 alias for the Gaussian `ψ₂` example. -/
+theorem hdp_02_hexample_h2_d5_d8a :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
+        (ProbabilityTheory.gaussianReal 0 1) id < ∞ ∧
+      ∀ σ : ℝ, 0 ≤ σ →
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
+            (ProbabilityTheory.gaussianReal 0
+              (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id < ∞ :=
+  NumStability.HDP.Scalar.SubGaussian.gaussianPsiTwoGauge_finite
 
 /-! Stable Chapter 2 alias for Proposition 2.5.2. -/
 theorem hdp_02_hprop_h2_d5_d2
