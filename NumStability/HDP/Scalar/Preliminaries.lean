@@ -787,6 +787,27 @@ theorem exercise122CauchyObstruction :
         cauchyMeasure 0 1 {x | x < t}) = ⊤) := by
   exact ⟨cauchy_pos_tail_top, cauchy_neg_tail_top⟩
 
+theorem exercise122CorrectedWithCauchy
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    (
+      (((∫⁻ ω, ENNReal.ofReal (max (X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (X ω) 0}) ∧
+      (∫⁻ ω, ENNReal.ofReal (max (-X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (-X ω) 0})) ∧
+      (∀ hInt : Integrable X μ,
+        (∫ ω, X ω ∂μ) =
+          (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
+            (∫ t in Set.Iio 0, μ.real {a | X a < t})))
+      ∧
+        ((∫⁻ t in Set.Ioi 0,
+          cauchyMeasure 0 1 {x | t < x}) = ⊤) ∧
+        ((∫⁻ t in Set.Iio 0,
+          cauchyMeasure 0 1 {x | x < t}) = ⊤)
+    ) := by
+  exact ⟨exercise122Corrected hX, exercise122CauchyObstruction⟩
+
 /-! The weighted layer-cake identity for positive real moments. -/
 theorem momentTailFormula
     {Ω : Type*} [MeasurableSpace Ω]
@@ -1308,22 +1329,28 @@ theorem hdp_01_hlem_h1_d2_d1
           ∫ t in Set.Ioi 0, μ.real {ω | t < X ω}) :=
   NumStability.HDP.Scalar.Preliminaries.layerCakeExpectation hX hNonneg
 
-/-! Stable Chapter 1 alias for the corrected signed-tail statement in
-    Exercise 1.2.2.  The two nonnegative extended identities are exported
-    independently of the integrable signed formula. -/
+/-! Stable Chapter 1 alias for the corrected signed-tail statement and its
+    standard-Cauchy obstruction in Exercise 1.2.2. -/
 theorem hdp_01_hex_h1_d2_d2
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : Ω → ℝ} (hX : Measurable X) :
-    ((∫⁻ ω, ENNReal.ofReal (max (X ω) 0) ∂μ =
+    (
+      (((∫⁻ ω, ENNReal.ofReal (max (X ω) 0) ∂μ =
         ∫⁻ t in Set.Ioi 0, μ {ω | t < max (X ω) 0}) ∧
       (∫⁻ ω, ENNReal.ofReal (max (-X ω) 0) ∂μ =
         ∫⁻ t in Set.Ioi 0, μ {ω | t < max (-X ω) 0})) ∧
       (∀ hInt : Integrable X μ,
         (∫ ω, X ω ∂μ) =
           (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
-            (∫ t in Set.Iio 0, μ.real {a | X a < t})) := by
-  exact NumStability.HDP.Scalar.Preliminaries.exercise122Corrected hX
+            (∫ t in Set.Iio 0, μ.real {a | X a < t})))
+      ∧
+        ((∫⁻ t in Set.Ioi 0,
+          Probability.cauchyMeasure 0 1 {x | t < x}) = ⊤) ∧
+        ((∫⁻ t in Set.Iio 0,
+          Probability.cauchyMeasure 0 1 {x | x < t}) = ⊤)
+    ) := by
+  exact NumStability.HDP.Scalar.Preliminaries.exercise122CorrectedWithCauchy hX
 
 theorem hdp_01_hex_h1_d2_d3
     {Ω : Type*} [MeasurableSpace Ω]
