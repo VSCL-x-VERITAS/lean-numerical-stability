@@ -1508,6 +1508,30 @@ theorem hdp_05_hex_h5_d2_d11 (n : ℕ) :
     NumStability.HDP.Concentration.MetricMeasure.uniformUnitIntervalLaw] using
     NumStability.HDP.Concentration.MetricMeasure.standardNormalCdfProductUniform n
 
+theorem hdp_05_hex_h5_d1_d13
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {Z : Ω → ℝ} {m : ℝ}
+    (hZ : Measurable Z)
+    (hm : (1 / 2 : ENNReal) ≤ Measure.map Z μ (Set.Iic m) ∧
+      (1 / 2 : ENNReal) ≤ Measure.map Z μ (Set.Ici m))
+    {i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind}
+    {K : ℝ} (hK : 0 < K)
+    (hProp : NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ Z i K) :
+    ∃ c C : ℝ, 0 < c ∧ 0 < C ∧
+      ENNReal.ofReal c *
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun ω => Z ω - ∫ x, Z x ∂μ) ≤
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+          (fun ω => Z ω - m) ∧
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+          (fun ω => Z ω - m) ≤
+        ENNReal.ofReal C *
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun ω => Z ω - ∫ x, Z x ∂μ) := by
+  exact NumStability.HDP.Concentration.MetricMeasure.medianPsiTwoGaugeComparison
+    hZ hm hK hProp
+
 theorem hdp_05_hex_h5_d1_d2 :
     (∀ {α β : Type} [PseudoEMetricSpace α] [PseudoEMetricSpace β]
       {K : NNReal} {f : α → β}, LipschitzWith K f → UniformContinuous f) ∧

@@ -14,7 +14,6 @@ namespace NumStability.HDP.Contract
 theorem hdp_05_hex_h5_d1_d13__contract :
     hdp_05_hex_h5_d1_d13__contract_type := by
   intro Ω instΩ μ instμ Z m hZ hm i K hK hProp
-  exact NumStability.HDP.Concentration.MetricMeasure.medianPsiTwoGaugeComparison
-    hZ hm hK hProp
+  exact NumStability.HDP.Contract.hdp_05_hex_h5_d1_d13 hZ hm hK hProp
 
 end NumStability.HDP.Contract
