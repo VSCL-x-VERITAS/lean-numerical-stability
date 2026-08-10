@@ -12,6 +12,7 @@ import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.Probability.Distributions.Exponential
 import Mathlib.Probability.Moments.IntegrableExpMul
 import NumStability.HDP.ContractSignatures.C_02_hrem_h2_d7_d9
+import NumStability.HDP.Scalar.SubGaussian
 import Mathlib.Tactic
 
 /-!
@@ -1076,6 +1077,191 @@ theorem powerOrliczCoincidence :
   · intro X hX
     exact powerOrliczMember_iff_memLp ψ μ X p hp hψ hX
 
+/-! Example 2.7.13: the Luxemburg gauge for `exp (x²) - 1` is the
+source ψ₂ gauge.  The two admissibility predicates differ only by the
+probability-measure contribution of the subtracted constant `1`. -/
+
+noncomputable def psiTwoOrliczFunction : OrliczFunction :=
+  { toFun := fun x => Real.exp (x ^ 2) - 1
+    nonnegative := by
+      intro x hx
+      have hsq : 0 ≤ x ^ 2 := sq_nonneg x
+      linarith [Real.one_le_exp hsq]
+    convexOn_nonneg := by
+      refine ⟨convex_Ici (0 : ℝ), ?_⟩
+      intro x hx y hy a b ha hb hab
+      change 0 ≤ x at hx
+      change 0 ≤ y at hy
+      change Real.exp ((a * x + b * y) ^ 2) - 1 ≤
+        a * (Real.exp (x ^ 2) - 1) + b * (Real.exp (y ^ 2) - 1)
+      have hsq : (a * x + b * y) ^ 2 ≤ a * x ^ 2 + b * y ^ 2 := by
+        nlinarith [sq_nonneg (x - y),
+          mul_nonneg (mul_nonneg ha hb) (sq_nonneg (x - y))]
+      have hexp := convexOn_exp.2 (show x ^ 2 ∈ Set.univ by trivial)
+        (show y ^ 2 ∈ Set.univ by trivial) ha hb hab
+      calc
+        Real.exp ((a * x + b * y) ^ 2) - 1 ≤
+            Real.exp (a * x ^ 2 + b * y ^ 2) - 1 := by
+          gcongr
+        _ ≤ a * Real.exp (x ^ 2) + b * Real.exp (y ^ 2) - 1 := by
+          simpa [smul_eq_mul] using sub_le_sub_right hexp 1
+        _ = a * (Real.exp (x ^ 2) - 1) +
+            b * (Real.exp (y ^ 2) - 1) := by
+          calc
+            a * Real.exp (x ^ 2) + b * Real.exp (y ^ 2) - 1 =
+                a * Real.exp (x ^ 2) + b * Real.exp (y ^ 2) - (a + b) := by
+                  rw [hab]
+            _ = a * (Real.exp (x ^ 2) - 1) +
+                b * (Real.exp (y ^ 2) - 1) := by ring
+    monotoneOn_nonneg := by
+      intro x hx y hy hxy
+      change 0 ≤ x at hx
+      change 0 ≤ y at hy
+      dsimp
+      apply sub_le_sub_right
+      apply Real.exp_le_exp.mpr
+      nlinarith [sq_nonneg (y - x)]
+    map_zero := by norm_num
+    tendsto_atTop := by
+      refine tendsto_atTop.mpr ?_
+      intro r
+      filter_upwards
+        [eventually_ge_atTop (max 0 (Real.sqrt (max (r + 1) 0)))] with x hx
+      have hx0 : 0 ≤ x := le_trans (le_max_left 0
+        (Real.sqrt (max (r + 1) 0))) hx
+      have hxroot : Real.sqrt (max (r + 1) 0) ≤ x := le_trans
+        (le_max_right 0 (Real.sqrt (max (r + 1) 0))) hx
+      have hsqrt0 : 0 ≤ Real.sqrt (max (r + 1) 0) :=
+        Real.sqrt_nonneg _
+      have hsqrt : (Real.sqrt (max (r + 1) 0)) ^ 2 = max (r + 1) 0 :=
+        Real.sq_sqrt (by positivity)
+      have hmax : r + 1 ≤ max (r + 1) 0 := le_max_left _ _
+      have hsq : r + 1 ≤ x ^ 2 := by
+        have hprod : 0 ≤ (x - Real.sqrt (max (r + 1) 0)) *
+            (x + Real.sqrt (max (r + 1) 0)) :=
+          mul_nonneg (sub_nonneg.mpr hxroot) (add_nonneg hx0 hsqrt0)
+        nlinarith [hprod, hsqrt, hmax]
+      have hexp : Real.exp (r + 1) ≤ Real.exp (x ^ 2) :=
+        Real.exp_le_exp.mpr hsq
+      have hlin : r + 1 ≤ Real.exp (r + 1) := by
+        nlinarith [Real.add_one_le_exp (r + 1)]
+      nlinarith }
+
+lemma psiTwoOrliczFunction_integral_add_one
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {t : ℝ≥0∞}
+    (ht0 : t ≠ 0) (htTop : t ≠ ∞) (hX : Measurable X) :
+    orliczIntegral psiTwoOrliczFunction μ X t + 1 =
+      ∫⁻ ω, ENNReal.ofReal (Real.exp (X ω ^ 2 / t.toReal ^ 2)) ∂μ := by
+  have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+  let f : Ω → ℝ := fun ω => Real.exp (X ω ^ 2 / t.toReal ^ 2)
+  let g : Ω → ℝ≥0∞ := fun ω => ENNReal.ofReal (f ω - 1)
+  have hmeasg : Measurable g := by
+    dsimp [g, f]
+    fun_prop
+  have hnonneg : ∀ ω, 0 ≤ f ω - 1 := by
+    intro ω
+    dsimp [f]
+    have hsq : 0 ≤ X ω ^ 2 / t.toReal ^ 2 := by positivity
+    linarith [Real.one_le_exp hsq]
+  have hpoint : ∀ ω, ENNReal.ofReal (f ω) = g ω + 1 := by
+    intro ω
+    dsimp [g]
+    calc
+      ENNReal.ofReal (f ω) = ENNReal.ofReal ((f ω - 1) + 1) := by
+        congr 1
+        ring
+      _ = ENNReal.ofReal (f ω - 1) + ENNReal.ofReal 1 :=
+        ENNReal.ofReal_add (hnonneg ω) (by norm_num)
+      _ = ENNReal.ofReal (f ω - 1) + 1 := by norm_num
+  calc
+    orliczIntegral psiTwoOrliczFunction μ X t + 1 =
+        (∫⁻ ω, g ω ∂μ) + 1 := by
+          congr 1
+          simp only [orliczIntegral, psiTwoOrliczFunction, g, f]
+          congr 1
+          funext ω
+          congr 2
+          rw [div_pow, sq_abs]
+    _ = ∫⁻ ω, (g ω + 1) ∂μ := by
+          symm
+          rw [lintegral_add_left hmeasg]
+          simp
+    _ = ∫⁻ ω, ENNReal.ofReal (f ω) ∂μ := by
+          apply lintegral_congr
+          intro ω
+          exact (hpoint ω).symm
+
+theorem psiTwoOrliczGauge_eq_psiTwoGauge
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    orliczGauge psiTwoOrliczFunction μ X =
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X := by
+  unfold orliczGauge NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
+  apply congrArg sInf
+  ext t
+  constructor
+  · intro ht
+    rcases ht with ⟨ht0, htTop, hbound⟩
+    have hbound' :
+        ∫⁻ ω, ENNReal.ofReal (Real.exp (X ω ^ 2 / t.toReal ^ 2)) ∂μ ≤ 2 := by
+      calc
+        (∫⁻ ω, ENNReal.ofReal (Real.exp (X ω ^ 2 / t.toReal ^ 2)) ∂μ) =
+            orliczIntegral psiTwoOrliczFunction μ X t + 1 := by
+              exact (psiTwoOrliczFunction_integral_add_one ht0 htTop hX).symm
+        _ ≤ 1 + 1 := by
+          simpa only [add_comm] using (add_le_add_right hbound (1 : ENNReal))
+        _ = 2 := by norm_num
+    have hInt : Integrable
+        (fun ω => Real.exp (X ω ^ 2 / t.toReal ^ 2)) μ := by
+      have hmeas : Measurable (fun ω =>
+          Real.exp (X ω ^ 2 / t.toReal ^ 2)) := by fun_prop
+      have hfinite : HasFiniteIntegral (fun ω =>
+          Real.exp (X ω ^ 2 / t.toReal ^ 2)) μ := by
+        rw [hasFiniteIntegral_iff_enorm]
+        simpa only [← ofReal_norm_eq_enorm, Real.norm_eq_abs,
+          abs_of_pos (Real.exp_pos _)] using
+          (lt_of_le_of_lt hbound' ENNReal.coe_lt_top)
+      exact ⟨hmeas.aestronglyMeasurable, hfinite⟩
+    refine ⟨hX, ht0, htTop, hInt, ?_⟩
+    have hEq := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt
+      (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))
+    have hOf : ENNReal.ofReal
+        (∫ ω, Real.exp (X ω ^ 2 / t.toReal ^ 2) ∂μ) ≤ (2 : ENNReal) := by
+      rw [hEq]
+      exact hbound'
+    have hreal := (ENNReal.ofReal_le_iff_le_toReal (b := (2 : ENNReal))
+      (by norm_num)).mp hOf
+    simpa using hreal
+  · intro ht
+    rcases ht with ⟨_, ht0, htTop, hInt, hbound⟩
+    refine ⟨ht0, htTop, ?_⟩
+    have hEq := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt
+      (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))
+    have h := psiTwoOrliczFunction_integral_add_one (μ := μ) (X := X) (t := t)
+      ht0 htTop hX
+    have hbound' :
+        (∫⁻ ω, ENNReal.ofReal (Real.exp (X ω ^ 2 / t.toReal ^ 2)) ∂μ) ≤
+          (2 : ENNReal) := by
+      rw [← hEq]
+      simpa using ENNReal.ofReal_le_ofReal hbound
+    apply ENNReal.le_of_add_le_add_right (a := (1 : ENNReal)) (by norm_num)
+    calc
+      orliczIntegral psiTwoOrliczFunction μ X t + 1 =
+          (∫⁻ ω, ENNReal.ofReal (Real.exp (X ω ^ 2 / t.toReal ^ 2)) ∂μ) := h
+      _ ≤ 2 := hbound'
+      _ = 1 + 1 := by norm_num
+
+theorem psiTwoOrliczMember_iff_psiTwoMember
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    orliczMember psiTwoOrliczFunction μ X ↔
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ := by
+  rw [orliczMember, psiTwoOrliczGauge_eq_psiTwoGauge hX]
+
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
@@ -1132,5 +1318,15 @@ theorem hdp_02_hexample_h2_d7_d12 :
         (NumStability.HDP.Scalar.SubExponential.orliczMember ψ μ X ↔
           MemLp X (p : ENNReal) μ)) := by
   exact NumStability.HDP.Scalar.SubExponential.powerOrliczCoincidence
+
+/-! Stable Chapter 2 alias for Example 2.7.13. -/
+theorem hdp_02_hexample_h2_d7_d13
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    NumStability.HDP.Scalar.SubExponential.orliczMember
+        NumStability.HDP.Scalar.SubExponential.psiTwoOrliczFunction μ X ↔
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ := by
+  exact NumStability.HDP.Scalar.SubExponential.psiTwoOrliczMember_iff_psiTwoMember hX
 
 end NumStability.HDP.Contract
