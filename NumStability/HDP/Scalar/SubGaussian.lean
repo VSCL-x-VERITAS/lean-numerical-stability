@@ -1936,7 +1936,10 @@ private lemma subGaussianTailThreshold_rescale
         _ = -(c * (t ^ 2 / K ^ 2)) := by rw [hScale]
     have hProb (s : Set Ω) : μ.real s ≤ 1 := by
       calc
-        μ.real s ≤ μ.real Set.univ := measureReal_mono (Set.subset_univ _)
+        μ.real s ≤ μ.real Set.univ := by
+          simp only [Measure.real_def]
+          exact ENNReal.toReal_mono (measure_ne_top μ Set.univ)
+            (measure_mono (Set.subset_univ _))
         _ = 1 := probReal_univ
     refine ⟨K', hK', fun t ht => ?_⟩
     let u : ℝ := t ^ 2 / K ^ 2
