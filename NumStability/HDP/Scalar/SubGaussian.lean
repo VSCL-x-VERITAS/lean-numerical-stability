@@ -1895,7 +1895,7 @@ def SubGaussianSquarePointWithThreshold {Ω : Type*} [MeasurableSpace Ω]
     Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
       (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ A
 
-private def subGaussianTailThreshold_rescale
+def subGaussianTailThreshold_rescale
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : Ω → ℝ} {K A B : ℝ} (hA : 1 < A) (hB : 1 < B) (hK : 0 < K)
@@ -1986,7 +1986,7 @@ private def subGaussianTailThreshold_rescale
         _ = B * Real.exp (-t ^ 2 / K' ^ 2) := by
           rw [hTargetExponent, show u = t ^ 2 / K ^ 2 by rfl]
 
-private def subGaussianSquarePointThreshold_rescale
+def subGaussianSquarePointThreshold_rescale
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : Ω → ℝ} {K A B : ℝ} (hX : Measurable X)
