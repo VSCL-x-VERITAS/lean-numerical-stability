@@ -14,6 +14,7 @@ import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.Preliminaries
+import NumStability.HDP.Scalar.IndependentSums.Hoeffding
 import NumStability.HDP.ContractSignatures.C_02_hex_h2_d6_d9
 
 /-!
@@ -2498,6 +2499,84 @@ theorem psiTwoGaugeCharacterizations
         ⟨K, hK, _, hProp⟩
       exact ⟨K, hK, hProp⟩
 
+/-! A finite independent-sum form of Proposition 2.6.1.  The input uses the
+linear-MGF branch of the five-way interface; the conclusion exposes both the
+same branch for the sum and the corresponding exact-gauge scale bound. -/
+theorem independentCenteredSubGaussianSum
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {K : ι → ℝ}
+    (hX : ∀ i, SubGaussianLinearMGF μ (X i) (K i))
+    (hIndep : iIndepFun X μ)
+    (hEnergy : 0 < ∑ i, K i ^ 2) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      SubGaussianProperty μ (fun ω => ∑ i, X i ω) .linearMGF
+        (Real.sqrt (∑ i, K i ^ 2)) ∧
+      PsiTwoGauge μ (fun ω => ∑ i, X i ω) ≤
+        ENNReal.ofReal (C * Real.sqrt (∑ i, K i ^ 2)) := by
+  let S : Ω → ℝ := fun ω => ∑ i, X i ω
+  let E : ℝ := ∑ i, K i ^ 2
+  have hE : 0 < E := by simpa [E] using hEnergy
+  have hS_meas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ (fun i _ => (hX i).1)
+  have hS_int : Integrable S μ := by
+    dsimp [S]
+    simpa only [Finset.sum_apply] using
+      (integrable_finset_sum (μ := μ) Finset.univ
+        (fun i hi => (hX i).2.2.1))
+  have hS_mean : (∫ ω, S ω ∂μ) = 0 := by
+    dsimp [S]
+    rw [integral_finset_sum]
+    · exact Finset.sum_eq_zero (fun i hi => (hX i).2.2.2.1)
+    · exact fun i hi => (hX i).2.2.1
+  have hS_exp (lam : ℝ) :
+      Integrable (fun ω => Real.exp (lam * S ω)) μ := by
+    have h := hIndep.integrable_exp_mul_sum
+      (fun i => (hX i).1) (s := Finset.univ)
+      (fun i hi => by simpa using ((hX i).2.2.2.2 lam).1)
+    simpa [S] using h
+  have hS_mgf (lam : ℝ) :
+      (∫ ω, Real.exp (lam * S ω) ∂μ) ≤ Real.exp (E * lam ^ 2) := by
+    have hFactor (i : ι) :
+        (∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ) ≤
+          Real.exp (K i ^ 2 * lam ^ 2) := by
+      simpa using ((hX i).2.2.2.2 lam).2
+    have hProd :
+        (∏ i, ∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ) ≤
+          ∏ i, Real.exp (K i ^ 2 * lam ^ 2) := by
+      apply Finset.prod_le_prod
+      · intro i hi
+        exact integral_nonneg (fun ω => Real.exp_nonneg _)
+      · intro i hi
+        exact hFactor i
+    have hFactorization :=
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.mgfIndependentSum
+        (μ := μ) (X := X) lam (fun _ => (1 : ℝ)) hIndep
+        (fun i => by simpa using ((hX i).2.2.2.2 lam).1)
+    calc
+      (∫ ω, Real.exp (lam * S ω) ∂μ) =
+          ∏ i, ∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ := by
+            simpa [S] using hFactorization
+      _ ≤ ∏ i, Real.exp (K i ^ 2 * lam ^ 2) := hProd
+      _ = Real.exp (E * lam ^ 2) := by
+        rw [← Real.exp_sum]
+        congr 1
+        dsimp [E]
+        rw [Finset.sum_mul]
+  have hS_linear :
+      SubGaussianLinearMGF μ S (Real.sqrt E) := by
+    refine ⟨hS_meas, Real.sqrt_pos.2 hE, hS_int, hS_mean, ?_⟩
+    intro lam
+    refine ⟨hS_exp lam, ?_⟩
+    simpa [Real.sq_sqrt hE.le, E, mul_comm] using hS_mgf lam
+  rcases psiTwoGaugeCharacterizations
+      (μ := μ) (X := S) ⟨hS_int, hS_mean⟩ with
+    ⟨C, hC, hGauge, _⟩
+  refine ⟨C, hC, ?_, ?_⟩
+  · simpa [S, E] using hS_linear
+  · exact hGauge .linearMGF (by positivity) hS_linear
+
 /-! The exact gauge is subadditive at the level of admissible scales.  This is
 the analytic core needed before passing to the a.e. quotient in Exercise
 2.5.7. -/
@@ -3420,6 +3499,25 @@ theorem hdp_02_hthm_hpsi2_hnorm_hcharacterizations
           NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K) ↔
           NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞)) :=
   NumStability.HDP.Scalar.SubGaussian.psiTwoGaugeCharacterizations hCenter
+
+/-! Stable Chapter 2 alias for Proposition 2.6.1. -/
+theorem hdp_02_hprop_h2_d6_d1
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {K : ι → ℝ}
+    (hX : ∀ i,
+      NumStability.HDP.Scalar.SubGaussian.SubGaussianLinearMGF μ (X i) (K i))
+    (hIndep : ProbabilityTheory.iIndepFun X μ)
+    (hEnergy : 0 < ∑ i, K i ^ 2) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ
+          (fun ω => ∑ i, X i ω) .linearMGF
+          (Real.sqrt (∑ i, K i ^ 2)) ∧
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+          (fun ω => ∑ i, X i ω) ≤
+        ENNReal.ofReal (C * Real.sqrt (∑ i, K i ^ 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianSum
+    hX hIndep hEnergy
 
 /-! Stable Chapter 2 alias for Remark 2.5.3. -/
 theorem hdp_02_hrem_h2_d5_d3
