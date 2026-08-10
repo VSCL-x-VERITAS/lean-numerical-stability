@@ -2499,6 +2499,144 @@ theorem psiTwoGaugeCharacterizations
         ⟨K, hK, _, hProp⟩
       exact ⟨K, hK, hProp⟩
 
+/-! Centering preserves sub-Gaussianity with an absolute change of scale. -/
+theorem centeredSubGaussian
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i : SubGaussianPropertyKind) {K : ℝ} (hK : 0 < K)
+    (hProp : SubGaussianProperty μ X i K) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      Integrable X μ ∧
+      ∃ K' : ℝ, 0 < K' ∧ K' ≤ C * K ∧
+        SubGaussianProperty μ
+          (fun ω => X ω - ∫ x, X x ∂μ) .squarePoint K' ∧
+        PsiTwoGauge μ (fun ω => X ω - ∫ x, X x ∂μ) ≤
+          ENNReal.ofReal (C * K) := by
+  rcases subGaussianToTail i hK hProp with ⟨T, hT, hTK, hTail⟩
+  have hMoment : SubGaussianMomentBound μ X (8 * Real.exp 1 * T) :=
+    subGaussianTailToMoment hTail
+  have hAbsInt : Integrable (fun ω => |X ω|) μ := by
+    have h := (hMoment.2.2.2 1 (by norm_num : (1 : ℝ) ≤ 1)).1
+    simpa using h
+  have hInt : Integrable X μ := by
+    apply (MeasureTheory.integrable_norm_iff hMoment.1.aestronglyMeasurable).mp
+    simpa [Real.norm_eq_abs] using hAbsInt
+  let m : ℝ := ∫ x, X x ∂μ
+  have hMean : |m| ≤ 8 * Real.exp 1 * T := by
+    have hMomentBound :=
+      (hMoment.2.2.2 1 (by norm_num : (1 : ℝ) ≤ 1)).2
+    have hIntegralNorm :=
+      MeasureTheory.norm_integral_le_integral_norm X (μ := μ)
+    dsimp [m]
+    calc
+      |∫ x, X x ∂μ| ≤ ∫ x, ‖X x‖ ∂μ := hIntegralNorm
+      _ = ∫ x, |X x| ∂μ := by simp only [Real.norm_eq_abs]
+      _ ≤ 8 * Real.exp 1 * T := by simpa using hMomentBound
+  let Kc : ℝ := 32 * Real.exp 1 * T
+  have hKc : 0 < Kc := by
+    dsimp [Kc]
+    positivity
+  have hKc_twoT : 2 * T ≤ Kc := by
+    dsimp [Kc]
+    nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1), hT.le]
+  have hCenter : Integrable (fun ω => X ω - m) μ ∧
+      (∫ ω, X ω - m ∂μ) = 0 := by
+    constructor
+    · exact hInt.sub (integrable_const m)
+    · dsimp [m]
+      rw [integral_sub hInt (integrable_const _)]
+      simp
+  have hTailCenter :
+      SubGaussianTailBound μ (fun ω => X ω - m) Kc := by
+    refine ⟨hTail.1.sub_const m, hKc, ?_⟩
+    intro t ht
+    have hProb (s : Set Ω) : μ.real s ≤ 1 := by
+      calc
+        μ.real s ≤ μ.real Set.univ := by
+          simp only [Measure.real_def]
+          exact ENNReal.toReal_mono (measure_ne_top μ Set.univ)
+            (measure_mono (Set.subset_univ _))
+        _ = 1 := probReal_univ
+    by_cases hsmall : t ≤ 2 * |m|
+    · have htBound : t ≤ 16 * Real.exp 1 * T := by
+        nlinarith [hMean]
+      have htSq : t ^ 2 ≤ (16 * Real.exp 1 * T) ^ 2 := by
+        exact (sq_le_sq₀ (by linarith) (by positivity)).2 htBound
+      have hratio : t ^ 2 / Kc ^ 2 ≤ (1 / 4 : ℝ) := by
+        apply (div_le_iff₀ (sq_pos_of_pos hKc)).2
+        dsimp [Kc]
+        nlinarith [htSq]
+      have hexp : (1 : ℝ) ≤ 2 * Real.exp (-(t ^ 2 / Kc ^ 2)) := by
+        have hbase := Real.add_one_le_exp (-(t ^ 2 / Kc ^ 2))
+        nlinarith [hratio]
+      calc
+        μ.real {ω | |X ω - m| ≥ t} ≤ 1 := hProb _
+        _ ≤ 2 * Real.exp (-t ^ 2 / Kc ^ 2) := by
+          simpa only [neg_div] using hexp
+    · have hlarge : 2 * |m| < t := lt_of_not_ge hsmall
+      have hsubset : {ω | |X ω - m| ≥ t} ⊆
+          {ω | |X ω| ≥ t / 2} := by
+        intro ω hω
+        change t ≤ |X ω - m| at hω
+        by_contra hnot
+        have hnot' : ¬ |X ω| ≥ t / 2 := by
+          simpa only [Set.mem_setOf_eq] using hnot
+        have hXlt : |X ω| < t / 2 := lt_of_not_ge hnot'
+        have hmlt : |m| < t / 2 := by linarith
+        have htriangle : |X ω - m| ≤ |X ω| + |m| := abs_sub _ _
+        linarith
+      have hhalf : 0 ≤ t / 2 := by linarith
+      have hsource := hTail.2.2 (t / 2) hhalf
+      have hsource' :
+          2 * Real.exp (-(t / 2) ^ 2 / T ^ 2) ≤
+            2 * Real.exp (-t ^ 2 / Kc ^ 2) := by
+        apply mul_le_mul_of_nonneg_left _ (by norm_num)
+        apply Real.exp_le_exp.mpr
+        have hden : 4 * T ^ 2 ≤ Kc ^ 2 := by
+          have hsq := (sq_le_sq₀ (by positivity) (by positivity)).2 hKc_twoT
+          nlinarith [hsq]
+        have hratio : t ^ 2 / Kc ^ 2 ≤ t ^ 2 / (4 * T ^ 2) := by
+          exact div_le_div_of_nonneg_left (sq_nonneg t) (by positivity) hden
+        calc
+          -(t / 2) ^ 2 / T ^ 2 = -(t ^ 2 / (4 * T ^ 2)) := by
+            field_simp
+            ring
+          _ ≤ -(t ^ 2 / Kc ^ 2) := by nlinarith [hratio]
+          _ = -t ^ 2 / Kc ^ 2 := by simp only [neg_div]
+      calc
+        μ.real {ω | |X ω - m| ≥ t} ≤ μ.real {ω | |X ω| ≥ t / 2} := by
+          rw [Measure.real_def, Measure.real_def]
+          exact ENNReal.toReal_mono (measure_ne_top μ _)
+            (measure_mono hsubset)
+        _ ≤ 2 * Real.exp (-(t / 2) ^ 2 / T ^ 2) := hsource
+        _ ≤ 2 * Real.exp (-t ^ 2 / Kc ^ 2) := hsource'
+    
+  rcases subGaussianFromTail hCenter .squarePoint hKc hTailCenter with
+    ⟨K', hK', hK'c, hPoint⟩
+  have hGaugeK' :
+      PsiTwoGauge μ (fun ω => X ω - m) ≤ ENNReal.ofReal K' := by
+    have hAdmissible :
+        PsiTwoAdmissible μ (fun ω => X ω - m) (ENNReal.ofReal K') := by
+      refine ⟨hPoint.1, (ENNReal.ofReal_ne_zero_iff).2 hK',
+        ENNReal.ofReal_ne_top, ?_, ?_⟩
+      · simpa [ENNReal.toReal_ofReal hK'.le] using hPoint.2.2.1
+      · simpa [ENNReal.toReal_ofReal hK'.le] using hPoint.2.2.2
+    exact sInf_le hAdmissible
+  let C : ℝ := 65536 * (Real.exp 1) ^ 2
+  have hC : 1 ≤ C := by
+    dsimp [C]
+    nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1)]
+  have hK'bound : K' ≤ C * K := by
+    have hTbound : T ≤ 16 * K := hTK
+    dsimp [C, Kc] at hK'c ⊢
+    nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1),
+      sq_nonneg (Real.exp 1), mul_pos (Real.exp_pos 1) hT,
+      mul_pos (Real.exp_pos 1) hK]
+  refine ⟨C, hC, hInt, K', hK', hK'bound, ?_, ?_⟩
+  · simpa [m] using hPoint
+  · apply hGaugeK'.trans
+    apply ENNReal.ofReal_mono hK'bound
+
 /-! A finite independent-sum form of Proposition 2.6.1.  The input uses the
 linear-MGF branch of the five-way interface; the conclusion exposes both the
 same branch for the sum and the corresponding exact-gauge scale bound. -/
@@ -3518,6 +3656,24 @@ theorem hdp_02_hprop_h2_d6_d1
         ENNReal.ofReal (C * Real.sqrt (∑ i, K i ^ 2)) :=
   NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianSum
     hX hIndep hEnergy
+
+/-! Stable Chapter 2 alias for Lemma 2.6.8. -/
+theorem hdp_02_hlem_h2_d6_d8
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind)
+    {K : ℝ} (hK : 0 < K)
+    (hProp : NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      Integrable X μ ∧
+      ∃ K' : ℝ, 0 < K' ∧ K' ≤ C * K ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ
+            (fun ω => X ω - ∫ x, X x ∂μ) .squarePoint K' ∧
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun ω => X ω - ∫ x, X x ∂μ) ≤
+          ENNReal.ofReal (C * K) :=
+  NumStability.HDP.Scalar.SubGaussian.centeredSubGaussian i hK hProp
 
 /-! Stable Chapter 2 alias for Remark 2.5.3. -/
 theorem hdp_02_hrem_h2_d5_d3
