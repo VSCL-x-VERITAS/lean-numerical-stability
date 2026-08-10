@@ -1446,6 +1446,193 @@ def symmetricGroupData_mk
   distance := d
   distance_eq_normalized_hamming := hd
 
+/-! Exercise 5.1.14: functional sub-Gaussian concentration gives metric
+blow-up.  The set is taken closed so that the zero distance sublevel contains
+the set itself, and the integrability hypothesis makes the displayed
+expectation an actual Bochner expectation. -/
+theorem hdp_05_hex_h5_d1_d14
+    {Ω : Type*} [PseudoMetricSpace Ω] [MeasurableSpace Ω] [BorelSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {A : Set Ω} (hAclosed : IsClosed A) (hAnonempty : A.Nonempty)
+    {K : ℝ} (hK : 0 < K)
+    (hYint : Integrable (fun x => Metric.infDist x A) μ)
+    (hFunctional : ∀ {f : Ω → ℝ} {L : NNReal},
+      Measurable f → Integrable f μ → LipschitzWith L f →
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun x => f x - ∫ y, f y ∂μ) ≤
+          ENNReal.ofReal K * ENNReal.ofNNReal L)
+    (hAprob : (1 / 2 : ENNReal) ≤ μ A) :
+    ∃ c : ℝ, 0 < c ∧ ∀ {t : ℝ}, 0 ≤ t →
+      1 - 2 * Real.exp (-c * t ^ 2 / K ^ 2) ≤
+        μ.real {x | Metric.infDist x A ≤ t} := by
+  let Y : Ω → ℝ := fun x => Metric.infDist x A
+  have hYmeas : Measurable Y := by
+    dsimp [Y]
+    exact Metric.continuous_infDist_pt A |>.measurable
+  have hYlip : LipschitzWith (1 : NNReal) Y := by
+    simpa [Y] using Metric.lipschitz_infDist_pt A
+  have hYnonneg : ∀ x, 0 ≤ Y x := by
+    intro x
+    exact Metric.infDist_nonneg
+  have hMedianY : IsMedian (Measure.map Y μ) 0 := by
+    constructor
+    · rw [Measure.map_apply hYmeas measurableSet_Iic]
+      calc
+        (1 / 2 : ENNReal) ≤ μ A := hAprob
+        _ ≤ μ (Y ⁻¹' Iic (0 : ℝ)) := by
+          apply measure_mono
+          intro x hx
+          change Y x ≤ 0
+          have hdist := Metric.infDist_le_dist_of_mem
+            (s := A) (x := x) (y := x) hx
+          simpa [Y] using hdist
+    · rw [Measure.map_apply hYmeas measurableSet_Ici]
+      have hpre : Y ⁻¹' Ici (0 : ℝ) = Set.univ := by
+        ext x
+        simp only [mem_preimage, mem_Ici, mem_univ, iff_true]
+        exact hYnonneg x
+      rw [hpre, measure_univ]
+      norm_num
+  have hGaugeC :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+          (fun x => Y x - ∫ y, Y y ∂μ) ≤ ENNReal.ofReal K := by
+    have h := hFunctional (f := Y) (L := (1 : NNReal)) hYmeas hYint hYlip
+    simpa using h
+  let Yc : Ω → ℝ := fun x => Y x - ∫ y, Y y ∂μ
+  have hYcmeas : Measurable Yc := by
+    dsimp [Yc]
+    exact hYmeas.sub_const _
+  have hYcint : Integrable Yc μ := by
+    dsimp [Yc]
+    exact hYint.sub (integrable_const _)
+  have hGaugeCLt :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Yc <
+        ENNReal.ofReal (2 * K) := by
+    apply lt_of_le_of_lt
+    · simpa [Yc] using hGaugeC
+    · apply (ENNReal.ofReal_lt_ofReal_iff (by positivity)).2
+      linarith
+  have hAdmissibleC :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ Yc
+        (ENNReal.ofReal (2 * K)) := by
+    unfold NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge at hGaugeCLt
+    rcases (sInf_lt_iff.mp hGaugeCLt) with ⟨s, hs, hsK⟩
+    exact NumStability.HDP.Scalar.SubGaussian.psiTwoAdmissible_mono hs hsK.le
+      (ENNReal.ofReal_ne_zero_iff.mpr (by positivity)) ENNReal.ofReal_ne_top
+  have hPointC :
+      NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ Yc
+        .squarePoint (2 * K) := by
+    have h2K : 0 ≤ 2 * K := by linarith
+    have h2KtoReal : (ENNReal.ofReal (2 * K)).toReal = 2 * K :=
+      ENNReal.toReal_ofReal h2K
+    refine ⟨hYcmeas, by linarith, ?_, ?_⟩
+    · simpa only [h2KtoReal] using hAdmissibleC.2.2.2.1
+    · simpa only [h2KtoReal] using hAdmissibleC.2.2.2.2
+  have hMedianC : IsMedian (Measure.map Yc μ)
+      (0 - ∫ y, Y y ∂μ) := by
+    dsimp [Yc]
+    exact isMedian_sub_const hYmeas hMedianY
+  rcases medianPsiTwoGaugeComparison hYcmeas hMedianC (i := .squarePoint)
+      (K := 2 * K) (by linarith) hPointC with
+    ⟨c, C, hc, hC, _, hUpper⟩
+  have hMeanC : (∫ x, Yc x ∂μ) = 0 := by
+    change (∫ x, (Y x - ∫ y, Y y ∂μ) ∂μ) = 0
+    rw [integral_sub hYint (integrable_const _)]
+    simp [Y, probReal_univ]
+  have hUpperY :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y ≤
+        ENNReal.ofReal C *
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Yc := by
+    calc
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y =
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun x => Yc x - (0 - ∫ y, Y y ∂μ)) := by
+        congr 1
+        funext x
+        dsimp [Yc]
+        ring
+      _ ≤ ENNReal.ofReal C *
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun x => Yc x - ∫ y, Yc y ∂μ) := hUpper
+      _ = ENNReal.ofReal C *
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Yc := by
+        rw [show (fun x => Yc x - ∫ y, Yc y ∂μ) = Yc by
+          funext x
+          rw [hMeanC]
+          simp]
+  have hGaugeY :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y ≤
+        ENNReal.ofReal (C * K) := by
+    calc
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y ≤
+          ENNReal.ofReal C *
+            NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Yc := hUpperY
+      _ ≤ ENNReal.ofReal C * ENNReal.ofReal K :=
+        mul_le_mul_left' (by simpa [Yc] using hGaugeC) _
+      _ = ENNReal.ofReal (C * K) := by
+        rw [ENNReal.ofReal_mul hC.le]
+  have hGaugeYLt :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y <
+        ENNReal.ofReal (2 * C * K) := by
+    have h2CK : 0 < 2 * C * K := by positivity
+    apply lt_of_le_of_lt hGaugeY
+    apply (ENNReal.ofReal_lt_ofReal_iff h2CK).2
+    nlinarith
+  have hAdmissibleY :
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ Y
+        (ENNReal.ofReal (2 * C * K)) := by
+    unfold NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge at hGaugeYLt
+    rcases (sInf_lt_iff.mp hGaugeYLt) with ⟨s, hs, hsK⟩
+    exact NumStability.HDP.Scalar.SubGaussian.psiTwoAdmissible_mono hs hsK.le
+      (ENNReal.ofReal_ne_zero_iff.mpr (by positivity)) ENNReal.ofReal_ne_top
+  refine ⟨1 / (4 * C ^ 2), by positivity, ?_⟩
+  intro t ht
+  have hTail :
+      μ.real {x | |Y x| ≥ t} ≤
+        2 * Real.exp (-t ^ 2 / (2 * C * K) ^ 2) := by
+    have h2CK : 0 < 2 * C * K := by positivity
+    have hTail0 :=
+      NumStability.HDP.Scalar.SubGaussian.squareMGFToTail
+        (K := (ENNReal.ofReal (2 * C * K)).toReal) hYmeas
+        (ENNReal.toReal_pos (ENNReal.ofReal_ne_zero_iff.mpr h2CK)
+          ENNReal.ofReal_ne_top)
+        ⟨hAdmissibleY.2.2.2.1, hAdmissibleY.2.2.2.2⟩ ht
+    simpa only [ENNReal.toReal_ofReal h2CK.le] using hTail0
+  have hStrictMeas : MeasurableSet {x | t < Y x} :=
+    measurableSet_Ioi.preimage hYmeas
+  have hStrictTail :
+      μ.real {x | t < Y x} ≤
+        2 * Real.exp (-t ^ 2 / (2 * C * K) ^ 2) := by
+    calc
+      μ.real {x | t < Y x} ≤ μ.real {x | |Y x| ≥ t} := by
+        rw [MeasureTheory.measureReal_def, MeasureTheory.measureReal_def]
+        apply ENNReal.toReal_mono (measure_ne_top μ _)
+        apply measure_mono
+        intro x hx
+        have hnonneg := hYnonneg x
+        simpa [abs_of_nonneg hnonneg] using (le_of_lt hx)
+      _ ≤ 2 * Real.exp (-t ^ 2 / (2 * C * K) ^ 2) := hTail
+  have hComplement : {x | Y x ≤ t} = ({x | t < Y x})ᶜ := by
+    ext x
+    simp only [mem_setOf_eq, mem_compl_iff, not_lt]
+  have hProb := MeasureTheory.probReal_add_probReal_compl (μ := μ) hStrictMeas
+  rw [← hComplement] at hProb
+  have hLower :
+      1 - 2 * Real.exp (-t ^ 2 / (2 * C * K) ^ 2) ≤
+        μ.real {x | Y x ≤ t} := by
+    linarith
+  have hExponent :
+      -t ^ 2 / (2 * C * K) ^ 2 =
+        -(1 / (4 * C ^ 2)) * t ^ 2 / K ^ 2 := by
+    field_simp [ne_of_gt hC, ne_of_gt hK]
+    ring
+  have hFinalY :
+      1 - 2 * Real.exp (-(1 / (4 * C ^ 2)) * t ^ 2 / K ^ 2) ≤
+        μ.real {x | Y x ≤ t} := by
+    rw [← hExponent]
+    exact hLower
+  simpa [Y] using hFinalY
+
 end NumStability.HDP.Concentration.MetricMeasure
 
 namespace NumStability.HDP.Contract
