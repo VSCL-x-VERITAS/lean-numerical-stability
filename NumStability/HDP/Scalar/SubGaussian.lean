@@ -2219,6 +2219,65 @@ theorem psiTwoGauge_finite_iff
       sInf_le htAdmissible
     exact lt_of_le_of_lt hInf ENNReal.ofReal_lt_top
 
+/-! Example 2.5.8(c): an essentially bounded variable has finite `ψ₂` gauge.
+
+The positive real `B` is an arbitrary essential bound for `|X|`; taking the
+infimum over such bounds recovers the printed essential-supremum estimate. -/
+theorem essentiallyBoundedPsiTwoGauge
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ} {B : ℝ}
+    (hX : Measurable X) (hB : 0 < B)
+    (hBound : ∀ᵐ ω ∂μ, |X ω| ≤ B) :
+    PsiTwoGauge μ X ≤
+      ENNReal.ofReal (B / Real.sqrt (Real.log 2)) := by
+  have hLog : 0 < Real.log 2 := by positivity
+  have hSqrt : 0 < Real.sqrt (Real.log 2) := Real.sqrt_pos.2 hLog
+  let K : ℝ := B / Real.sqrt (Real.log 2)
+  have hK : 0 < K := div_pos hB hSqrt
+  have hSqSqrt : (Real.sqrt (Real.log 2)) ^ 2 = Real.log 2 :=
+    Real.sq_sqrt hLog.le
+  have hPointwise : ∀ᵐ ω ∂μ,
+      Real.exp (X ω ^ 2 / K ^ 2) ≤ (2 : ℝ) := by
+    filter_upwards [hBound] with ω hω
+    have hSq : X ω ^ 2 ≤ B ^ 2 := by
+      rw [← sq_abs]
+      exact (sq_le_sq₀ (abs_nonneg (X ω)) hB.le).2 hω
+    have hArg : X ω ^ 2 / K ^ 2 ≤ Real.log 2 := by
+      dsimp [K]
+      calc
+        X ω ^ 2 / (B / Real.sqrt (Real.log 2)) ^ 2 =
+            X ω ^ 2 * (Real.sqrt (Real.log 2)) ^ 2 / B ^ 2 := by
+              field_simp [ne_of_gt hB, ne_of_gt hSqrt]
+        _ ≤ B ^ 2 * (Real.sqrt (Real.log 2)) ^ 2 / B ^ 2 := by
+              gcongr
+        _ = (Real.sqrt (Real.log 2)) ^ 2 := by
+              field_simp [ne_of_gt hB]
+        _ = Real.log 2 := hSqSqrt
+    calc
+      Real.exp (X ω ^ 2 / K ^ 2) ≤ Real.exp (Real.log 2) :=
+        Real.exp_le_exp.mpr hArg
+      _ = 2 := by rw [Real.exp_log (by norm_num)]
+  have hInt : Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ := by
+    refine MeasureTheory.Integrable.mono' (integrable_const (2 : ℝ)) ?_ ?_
+    · fun_prop
+    · filter_upwards [hPointwise] with ω hω
+      simpa only [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)] using hω
+  have hBoundIntegral :
+      (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ 2 := by
+    calc
+      (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤
+          ∫ _ : Ω, (2 : ℝ) ∂μ :=
+        MeasureTheory.integral_mono_ae hInt (integrable_const (2 : ℝ))
+          hPointwise
+      _ = 2 := by simp [probReal_univ]
+  have hAdmissible : PsiTwoAdmissible μ X (ENNReal.ofReal K) := by
+    refine ⟨hX, (ENNReal.ofReal_ne_zero_iff).2 hK,
+      ENNReal.ofReal_ne_top, ?_, ?_⟩
+    · simpa [ENNReal.toReal_ofReal hK.le] using hInt
+    · simpa [ENNReal.toReal_ofReal hK.le] using hBoundIntegral
+  have hInf : PsiTwoGauge μ X ≤ ENNReal.ofReal K := sInf_le hAdmissible
+  simpa [K] using hInf
+
 theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
@@ -2263,6 +2322,16 @@ theorem hdp_02_hdef_h2_d5_d6
       ∃ K : ℝ, 0 < K ∧
         NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePoint μ X K :=
   NumStability.HDP.Scalar.SubGaussian.psiTwoGauge_finite_iff
+
+/-! Stable Chapter 2 alias for the essentially bounded `ψ₂` estimate. -/
+theorem hdp_02_hexample_h2_d5_d8c
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ} {B : ℝ}
+    (hX : Measurable X) (hB : 0 < B)
+    (hBound : ∀ᵐ ω ∂μ, |X ω| ≤ B) :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ≤
+      ENNReal.ofReal (B / Real.sqrt (Real.log 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.essentiallyBoundedPsiTwoGauge hX hB hBound
 
 /-! Stable Chapter 2 alias for the standard-normal `Lᵖ` moment formula. -/
 theorem hdp_02_hex_h2_d5_d1 (p : ℝ) (hp : 1 ≤ p) :
