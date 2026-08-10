@@ -2979,7 +2979,7 @@ structure PsiTwoNormQuotientModelData
   norm_add_le : ∀ x y, norm (x + y) ≤ norm x + norm y
   norm_smul : ∀ (c : ℝ) x, norm (c • x) = |c| * norm x
 
-noncomputable def psiTwoNormQuotientModel
+noncomputable def psiTwoNormQuotientModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] :
     PsiTwoNormQuotientModelData μ :=
@@ -2989,6 +2989,19 @@ noncomputable def psiTwoNormQuotientModel
     norm_eq_zero := psiTwoQuotientNorm_eq_zero_iff μ
     norm_add_le := psiTwoQuotientNorm_add_le μ
     norm_smul := psiTwoQuotientNorm_smul μ }
+
+theorem psiTwoNormQuotientModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :
+    ∃ norm : psiTwoSpace μ → ℝ,
+      (∀ x, 0 ≤ norm x) ∧
+        norm 0 = 0 ∧
+        (∀ x, norm x = 0 ↔ x = 0) ∧
+        (∀ x y, norm (x + y) ≤ norm x + norm y) ∧
+        (∀ (c : ℝ) x, norm (c • x) = |c| * norm x) := by
+  refine ⟨psiTwoQuotientNorm μ, psiTwoQuotientNorm_nonneg μ,
+    psiTwoQuotientNorm_zero μ, psiTwoQuotientNorm_eq_zero_iff μ,
+    psiTwoQuotientNorm_add_le μ, psiTwoQuotientNorm_smul μ⟩
 /-! Example 2.5.8(a): Gaussian variables have finite `ψ₂` gauge. -/
 theorem gaussianPsiTwoGauge_finite :
     PsiTwoGauge (gaussianReal 0 1) id < ∞ ∧
@@ -3350,10 +3363,15 @@ theorem hdp_02_hdef_h2_d5_d6
 
 /-! Stable Chapter 2 alias for Exercise 2.5.7: the exact ψ₂ norm on the
 measurable finite-gauge quotient modulo a.e. equality. -/
-noncomputable def hdp_02_hex_h2_d5_d7
+theorem hdp_02_hex_h2_d5_d7
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] :
-    NumStability.HDP.Scalar.SubGaussian.PsiTwoNormQuotientModelData μ :=
+    ∃ norm : NumStability.HDP.Scalar.SubGaussian.psiTwoSpace μ → ℝ,
+      (∀ x, 0 ≤ norm x) ∧
+        norm 0 = 0 ∧
+        (∀ x, norm x = 0 ↔ x = 0) ∧
+        (∀ x y, norm (x + y) ≤ norm x + norm y) ∧
+        (∀ (c : ℝ) x, norm (c • x) = |c| * norm x) :=
   NumStability.HDP.Scalar.SubGaussian.psiTwoNormQuotientModel μ
 
 /-! Stable Chapter 2 alias for the essentially bounded `ψ₂` estimate. -/
