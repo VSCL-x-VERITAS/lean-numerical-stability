@@ -2,6 +2,7 @@ import Mathlib.Probability.Moments.Variance
 import Mathlib.Probability.CDF
 import Mathlib.MeasureTheory.Function.LpSpace.Basic
 import Mathlib.MeasureTheory.Function.LpSpace.Complete
+import Mathlib.MeasureTheory.Function.LpSeminorm.LpNorm
 import Mathlib.MeasureTheory.Function.LpSeminorm.Indicator
 import Mathlib.Probability.UniformOn
 import Mathlib.Analysis.Convex.Integral
@@ -681,6 +682,47 @@ theorem cauchySchwarzIntegralBound
         (fun x y => x * y) 1 (.of_forall fun _ => by simp)
     _ = (eLpNorm X 2 μ).toReal * (eLpNorm Y 2 μ).toReal := by
       simp only [ENNReal.toReal_mul]
+
+/-! The pinned representative L2 norm agrees with the chapter's
+  square-root-of-second-moment representative norm. -/
+theorem eLpNormTwoToL2Norm
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {Z : Ω → ℝ}
+    (hZ : MemLp Z 2 μ) :
+    (eLpNorm Z 2 μ).toReal = l2Norm μ Z := by
+  rw [toReal_eLpNorm hZ.1]
+  rw [lpNorm_eq_integral_norm_rpow_toReal (by norm_num) (by norm_num) hZ.1]
+  simp [l2Norm, expectation, Real.sqrt_eq_rpow, Real.norm_eq_abs, ← sq_abs]
+
+/-! Remark 1.1.1: covariance is controlled by the product of the two
+  centered L2 norms, hence by the product of the source standard deviations. -/
+theorem covarianceCauchySchwarzBound
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X Y : Ω → ℝ}
+    (hX : MemLp X 2 μ) (hY : MemLp Y 2 μ) :
+    ‖covariance μ X Y‖ ≤ standardDeviation μ X * standardDeviation μ Y := by
+  have hXc : MemLp (fun ω => X ω - expectation μ X) 2 μ := by
+    simpa using hX.sub (memLp_const (expectation μ X))
+  have hYc : MemLp (fun ω => Y ω - expectation μ Y) 2 μ := by
+    simpa using hY.sub (memLp_const (expectation μ Y))
+  have hbound := cauchySchwarzIntegralBound hXc hYc
+  have hnormX := eLpNormTwoToL2Norm hXc
+  have hnormY := eLpNormTwoToL2Norm hYc
+  calc
+    ‖covariance μ X Y‖ =
+        ‖expectation μ (fun ω =>
+          (X ω - expectation μ X) * (Y ω - expectation μ Y))‖ := by
+      rfl
+    _ ≤
+        (eLpNorm (fun ω => X ω - expectation μ X) 2 μ).toReal *
+          (eLpNorm (fun ω => Y ω - expectation μ Y) 2 μ).toReal := hbound
+    _ = l2Norm μ (fun ω => X ω - expectation μ X) *
+          l2Norm μ (fun ω => Y ω - expectation μ Y) := by
+      rw [hnormX, hnormY]
+    _ = standardDeviation μ X * standardDeviation μ Y := by
+      rw [(stdevCovarianceIdentities μ X Y).1]
+      rw [(stdevCovarianceIdentities μ Y X).1]
 
 /-! A concrete two-point witness that the displayed `Lᵖ` functional need not
 be subadditive below one. -/
