@@ -2491,6 +2491,140 @@ theorem essentiallyBoundedPsiTwoGauge
   have hInf : PsiTwoGauge μ X ≤ ENNReal.ofReal K := sInf_le hAdmissible
   simpa [K] using hInf
 
+/-! Example 2.5.8(b): the exact gauge of the symmetric two-point law. -/
+noncomputable def rademacherPsiTwoLaw : Measure ℝ :=
+  (1 / 2 : ENNReal) • Measure.dirac (-1) +
+    (1 / 2 : ENNReal) • Measure.dirac 1
+
+lemma rademacherPsiTwoLaw_probability :
+    IsProbabilityMeasure rademacherPsiTwoLaw := by
+  apply isProbabilityMeasure_iff.mpr
+  simp [rademacherPsiTwoLaw, ENNReal.div_eq_inv_mul]
+  calc
+    (2 : ENNReal)⁻¹ + 2⁻¹ = (2 : ENNReal)⁻¹ + (2 : ENNReal)⁻¹ * 1 := by ring
+    _ = (2 : ENNReal)⁻¹ * (1 + 1) := by ring
+    _ = (2 : ENNReal)⁻¹ * 2 := by norm_num
+    _ = 1 := by exact ENNReal.inv_mul_cancel (by norm_num) (by norm_num)
+
+lemma rademacherPsiTwoLaw_integral (f : ℝ → ℝ) :
+    ∫ x, f x ∂rademacherPsiTwoLaw =
+      (1 / 2 : ℝ) * f (-1) + (1 / 2 : ℝ) * f 1 := by
+  rw [rademacherPsiTwoLaw, MeasureTheory.integral_add_measure]
+  · rw [MeasureTheory.integral_smul_measure, MeasureTheory.integral_smul_measure,
+      MeasureTheory.integral_dirac, MeasureTheory.integral_dirac]
+    norm_num
+  · apply Integrable.smul_measure
+    · exact integrable_dirac (by simp)
+    · simp [ENNReal.div_eq_inv_mul]
+  · apply Integrable.smul_measure
+    · exact integrable_dirac (by simp)
+    · simp [ENNReal.div_eq_inv_mul]
+
+lemma rademacherPsiTwoGauge_admissible_iff {t : ℝ≥0∞} :
+    PsiTwoAdmissible rademacherPsiTwoLaw id t ↔
+      t ≠ 0 ∧ t ≠ ∞ ∧ Real.exp (1 / t.toReal ^ 2) ≤ 2 := by
+  constructor
+  · rintro ⟨hMeas, ht0, htTop, hInt, hBound⟩
+    refine ⟨ht0, htTop, ?_⟩
+    rw [rademacherPsiTwoLaw_integral] at hBound
+    have hneg : Real.exp (id (-1 : ℝ) ^ 2 / t.toReal ^ 2) =
+        Real.exp (1 / t.toReal ^ 2) := by
+      simp only [id]
+      congr 1
+      ring
+    have hpos : Real.exp (id (1 : ℝ) ^ 2 / t.toReal ^ 2) =
+        Real.exp (1 / t.toReal ^ 2) := by
+      simp only [id]
+      congr 1
+      ring
+    calc
+      Real.exp (1 / t.toReal ^ 2) =
+          (1 / 2 : ℝ) * Real.exp (1 / t.toReal ^ 2) +
+            (1 / 2 : ℝ) * Real.exp (1 / t.toReal ^ 2) := by ring
+      _ = (1 / 2 : ℝ) * Real.exp (id (-1 : ℝ) ^ 2 / t.toReal ^ 2) +
+            (1 / 2 : ℝ) * Real.exp (id (1 : ℝ) ^ 2 / t.toReal ^ 2) := by
+              rw [hneg, hpos]
+      _ ≤ 2 := hBound
+  · rintro ⟨ht0, htTop, hBound⟩
+    refine ⟨measurable_id, ht0, htTop, ?_, ?_⟩
+    · apply Integrable.add_measure
+      · apply Integrable.smul_measure
+        · exact integrable_dirac (by simp)
+        · simp [rademacherPsiTwoLaw, ENNReal.div_eq_inv_mul]
+      · apply Integrable.smul_measure
+        · exact integrable_dirac (by simp)
+        · simp [rademacherPsiTwoLaw, ENNReal.div_eq_inv_mul]
+    · rw [rademacherPsiTwoLaw_integral]
+      have hneg : Real.exp (id (-1 : ℝ) ^ 2 / t.toReal ^ 2) =
+          Real.exp (1 / t.toReal ^ 2) := by
+        simp only [id]
+        congr 1
+        ring
+      have hpos : Real.exp (id (1 : ℝ) ^ 2 / t.toReal ^ 2) =
+          Real.exp (1 / t.toReal ^ 2) := by
+        simp only [id]
+        congr 1
+        ring
+      calc
+        (1 / 2 : ℝ) * Real.exp (id (-1 : ℝ) ^ 2 / t.toReal ^ 2) +
+            (1 / 2 : ℝ) * Real.exp (id (1 : ℝ) ^ 2 / t.toReal ^ 2) =
+            (1 / 2 : ℝ) * Real.exp (1 / t.toReal ^ 2) +
+              (1 / 2 : ℝ) * Real.exp (1 / t.toReal ^ 2) := by rw [hneg, hpos]
+        _ ≤ 2 := by nlinarith [hBound]
+
+theorem rademacherPsiTwoGauge_exact :
+    PsiTwoGauge rademacherPsiTwoLaw id =
+      ENNReal.ofReal (1 / Real.sqrt (Real.log 2)) := by
+  let q : ℝ := 1 / Real.sqrt (Real.log 2)
+  have hlog : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hsqrt : 0 < Real.sqrt (Real.log 2) := Real.sqrt_pos.2 hlog
+  have hq : 0 < q := div_pos one_pos hsqrt
+  have hqSq : q ^ 2 = 1 / Real.log 2 := by
+    dsimp [q]
+    rw [div_pow, Real.sq_sqrt hlog.le]
+    norm_num
+  have hExpIff {t : ℝ} (ht : 0 < t) :
+      Real.exp (1 / t ^ 2) ≤ 2 ↔ q ≤ t := by
+    constructor
+    · intro hExp
+      have hlog' : 1 / t ^ 2 ≤ Real.log 2 := by
+        calc
+          1 / t ^ 2 = Real.log (Real.exp (1 / t ^ 2)) := by
+            rw [Real.log_exp]
+          _ ≤ Real.log 2 := by
+            exact Real.log_le_log (by positivity) hExp
+      apply (sq_le_sq₀ hq.le ht.le).mp
+      rw [hqSq]
+      apply (div_le_iff₀ hlog).2
+      have hmul := (div_le_iff₀ (sq_pos_of_pos ht)).mp hlog'
+      simpa [mul_comm] using hmul
+    · intro hqt
+      have hsq : 1 / t ^ 2 ≤ Real.log 2 := by
+        apply (div_le_iff₀ (sq_pos_of_pos ht)).2
+        have hqtSq : q ^ 2 ≤ t ^ 2 := (sq_le_sq₀ hq.le ht.le).2 hqt
+        rw [hqSq] at hqtSq
+        have hmul := (div_le_iff₀ hlog).mp hqtSq
+        simpa [mul_comm] using hmul
+      calc
+        Real.exp (1 / t ^ 2) ≤ Real.exp (Real.log 2) :=
+          Real.exp_le_exp.mpr hsq
+        _ = 2 := by rw [Real.exp_log (by norm_num)]
+  have hqAdmissible :
+      PsiTwoAdmissible rademacherPsiTwoLaw id (ENNReal.ofReal q) := by
+    apply (rademacherPsiTwoGauge_admissible_iff).2
+    refine ⟨ENNReal.ofReal_ne_zero_iff.mpr hq, ENNReal.ofReal_ne_top, ?_⟩
+    rw [ENNReal.toReal_ofReal hq.le]
+    exact (hExpIff hq).2 le_rfl
+  unfold PsiTwoGauge
+  apply le_antisymm
+  · exact sInf_le hqAdmissible
+  · apply le_sInf
+    intro t ht
+    rcases (rademacherPsiTwoGauge_admissible_iff).1 ht with ⟨ht0, htTop, hBound⟩
+    have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+    rw [ENNReal.ofReal_le_iff_le_toReal htTop]
+    exact (hExpIff htpos).mp hBound
+
 theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
@@ -2560,6 +2694,13 @@ theorem hdp_02_hexample_h2_d5_d8c
     NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ≤
       ENNReal.ofReal (B / Real.sqrt (Real.log 2)) :=
   NumStability.HDP.Scalar.SubGaussian.essentiallyBoundedPsiTwoGauge hX hB hBound
+
+/-! Stable Chapter 2 alias for the exact Rademacher `ψ₂` gauge. -/
+theorem hdp_02_hexample_h2_d5_d8b :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
+        NumStability.HDP.Scalar.SubGaussian.rademacherPsiTwoLaw id =
+      ENNReal.ofReal (1 / Real.sqrt (Real.log 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.rademacherPsiTwoGauge_exact
 
 /-! Stable Chapter 2 alias for the standard-normal `Lᵖ` moment formula. -/
 theorem hdp_02_hex_h2_d5_d1 (p : ℝ) (hp : 1 ≤ p) :
