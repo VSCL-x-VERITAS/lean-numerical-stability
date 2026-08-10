@@ -1186,6 +1186,67 @@ theorem subExponentialCharacterization
         _ ≤ 4096 * (Real.exp 1) ^ 3 * Ki :=
           mul_le_mul_of_nonneg_right hcoeff hKi0
 
+/-! Exercise 2.7.3: the fixed-`α` power-coordinate interface.
+
+For `α > 0`, the natural common interface is obtained by applying the
+sub-exponential characterization to `|X|^α`.  In the tail coordinate this is
+the printed bound `2 exp (-(t/K)^α)` after the change of variable
+`t ↦ t^α`; in the moment coordinate it records the growth of the moments of
+`|X|^α`, hence the usual `p^(1/α)` growth after reparameterizing the moment
+order.  This representation deliberately does not assert a linear MGF norm
+when `α ≤ 1`.
+-/
+
+abbrev SubWeibullPropertyKind := SubExponentialPropertyKind
+
+def SubWeibullProperty {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (α : ℝ) :
+    SubWeibullPropertyKind → ℝ → Prop
+  | i, K => 0 < α ∧
+      SubExponentialProperty μ (fun ω => |X ω| ^ α) i K
+
+theorem subWeibullMomentInterpretation
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {α K : ℝ}
+    (hα : 0 < α) (h : SubWeibullProperty μ X α .moment K) :
+    ∀ p : ℝ, 1 ≤ p →
+      Integrable (fun ω => |X ω| ^ (α * p)) μ ∧
+        (∫ ω, |X ω| ^ (α * p) ∂μ) ≤ (K * p) ^ p := by
+  rcases h with ⟨_, hMoment⟩
+  rcases hMoment with ⟨hMeas, hK, hGrowth⟩
+  intro p hp
+  rcases hGrowth.2 p hp with ⟨hInt, hBound⟩
+  constructor
+  · convert hInt using 1
+    funext ω
+    dsimp
+    rw [abs_of_nonneg (Real.rpow_nonneg (abs_nonneg (X ω)) α)]
+    rw [← Real.rpow_mul (abs_nonneg (X ω))]
+  · convert hBound using 1
+    apply integral_congr_ae
+    filter_upwards [] with ω
+    rw [abs_of_nonneg (Real.rpow_nonneg (abs_nonneg (X ω)) α)]
+    rw [← Real.rpow_mul (abs_nonneg (X ω))]
+
+theorem subWeibullCharacterization
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {α : ℝ} (hα : 0 < α) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ i j : SubWeibullPropertyKind, ∀ {Ki : ℝ}, 0 < Ki →
+        SubWeibullProperty μ X α i Ki →
+          ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+            SubWeibullProperty μ X α j Kj := by
+  let Y : Ω → ℝ := fun ω => |X ω| ^ α
+  obtain ⟨C, hC, hCharacterization⟩ :=
+    (subExponentialCharacterization (μ := μ) (X := Y))
+  refine ⟨C, hC, ?_⟩
+  intro i j Ki hKi hProp
+  rcases hProp with ⟨hα', hSub⟩
+  rcases hCharacterization i j hKi hSub with ⟨Kj, hKj, hKjbound, hResult⟩
+  exact ⟨Kj, hKj, hKjbound, ⟨hα', by simpa [Y] using hResult⟩⟩
+
 /-! Remark 2.7.9: a bounded centered unit-variance witness and the domain of the
 rate-one exponential MGF.  The symmetric two-point law makes the local Taylor
 calculation exact, while the exponential-law calculation is kept in extended
@@ -1769,6 +1830,19 @@ theorem hdp_02_hex_h2_d7_d2
             ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
               NumStability.HDP.Scalar.SubExponential.SubExponentialProperty μ X j Kj := by
   exact NumStability.HDP.Scalar.SubExponential.subExponentialCharacterization
+
+/-! Stable Chapter 2 alias for Exercise 2.7.3. -/
+theorem hdp_02_hex_h2_d7_d3
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {α : ℝ} (hα : 0 < α) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ i j : NumStability.HDP.Scalar.SubExponential.SubWeibullPropertyKind,
+        ∀ {Ki : ℝ}, 0 < Ki →
+          NumStability.HDP.Scalar.SubExponential.SubWeibullProperty μ X α i Ki →
+            ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+              NumStability.HDP.Scalar.SubExponential.SubWeibullProperty μ X α j Kj := by
+  exact NumStability.HDP.Scalar.SubExponential.subWeibullCharacterization hα
 
 /-! Stable Chapter 2 alias for Remark 2.7.9. -/
 theorem hdp_02_hrem_h2_d7_d9 : hdp_02_hrem_h2_d7_d9__contract_type := by
