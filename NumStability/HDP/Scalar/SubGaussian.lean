@@ -2432,6 +2432,72 @@ theorem psiTwoGauge_finite_iff
       sInf_le htAdmissible
     exact lt_of_le_of_lt hInf ENNReal.ofReal_lt_top
 
+/-! A gauge-facing form of the five-way characterization.  Every one of the
+    parameterized sub-Gaussian properties controls the exact `ψ₂` gauge up to
+    one universal constant, and finite gauge is equivalent to each property
+    being available at some positive scale. -/
+theorem psiTwoGaugeCharacterizations
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      (∀ i : SubGaussianPropertyKind, ∀ {K : ℝ}, 0 < K →
+        SubGaussianProperty μ X i K →
+          PsiTwoGauge μ X ≤ ENNReal.ofReal (C * K)) ∧
+      (∀ i : SubGaussianPropertyKind,
+        ((∃ K : ℝ, 0 < K ∧ SubGaussianProperty μ X i K) ↔
+          PsiTwoGauge μ X < ∞)) := by
+  let C : ℝ := 4096 * Real.exp 1
+  have hC : 1 ≤ C := by
+    dsimp [C]
+    nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1)]
+  refine ⟨C, hC, ?_, ?_⟩
+  · intro i K hK hProp
+    rcases subGaussianToTail i hK hProp with
+      ⟨T, hT, hTbound, hTail⟩
+    rcases subGaussianFromTail hCenter .squarePoint hT hTail with
+      ⟨Kpoint, hKpoint, hKpointBound, hPoint⟩
+    have hAdmissible : PsiTwoAdmissible μ X (ENNReal.ofReal Kpoint) := by
+      have hKpoint0 : ENNReal.ofReal Kpoint ≠ 0 :=
+        (ENNReal.ofReal_ne_zero_iff).2 hKpoint
+      refine ⟨hPoint.1, hKpoint0, ENNReal.ofReal_ne_top, ?_, ?_⟩
+      · simpa [ENNReal.toReal_ofReal hKpoint.le] using hPoint.2.2.1
+      · simpa [ENNReal.toReal_ofReal hKpoint.le] using hPoint.2.2.2
+    have hGauge : PsiTwoGauge μ X ≤ ENNReal.ofReal Kpoint :=
+      sInf_le hAdmissible
+    have hScaled : 128 * Real.exp 1 * T ≤
+        (4096 * Real.exp 1) * K := by
+      have hmul := mul_le_mul_of_nonneg_left hTbound
+        (by positivity : 0 ≤ 128 * Real.exp 1)
+      calc
+        128 * Real.exp 1 * T ≤ 128 * Real.exp 1 * (16 * K) := hmul
+        _ ≤ (4096 * Real.exp 1) * K := by
+          nlinarith [mul_pos (Real.exp_pos 1) hK]
+    have hKpointC : Kpoint ≤ C * K := by
+      calc
+        Kpoint ≤ 128 * Real.exp 1 * T := hKpointBound
+        _ ≤ (4096 * Real.exp 1) * K := hScaled
+        _ = C * K := by rfl
+    exact hGauge.trans (ENNReal.ofReal_mono hKpointC)
+  · intro i
+    constructor
+    · rintro ⟨K, hK, hProp⟩
+      rcases subGaussianToTail i hK hProp with
+        ⟨T, hT, hTbound, hTail⟩
+      rcases subGaussianFromTail hCenter .squarePoint hT hTail with
+        ⟨Kpoint, hKpoint, _, hPoint⟩
+      exact (psiTwoGauge_finite_iff (μ := μ) (X := X)).2
+        ⟨Kpoint, hKpoint, hPoint⟩
+    · intro hGauge
+      rcases (psiTwoGauge_finite_iff (μ := μ) (X := X)).1 hGauge with
+        ⟨Kpoint, hKpoint, hPoint⟩
+      rcases subGaussianToTail .squarePoint hKpoint hPoint with
+        ⟨T, hT, _, hTail⟩
+      rcases subGaussianFromTail hCenter i hT hTail with
+        ⟨K, hK, _, hProp⟩
+      exact ⟨K, hK, hProp⟩
+
 /-! The exact gauge is subadditive at the level of admissible scales.  This is
 the analytic core needed before passing to the a.e. quotient in Exercise
 2.5.7. -/
@@ -3336,6 +3402,24 @@ theorem hdp_02_hprop_h2_d5_d2
             ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
               NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj :=
   NumStability.HDP.Scalar.SubGaussian.subGaussianCharacterization hCenter
+
+/-! Stable Chapter 2 alias for the gauge-facing characterization theorem. -/
+theorem hdp_02_hthm_hpsi2_hnorm_hcharacterizations
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      (∀ i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+        ∀ {K : ℝ}, 0 < K →
+          NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K →
+            NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ≤
+              ENNReal.ofReal (C * K)) ∧
+      (∀ i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+        ((∃ K : ℝ, 0 < K ∧
+          NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K) ↔
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞)) :=
+  NumStability.HDP.Scalar.SubGaussian.psiTwoGaugeCharacterizations hCenter
 
 /-! Stable Chapter 2 alias for Remark 2.5.3. -/
 theorem hdp_02_hrem_h2_d5_d3
