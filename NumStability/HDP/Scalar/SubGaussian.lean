@@ -2432,6 +2432,563 @@ theorem psiTwoGauge_finite_iff
       sInf_le htAdmissible
     exact lt_of_le_of_lt hInf ENNReal.ofReal_lt_top
 
+/-! The exact gauge is subadditive at the level of admissible scales.  This is
+the analytic core needed before passing to the a.e. quotient in Exercise
+2.5.7. -/
+lemma psiTwoAdmissible_add_of_admissible
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} {s t : ℝ≥0∞}
+    (hs : PsiTwoAdmissible μ X s) (ht : PsiTwoAdmissible μ Y t) :
+    PsiTwoAdmissible μ (fun ω => X ω + Y ω) (s + t) := by
+  rcases hs with ⟨hX, hs0, hsTop, hXs, hXbound⟩
+  rcases ht with ⟨hY, ht0, htTop, hYt, hYbound⟩
+  have hspos : 0 < s.toReal := ENNReal.toReal_pos hs0 hsTop
+  have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+  have hstTop : s + t ≠ ∞ := ENNReal.add_ne_top.2 ⟨hsTop, htTop⟩
+  have hst0 : s + t ≠ 0 := by
+    simp [hs0, ht0]
+  have hstpos : 0 < (s + t).toReal := ENNReal.toReal_pos hst0 hstTop
+  have hstreal : (s + t).toReal = s.toReal + t.toReal := by
+    simpa using ENNReal.toReal_add hsTop htTop
+  let a : ℝ := s.toReal / (s + t).toReal
+  let b : ℝ := t.toReal / (s + t).toReal
+  have ha : 0 ≤ a := div_nonneg hspos.le hstpos.le
+  have hb : 0 ≤ b := div_nonneg htpos.le hstpos.le
+  have hab : a + b = 1 := by
+    dsimp [a, b]
+    rw [hstreal]
+    field_simp
+  have harg : ∀ ω,
+      (X ω + Y ω) ^ 2 / (s + t).toReal ^ 2 ≤
+        a * (X ω ^ 2 / s.toReal ^ 2) + b * (Y ω ^ 2 / t.toReal ^ 2) := by
+    intro ω
+    have hsq := sq_nonneg (t.toReal * X ω - s.toReal * Y ω)
+    dsimp [a, b]
+    rw [hstreal]
+    field_simp
+    nlinarith
+  have hpoint : ∀ ω,
+      Real.exp ((X ω + Y ω) ^ 2 / (s + t).toReal ^ 2) ≤
+        a * Real.exp (X ω ^ 2 / s.toReal ^ 2) +
+          b * Real.exp (Y ω ^ 2 / t.toReal ^ 2) := by
+    intro ω
+    have hconv := convexOn_exp.2
+      (show X ω ^ 2 / s.toReal ^ 2 ∈ Set.univ by trivial)
+      (show Y ω ^ 2 / t.toReal ^ 2 ∈ Set.univ by trivial)
+      ha hb hab
+    exact (Real.exp_le_exp.mpr (harg ω)).trans hconv
+  have hsum : Integrable (fun ω =>
+      a * Real.exp (X ω ^ 2 / s.toReal ^ 2) +
+        b * Real.exp (Y ω ^ 2 / t.toReal ^ 2)) μ := by
+    exact (hXs.const_mul a).add (hYt.const_mul b)
+  have hInt : Integrable
+      (fun ω => Real.exp ((X ω + Y ω) ^ 2 / (s + t).toReal ^ 2)) μ := by
+    refine MeasureTheory.Integrable.mono' hsum ?_ ?_
+    · fun_prop
+    · filter_upwards [] with ω
+      simpa only [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)] using hpoint ω
+  refine ⟨hX.add hY, hst0, hstTop, hInt, ?_⟩
+  have hmono := MeasureTheory.integral_mono_ae hInt hsum
+    (Filter.Eventually.of_forall hpoint)
+  calc
+    (∫ ω, Real.exp ((X ω + Y ω) ^ 2 / (s + t).toReal ^ 2) ∂μ) ≤
+        ∫ ω, a * Real.exp (X ω ^ 2 / s.toReal ^ 2) +
+          b * Real.exp (Y ω ^ 2 / t.toReal ^ 2) ∂μ := hmono
+    _ = a * (∫ ω, Real.exp (X ω ^ 2 / s.toReal ^ 2) ∂μ) +
+          b * (∫ ω, Real.exp (Y ω ^ 2 / t.toReal ^ 2) ∂μ) := by
+      rw [MeasureTheory.integral_add (hXs.const_mul a) (hYt.const_mul b),
+        MeasureTheory.integral_const_mul, MeasureTheory.integral_const_mul]
+    _ ≤ a * 2 + b * 2 := by
+      gcongr
+    _ = 2 := by rw [← add_mul, hab, one_mul]
+
+lemma psiTwoAdmissible_neg_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {t : ℝ≥0∞} :
+    PsiTwoAdmissible μ (fun ω => -X ω) t ↔ PsiTwoAdmissible μ X t := by
+  constructor <;> intro h
+  · rcases h with ⟨hX, ht0, htTop, hInt, hBound⟩
+    have hX' : Measurable X := by simpa using hX.neg
+    refine ⟨hX', ht0, htTop, ?_, ?_⟩
+    · simpa [sq] using hInt
+    · simpa [sq] using hBound
+  · rcases h with ⟨hX, ht0, htTop, hInt, hBound⟩
+    refine ⟨hX.neg, ht0, htTop, ?_, ?_⟩
+    · simpa [sq] using hInt
+    · simpa [sq] using hBound
+
+theorem psiTwoGauge_neg
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} :
+    PsiTwoGauge μ (fun ω => -X ω) = PsiTwoGauge μ X := by
+  unfold PsiTwoGauge
+  congr 1
+  ext t
+  exact psiTwoAdmissible_neg_iff
+
+theorem psiTwoGauge_add_le
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} :
+    PsiTwoGauge μ (fun ω => X ω + Y ω) ≤
+      PsiTwoGauge μ X + PsiTwoGauge μ Y := by
+  change sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ (fun ω => X ω + Y ω) t} ≤
+    sInf {s : ℝ≥0∞ | PsiTwoAdmissible μ X s} +
+      sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ Y t}
+  simp only [sInf_eq_iInf]
+  apply ENNReal.le_iInf₂_add_iInf₂
+  intro s hs t ht
+  have hadd := psiTwoAdmissible_add_of_admissible hs ht
+  exact iInf_le_of_le (s + t) (iInf_le_of_le hadd le_rfl)
+
+lemma psiTwoAdmissible_smul_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {c : ℝ} (hc : c ≠ 0)
+    {t : ℝ≥0∞} (ht0 : t ≠ 0) (htTop : t ≠ ∞) :
+    PsiTwoAdmissible μ (fun ω => c * X ω) (ENNReal.ofReal |c| * t) ↔
+      PsiTwoAdmissible μ X t := by
+  have hcabs : 0 < |c| := abs_pos.mpr hc
+  have hcof0 : ENNReal.ofReal |c| ≠ 0 :=
+    (ENNReal.ofReal_ne_zero_iff).2 hcabs
+  have hct0 : ENNReal.ofReal |c| * t ≠ 0 := by
+    exact mul_ne_zero hcof0 ht0
+  have hctTop : ENNReal.ofReal |c| * t ≠ ∞ := by
+    exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top htTop
+  have hscale : (ENNReal.ofReal |c| * t).toReal = |c| * t.toReal := by
+    simp [ENNReal.toReal_mul]
+  have harg : ∀ ω,
+      (c * X ω) ^ 2 / (|c| * t.toReal) ^ 2 = X ω ^ 2 / t.toReal ^ 2 := by
+    intro ω
+    field_simp [ne_of_gt hcabs, ne_of_gt (ENNReal.toReal_pos ht0 htTop)]
+    rw [sq_abs]
+    ring
+  have harg' : ∀ ω,
+      (c * X ω) ^ 2 * ((|c| * t.toReal) ^ 2)⁻¹ =
+        X ω ^ 2 * (t.toReal ^ 2)⁻¹ := by
+    intro ω
+    simpa [div_eq_mul_inv] using harg ω
+  constructor
+  · intro h
+    rcases h with ⟨hX, _, _, hInt, hBound⟩
+    have hX' : Measurable X := by
+      have := hX.const_mul c⁻¹
+      simpa [hc, mul_assoc] using this
+    refine ⟨hX', ht0, htTop, ?_, ?_⟩
+    · simpa only [hscale, div_eq_mul_inv, harg'] using hInt
+    · simpa only [hscale, div_eq_mul_inv, harg'] using hBound
+  · intro h
+    rcases h with ⟨hX, _, _, hInt, hBound⟩
+    refine ⟨hX.const_mul c, hct0, hctTop, ?_, ?_⟩
+    · simpa only [hscale, div_eq_mul_inv, harg'] using hInt
+    · simpa only [hscale, div_eq_mul_inv, harg'] using hBound
+
+theorem psiTwoGauge_smul_of_ne_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {c : ℝ} (hc : c ≠ 0) :
+    PsiTwoGauge μ (fun ω => c * X ω) =
+      ENNReal.ofReal |c| * PsiTwoGauge μ X := by
+  let a : ℝ≥0∞ := ENNReal.ofReal |c|
+  have ha0 : a ≠ 0 := by
+    dsimp [a]
+    exact (ENNReal.ofReal_ne_zero_iff).2 (abs_pos.mpr hc)
+  have haTop : a ≠ ∞ := by
+    exact ENNReal.ofReal_ne_top
+  apply le_antisymm
+  · rw [show PsiTwoGauge μ (fun ω => c * X ω) =
+      sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ (fun ω => c * X ω) t} by rfl,
+      show PsiTwoGauge μ X =
+        sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ X t} by rfl,
+      sInf_eq_iInf', sInf_eq_iInf']
+    rw [ENNReal.mul_iInf_of_ne ha0 haTop]
+    apply le_iInf
+    intro t
+    exact iInf_le_of_le ⟨a * t.1, by
+      have hiff := psiTwoAdmissible_smul_iff (μ := μ) (X := X) hc
+        t.2.2.1 t.2.2.2.1
+      exact hiff.2 t.2⟩ le_rfl
+  · rw [show PsiTwoGauge μ (fun ω => c * X ω) =
+      sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ (fun ω => c * X ω) t} by rfl,
+      show PsiTwoGauge μ X =
+        sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ X t} by rfl,
+      sInf_eq_iInf', sInf_eq_iInf']
+    rw [ENNReal.mul_iInf_of_ne ha0 haTop]
+    apply le_iInf
+    intro t
+    have hiff := psiTwoAdmissible_smul_iff (μ := μ)
+      (X := fun ω => c * X ω) (c := c⁻¹) (inv_ne_zero hc)
+      t.2.2.1 t.2.2.2.1
+    have hscaled : PsiTwoAdmissible μ X
+        (ENNReal.ofReal |c⁻¹| * t.1) := by
+      have hfun : (fun ω => c⁻¹ * (c * X ω)) = X := by
+        funext ω
+        field_simp [hc]
+      simpa [hfun] using hiff.2 t.2
+    have hca : ENNReal.ofReal |c| * ENNReal.ofReal |c⁻¹| = 1 := by
+      rw [← ENNReal.ofReal_mul (abs_nonneg c)]
+      simp [abs_inv, hc]
+    have hmul : a * (ENNReal.ofReal |c⁻¹| * t.1) = t.1 := by
+      dsimp [a]
+      rw [← mul_assoc, hca, one_mul]
+    exact iInf_le_of_le ⟨ENNReal.ofReal |c⁻¹| * t.1, hscaled⟩ (by
+      exact le_of_eq hmul)
+
+theorem psiTwoGauge_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] :
+    PsiTwoGauge μ (fun _ : Ω => (0 : ℝ)) = 0 := by
+  apply le_antisymm
+  · apply le_of_forall_gt_imp_ge_of_dense
+    intro r hr
+    by_cases hrTop : r = ∞
+    · simp [hrTop]
+    have hr0 : r ≠ 0 := ne_of_gt hr
+    have hAd : PsiTwoAdmissible μ (fun _ : Ω => (0 : ℝ)) r := by
+      refine ⟨measurable_const, hr0, hrTop, ?_, ?_⟩
+      · simpa using (integrable_const (1 : ℝ) : Integrable (fun _ : Ω => (1 : ℝ)) μ)
+      · simpa using (show (1 : ℝ) ≤ 2 by norm_num)
+    exact sInf_le hAd
+  · exact bot_le
+
+lemma psiTwoAdmissible_ae_congr
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} (hX : Measurable X) (hY : Measurable Y)
+    (hXY : X =ᵐ[μ] Y) {t : ℝ≥0∞} :
+    PsiTwoAdmissible μ X t ↔ PsiTwoAdmissible μ Y t := by
+  have hfun : (fun ω => Real.exp (X ω ^ 2 / t.toReal ^ 2)) =ᵐ[μ]
+      (fun ω => Real.exp (Y ω ^ 2 / t.toReal ^ 2)) := by
+    filter_upwards [hXY] with ω hω
+    simp [hω]
+  constructor
+  · intro h
+    rcases h with ⟨_, ht0, htTop, hInt, hBound⟩
+    refine ⟨hY, ht0, htTop, hInt.congr hfun, ?_⟩
+    rw [integral_congr_ae hfun] at hBound
+    exact hBound
+  · intro h
+    rcases h with ⟨_, ht0, htTop, hInt, hBound⟩
+    refine ⟨hX, ht0, htTop, hInt.congr hfun.symm, ?_⟩
+    rw [integral_congr_ae hfun.symm] at hBound
+    exact hBound
+
+theorem psiTwoGauge_ae_congr
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} (hX : Measurable X) (hY : Measurable Y)
+    (hXY : X =ᵐ[μ] Y) :
+    PsiTwoGauge μ X = PsiTwoGauge μ Y := by
+  unfold PsiTwoGauge
+  congr 1
+  ext t
+  exact psiTwoAdmissible_ae_congr hX hY hXY
+
+lemma psiTwoAdmissible_mono
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {s u : ℝ≥0∞}
+    (hs : PsiTwoAdmissible μ X s) (hsu : s ≤ u)
+    (hu0 : u ≠ 0) (huTop : u ≠ ∞) :
+    PsiTwoAdmissible μ X u := by
+  rcases hs with ⟨hX, hs0, hsTop, hInt, hBound⟩
+  have hspos : 0 < s.toReal := ENNReal.toReal_pos hs0 hsTop
+  have hupos : 0 < u.toReal := ENNReal.toReal_pos hu0 huTop
+  have hsto : s.toReal ≤ u.toReal := ENNReal.toReal_mono huTop hsu
+  have hsq : s.toReal ^ 2 ≤ u.toReal ^ 2 :=
+    (sq_le_sq₀ hspos.le hupos.le).2 hsto
+  have harg : ∀ ω,
+      X ω ^ 2 / u.toReal ^ 2 ≤ X ω ^ 2 / s.toReal ^ 2 := by
+    intro ω
+    apply (div_le_div_iff₀ (by positivity : 0 < u.toReal ^ 2)
+      (by positivity : 0 < s.toReal ^ 2)).2
+    exact mul_le_mul_of_nonneg_left hsq (sq_nonneg (X ω))
+  have hpoint : ∀ ω,
+      Real.exp (X ω ^ 2 / u.toReal ^ 2) ≤
+        Real.exp (X ω ^ 2 / s.toReal ^ 2) := fun ω =>
+    Real.exp_le_exp.mpr (harg ω)
+  have hInt' : Integrable (fun ω => Real.exp (X ω ^ 2 / u.toReal ^ 2)) μ := by
+    refine MeasureTheory.Integrable.mono' hInt ?_ ?_
+    · fun_prop
+    · filter_upwards [] with ω
+      simpa only [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)] using hpoint ω
+  refine ⟨hX, hu0, huTop, hInt', ?_⟩
+  exact (MeasureTheory.integral_mono_ae hInt' hInt
+    (Filter.Eventually.of_forall hpoint)).trans hBound
+
+lemma psiTwoAdmissible_of_gauge_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
+    (hX : Measurable X) (hGauge : PsiTwoGauge μ X = 0) {K : ℝ} (hK : 0 < K) :
+    PsiTwoAdmissible μ X (ENNReal.ofReal K) := by
+  have hlt : PsiTwoGauge μ X < ENNReal.ofReal K := by
+    rw [hGauge]
+    exact ENNReal.ofReal_pos.mpr hK
+  unfold PsiTwoGauge at hlt
+  rcases (sInf_lt_iff.mp hlt) with ⟨s, hs, hsK⟩
+  apply psiTwoAdmissible_mono hs hsK.le
+  · exact (ENNReal.ofReal_ne_zero_iff).2 hK
+  · exact ENNReal.ofReal_ne_top
+
+theorem psiTwoGauge_eq_zero_iff_ae_eq_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
+    (hX : Measurable X) :
+    PsiTwoGauge μ X = 0 ↔ X =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := by
+  constructor
+  · intro hGauge
+    have hTail : ∀ K : ℝ, 0 < K → ∀ t : ℝ, 0 ≤ t →
+        μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2) := by
+      intro K hK t ht
+      have hAd := psiTwoAdmissible_of_gauge_zero hX hGauge hK
+      have hPoint : SubGaussianSquarePoint μ X K := by
+        refine ⟨hX, hK, ?_, ?_⟩
+        · simpa [ENNReal.toReal_ofReal hK.le] using hAd.2.2.2.1
+        · simpa [ENNReal.toReal_ofReal hK.le] using hAd.2.2.2.2
+      exact squareMGFToTail hX hK ⟨hPoint.2.2.1, hPoint.2.2.2⟩ ht
+    have hLpOne : LpMomentGrowth μ X (8 * Real.exp 1) := by
+      have h := tailToLpMomentGrowth hX (by norm_num : (0 : ℝ) < 1)
+        (hTail 1 (by norm_num))
+      simpa using h
+    have hInt : Integrable (fun ω => |X ω|) μ := by
+      have h := hLpOne.2 1 (by norm_num : (1 : ℝ) ≤ 1)
+      simpa using h.1
+    have hBound : ∀ K : ℝ, 0 < K →
+        (∫ ω, |X ω| ∂μ) ≤ 8 * Real.exp 1 * K := by
+      intro K hK
+      have hLp := tailToLpMomentGrowth hX hK (hTail K hK)
+      have h := hLp.2 1 (by norm_num : (1 : ℝ) ≤ 1)
+      simpa using h.2
+    have hIntegralZero : (∫ ω, |X ω| ∂μ) = 0 := by
+      apply le_antisymm
+      · apply le_of_forall_gt_imp_ge_of_dense
+        intro ε hε
+        have hK : 0 < ε / (8 * Real.exp 1) := by positivity
+        calc
+          (∫ ω, |X ω| ∂μ) ≤ 8 * Real.exp 1 * (ε / (8 * Real.exp 1)) := by
+            exact (hBound (ε / (8 * Real.exp 1)) hK).trans_eq (by
+              field_simp)
+          _ = ε := by field_simp
+      · exact integral_nonneg_of_ae
+          (Filter.Eventually.of_forall (fun ω => abs_nonneg (X ω)))
+    have hAbs : (fun ω => |X ω|) =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) :=
+      (integral_eq_zero_iff_of_nonneg
+        (fun ω => abs_nonneg (X ω)) hInt).mp hIntegralZero
+    filter_upwards [hAbs] with ω hω
+    exact abs_eq_zero.mp hω
+  · intro hZero
+    rw [psiTwoGauge_ae_congr hX measurable_const hZero]
+    exact psiTwoGauge_zero
+
+/-! The exact a.e.-quotient carrier for Exercise 2.5.7.  The carrier is a
+submodule of measurable finite-gauge representatives; quotienting by its
+null submodule makes the definiteness statement literal. -/
+def psiTwoMemberSubmodule
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] : Submodule ℝ (Ω → ℝ) where
+  carrier := {X | Measurable X ∧ PsiTwoGauge μ X < ∞}
+  zero_mem' := by
+    refine ⟨measurable_const, ?_⟩
+    change PsiTwoGauge μ (fun _ : Ω => (0 : ℝ)) < ∞
+    rw [psiTwoGauge_zero]
+    simp
+  add_mem' := by
+    intro X Y hX hY
+    refine ⟨hX.1.add hY.1, ?_⟩
+    exact lt_of_le_of_lt (psiTwoGauge_add_le (μ := μ) (X := X) (Y := Y))
+      (ENNReal.add_lt_top.mpr ⟨hX.2, hY.2⟩)
+  smul_mem' := by
+    intro c X hX
+    refine ⟨hX.1.const_smul c, ?_⟩
+    by_cases hc : c = 0
+    · subst c
+      simpa using (show PsiTwoGauge μ (fun _ : Ω => (0 : ℝ)) < ∞ by
+        rw [psiTwoGauge_zero]
+        simp)
+    · rw [show c • X = (fun ω => c * X ω) by rfl,
+      psiTwoGauge_smul_of_ne_zero hc]
+      exact ENNReal.mul_lt_top ENNReal.ofReal_lt_top hX.2
+
+def psiTwoNullSubmodule
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :
+    Submodule ℝ (psiTwoMemberSubmodule μ) where
+  carrier := {X | (X : Ω → ℝ) =ᵐ[μ] (fun _ : Ω => (0 : ℝ))}
+  zero_mem' := by
+    change ((0 : psiTwoMemberSubmodule μ) : Ω → ℝ) =ᵐ[μ]
+      (fun _ : Ω => (0 : ℝ))
+    exact Filter.Eventually.of_forall (fun _ => rfl)
+  add_mem' := by
+    intro X Y hX hY
+    change (X : Ω → ℝ) =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) at hX
+    change (Y : Ω → ℝ) =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) at hY
+    change (fun ω => X.1 ω + Y.1 ω) =ᵐ[μ] (fun _ : Ω => (0 : ℝ))
+    filter_upwards [hX, hY] with ω hωX hωY
+    simp [hωX, hωY]
+  smul_mem' := by
+    intro c X hX
+    change (X : Ω → ℝ) =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) at hX
+    change (fun ω => c * X.1 ω) =ᵐ[μ] (fun _ : Ω => (0 : ℝ))
+    filter_upwards [hX] with ω hω
+    simp [hω]
+
+def psiTwoSpace
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :=
+  psiTwoMemberSubmodule μ ⧸ psiTwoNullSubmodule μ
+
+instance psiTwoSpace.instAddCommGroup
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] : AddCommGroup (psiTwoSpace μ) := by
+  unfold psiTwoSpace
+  exact Submodule.Quotient.addCommGroup (psiTwoNullSubmodule μ)
+
+instance psiTwoSpace.instModule
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] : Module ℝ (psiTwoSpace μ) := by
+  unfold psiTwoSpace
+  exact Submodule.Quotient.module (psiTwoNullSubmodule μ)
+
+noncomputable def psiTwoQuotientGauge
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] : psiTwoSpace μ → ℝ≥0∞ :=
+  Quotient.lift
+    (fun X : psiTwoMemberSubmodule μ => PsiTwoGauge μ X.1)
+    (by
+      intro X Y hXY
+      have hmem : X - Y ∈ psiTwoNullSubmodule μ :=
+        (psiTwoNullSubmodule μ).quotientRel_def.mp hXY
+      have hzero : (X.1 - Y.1) =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := hmem
+      have hXY' : X.1 =ᵐ[μ] Y.1 := by
+        filter_upwards [hzero] with ω hω
+        change X.1 ω - Y.1 ω = 0 at hω
+        linarith
+      exact psiTwoGauge_ae_congr X.2.1 Y.2.1 hXY')
+
+noncomputable def psiTwoQuotientNorm
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] : psiTwoSpace μ → ℝ :=
+  fun x => (psiTwoQuotientGauge μ x).toReal
+
+lemma psiTwoQuotientNorm_mk
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : psiTwoMemberSubmodule μ) :
+    psiTwoQuotientNorm μ (Submodule.Quotient.mk X) =
+      (PsiTwoGauge μ X.1).toReal := rfl
+
+lemma psiTwoQuotientNorm_nonneg
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (x : psiTwoSpace μ) :
+    0 ≤ psiTwoQuotientNorm μ x :=
+  ENNReal.toReal_nonneg
+
+lemma psiTwoQuotientNorm_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :
+    psiTwoQuotientNorm μ (0 : psiTwoSpace μ) = 0 := by
+  change (psiTwoQuotientGauge μ (0 : psiTwoSpace μ)).toReal = 0
+  rw [show (0 : psiTwoSpace μ) = Submodule.Quotient.mk (0 : psiTwoMemberSubmodule μ) by rfl,
+    psiTwoQuotientGauge]
+  change (PsiTwoGauge μ (0 : Ω → ℝ)).toReal = 0
+  rw [show (0 : Ω → ℝ) = (fun _ : Ω => (0 : ℝ)) by rfl,
+    psiTwoGauge_zero]
+  rfl
+
+lemma psiTwoQuotientNorm_eq_zero_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (x : psiTwoSpace μ) :
+    psiTwoQuotientNorm μ x = 0 ↔ x = 0 := by
+  refine Submodule.Quotient.induction_on (psiTwoNullSubmodule μ) x ?_
+  intro X
+  have hfinite : PsiTwoGauge μ X.1 < ∞ := X.2.2
+  rw [psiTwoQuotientNorm_mk]
+  constructor
+  · intro hnorm
+    have hGauge : PsiTwoGauge μ X.1 = 0 := by
+      exact (ENNReal.toReal_eq_zero_iff _).mp hnorm |>.resolve_right hfinite.ne
+    apply (Submodule.Quotient.mk_eq_zero (psiTwoNullSubmodule μ)).2
+    exact (psiTwoGauge_eq_zero_iff_ae_eq_zero X.2.1).mp hGauge
+  · intro hx
+    have hGauge : PsiTwoGauge μ X.1 = 0 := by
+      apply (psiTwoGauge_eq_zero_iff_ae_eq_zero X.2.1).2
+      exact (Submodule.Quotient.mk_eq_zero (psiTwoNullSubmodule μ)).mp hx
+    simp [hGauge]
+
+lemma psiTwoQuotientNorm_add_le
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (x y : psiTwoSpace μ) :
+    psiTwoQuotientNorm μ (x + y) ≤
+      psiTwoQuotientNorm μ x + psiTwoQuotientNorm μ y := by
+  refine Submodule.Quotient.induction_on (psiTwoNullSubmodule μ) x ?_
+  intro X
+  refine Submodule.Quotient.induction_on (psiTwoNullSubmodule μ) y ?_
+  intro Y
+  have hmk :
+      (Submodule.Quotient.mk X : psiTwoSpace μ) + Submodule.Quotient.mk Y =
+        Submodule.Quotient.mk (X + Y) :=
+    (Submodule.Quotient.mk_add (psiTwoNullSubmodule μ) (x := X) (y := Y)).symm
+  have hsum := (psiTwoMemberSubmodule μ).add_mem X.2 Y.2
+  have hle := psiTwoGauge_add_le (μ := μ) (X := X.1) (Y := Y.1)
+  have htopLeft : PsiTwoGauge μ (X + Y).1 ≠ ∞ := hsum.2.ne
+  have htopRight : PsiTwoGauge μ X.1 + PsiTwoGauge μ Y.1 ≠ ∞ :=
+    (ENNReal.add_lt_top.mpr ⟨X.2.2, Y.2.2⟩).ne
+  have hreal := (ENNReal.toReal_le_toReal htopLeft htopRight).2 hle
+  calc
+    psiTwoQuotientNorm μ
+        ((Submodule.Quotient.mk X : psiTwoSpace μ) + Submodule.Quotient.mk Y) =
+        psiTwoQuotientNorm μ (Submodule.Quotient.mk (X + Y)) := congrArg _ hmk
+    _ = (PsiTwoGauge μ (X + Y).1).toReal := rfl
+    _ ≤ (PsiTwoGauge μ X.1).toReal + (PsiTwoGauge μ Y.1).toReal := by
+      simpa [ENNReal.toReal_add X.2.2.ne Y.2.2.ne] using hreal
+    _ = psiTwoQuotientNorm μ (Submodule.Quotient.mk X) +
+        psiTwoQuotientNorm μ (Submodule.Quotient.mk Y) := by rfl
+
+lemma psiTwoQuotientNorm_smul
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (c : ℝ) (x : psiTwoSpace μ) :
+    psiTwoQuotientNorm μ (c • x) = |c| * psiTwoQuotientNorm μ x := by
+  refine Submodule.Quotient.induction_on (psiTwoNullSubmodule μ) x ?_
+  intro X
+  have hmk : c • (Submodule.Quotient.mk X : psiTwoSpace μ) =
+      Submodule.Quotient.mk (c • X) :=
+    (Submodule.Quotient.mk_smul (psiTwoNullSubmodule μ) c X).symm
+  calc
+    psiTwoQuotientNorm μ (c • (Submodule.Quotient.mk X : psiTwoSpace μ)) =
+    psiTwoQuotientNorm μ (Submodule.Quotient.mk (c • X)) := congrArg _ hmk
+    _ = (PsiTwoGauge μ (c • X).1).toReal := rfl
+    _ = |c| * (PsiTwoGauge μ X.1).toReal := by
+      change (PsiTwoGauge μ (fun ω => c * X.1 ω)).toReal =
+        |c| * (PsiTwoGauge μ X.1).toReal
+      by_cases hc : c = 0
+      · subst c
+        rw [show (fun ω => (0 : ℝ) * X.1 ω) = (fun _ : Ω => (0 : ℝ)) by
+          funext ω; simp, psiTwoGauge_zero]
+        simp
+      · have hsmul :
+            PsiTwoGauge μ (fun ω => c * X.1 ω) =
+              ENNReal.ofReal |c| * PsiTwoGauge μ X.1 :=
+          psiTwoGauge_smul_of_ne_zero (μ := μ) (X := X.1) hc
+        rw [hsmul, ENNReal.toReal_mul]
+        · simp [ENNReal.toReal_ofReal (abs_nonneg c)]
+    _ = |c| * psiTwoQuotientNorm μ (Submodule.Quotient.mk X) := by rfl
+
+structure PsiTwoNormQuotientModelData
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] where
+  norm : psiTwoSpace μ → ℝ
+  norm_nonneg : ∀ x, 0 ≤ norm x
+  norm_zero : norm 0 = 0
+  norm_eq_zero : ∀ x, norm x = 0 ↔ x = 0
+  norm_add_le : ∀ x y, norm (x + y) ≤ norm x + norm y
+  norm_smul : ∀ (c : ℝ) x, norm (c • x) = |c| * norm x
+
+noncomputable def psiTwoNormQuotientModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :
+    PsiTwoNormQuotientModelData μ :=
+  { norm := psiTwoQuotientNorm μ
+    norm_nonneg := psiTwoQuotientNorm_nonneg μ
+    norm_zero := psiTwoQuotientNorm_zero μ
+    norm_eq_zero := psiTwoQuotientNorm_eq_zero_iff μ
+    norm_add_le := psiTwoQuotientNorm_add_le μ
+    norm_smul := psiTwoQuotientNorm_smul μ }
 /-! Example 2.5.8(a): Gaussian variables have finite `ψ₂` gauge. -/
 theorem gaussianPsiTwoGauge_finite :
     PsiTwoGauge (gaussianReal 0 1) id < ∞ ∧
@@ -2790,6 +3347,14 @@ theorem hdp_02_hdef_h2_d5_d6
       ∃ K : ℝ, 0 < K ∧
         NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePoint μ X K :=
   NumStability.HDP.Scalar.SubGaussian.psiTwoGauge_finite_iff
+
+/-! Stable Chapter 2 alias for Exercise 2.5.7: the exact ψ₂ norm on the
+measurable finite-gauge quotient modulo a.e. equality. -/
+noncomputable def hdp_02_hex_h2_d5_d7
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoNormQuotientModelData μ :=
+  NumStability.HDP.Scalar.SubGaussian.psiTwoNormQuotientModel μ
 
 /-! Stable Chapter 2 alias for the essentially bounded `ψ₂` estimate. -/
 theorem hdp_02_hexample_h2_d5_d8c
