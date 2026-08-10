@@ -10,6 +10,7 @@ import Mathlib.Analysis.Convex.Continuous
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 import Mathlib.MeasureTheory.Integral.Layercake
+import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 import Mathlib.Analysis.SpecialFunctions.Pow.Integral
 import Mathlib.Tactic
 
@@ -410,6 +411,103 @@ theorem layerCakeExpectation
   refine ⟨layerCakeExpectationExtended hX hNonneg, ?_⟩
   intro hInt
   exact layerCakeExpectationFinite hX hNonneg hInt
+
+/-! The corrected positive/negative-part form of Exercise 1.2.2.  The
+    textbook's signed tail subtraction is only used after integrability has
+    made both real integrals finite; the two extended identities remain
+    separate nonnegative statements. -/
+theorem exercise122PositiveNegativeLayerCake
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    (∫⁻ ω, ENNReal.ofReal (max (X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (X ω) 0}) ∧
+      (∫⁻ ω, ENNReal.ofReal (max (-X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (-X ω) 0}) := by
+  have hpos : Measurable (fun ω => max (X ω) 0) := hX.max measurable_const
+  have hneg : Measurable (fun ω => max (-X ω) 0) :=
+    (hX.neg).max measurable_const
+  exact ⟨layerCakeExpectationExtended hpos
+      (fun ω => le_max_right (X ω) 0),
+    layerCakeExpectationExtended hneg
+      (fun ω => le_max_right (-X ω) 0)⟩
+
+theorem exercise122CorrectedSignedTailFormula
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) (hInt : Integrable X μ) :
+    ∫ ω, X ω ∂μ =
+      (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
+        (∫ t in Set.Iio 0, μ.real {a | X a < t}) := by
+  have hintpos : Integrable (fun ω => max (X ω) 0) μ := by
+    have h' := hInt.real_toNNReal
+    convert h' using 1
+  have hintneg : Integrable (fun ω => max (-X ω) 0) μ := by
+    have h' := hInt.neg.real_toNNReal
+    convert h' using 1
+  have hfinitepos := hintpos.integral_eq_integral_meas_lt
+    (Filter.Eventually.of_forall (fun ω => le_max_right (X ω) 0))
+  rw [integral_eq_integral_pos_part_sub_integral_neg_part hInt]
+  have hpos_eq : (fun ω => (Real.toNNReal (X ω) : ℝ)) =
+      (fun ω => max (X ω) 0) := by
+    funext ω
+    by_cases hx : 0 ≤ X ω
+    · rw [Real.toNNReal_of_nonneg hx]
+      simp [max_eq_left hx]
+    · have hx' : X ω ≤ 0 := le_of_not_ge hx
+      rw [Real.toNNReal_of_nonpos hx']
+      simp [max_eq_right hx']
+  have hneg_eq : (fun ω => (Real.toNNReal (-X ω) : ℝ)) =
+      (fun ω => max (-X ω) 0) := by
+    funext ω
+    by_cases hx : 0 ≤ -X ω
+    · rw [Real.toNNReal_of_nonneg hx]
+      simp [max_eq_left hx]
+    · have hx' : -X ω ≤ 0 := le_of_not_ge hx
+      rw [Real.toNNReal_of_nonpos hx']
+      simp [max_eq_right hx']
+  rw [hpos_eq, hneg_eq, hfinitepos]
+  have hfinneg := hintneg.integral_eq_integral_meas_lt
+    (Filter.Eventually.of_forall (fun ω => le_max_right (-X ω) 0))
+  rw [hfinneg]
+  have hpos_tail :
+      (∫ t in Set.Ioi 0, μ.real {a | t < max (X a) 0}) =
+        ∫ t in Set.Ioi 0, μ.real {a | t < X a} := by
+    apply setIntegral_congr_fun measurableSet_Ioi
+    intro t ht
+    apply congrArg μ.real
+    ext a
+    change (t < max (X a) 0) ↔ t < X a
+    constructor
+    · intro h
+      exact (lt_max_iff.mp h).resolve_right (not_lt_of_ge ht.le)
+    · intro h
+      exact lt_max_iff.mpr (Or.inl h)
+  have hneg_tail :
+      (∫ t in Set.Ioi 0, μ.real {a | t < max (-X a) 0}) =
+        ∫ t in Set.Iio 0, μ.real {a | X a < t} := by
+    calc
+      (∫ t in Set.Ioi 0, μ.real {a | t < max (-X a) 0}) =
+          ∫ t in Set.Ioi 0, μ.real {a | X a < -t} := by
+            apply setIntegral_congr_fun measurableSet_Ioi
+            intro t ht
+            apply congrArg μ.real
+            ext a
+            change (t < max (-X a) 0) ↔ X a < -t
+            constructor
+            · intro h
+              have h' := (lt_max_iff.mp h).resolve_right
+                (not_lt_of_ge ht.le)
+              linarith
+            · intro h
+              exact lt_max_iff.mpr (Or.inl (by linarith))
+      _ = ∫ t in Set.Iic 0, μ.real {a | X a < t} := by
+        simpa only [neg_zero] using
+          (integral_comp_neg_Ioi 0
+            (fun t : ℝ => μ.real {a | X a < t}))
+      _ = ∫ t in Set.Iio 0, μ.real {a | X a < t} :=
+        integral_Iic_eq_integral_Iio
+  convert congrArg₂ (· - ·) hpos_tail hneg_tail using 1
 
 /-! The weighted layer-cake identity for positive real moments. -/
 theorem momentTailFormula
@@ -931,6 +1029,26 @@ theorem hdp_01_hlem_h1_d2_d1
         NumStability.HDP.Scalar.Preliminaries.expectation μ X =
           ∫ t in Set.Ioi 0, μ.real {ω | t < X ω}) :=
   NumStability.HDP.Scalar.Preliminaries.layerCakeExpectation hX hNonneg
+
+/-! Stable Chapter 1 alias for the corrected signed-tail statement in
+    Exercise 1.2.2.  The two nonnegative extended identities are exported
+    independently of the integrable signed formula. -/
+theorem hdp_01_hex_h1_d2_d2
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    ((∫⁻ ω, ENNReal.ofReal (max (X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (X ω) 0}) ∧
+      (∫⁻ ω, ENNReal.ofReal (max (-X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (-X ω) 0})) ∧
+      (∀ hInt : Integrable X μ,
+        (∫ ω, X ω ∂μ) =
+          (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
+            (∫ t in Set.Iio 0, μ.real {a | X a < t})) := by
+  exact ⟨NumStability.HDP.Scalar.Preliminaries.exercise122PositiveNegativeLayerCake hX,
+    fun hInt =>
+      NumStability.HDP.Scalar.Preliminaries.exercise122CorrectedSignedTailFormula
+        hX hInt⟩
 
 theorem hdp_01_hex_h1_d2_d3
     {Ω : Type*} [MeasurableSpace Ω]
