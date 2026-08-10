@@ -30,7 +30,7 @@ open ProbabilityTheory
 open Filter
 open scoped Topology
 open scoped BigOperators
-open scoped NNReal
+open scoped NNReal ENNReal
 
 namespace NumStability.HDP.Scalar.SubGaussian
 
@@ -2179,6 +2179,46 @@ theorem subGaussianCharacterization
       have hpos : 0 < Real.exp 1 * Ki := mul_pos (Real.exp_pos 1) hKi
       nlinarith
 
+/-! The extended `ψ₂` gauge from Definition 2.5.6. -/
+def PsiTwoAdmissible {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : Prop :=
+  Measurable X ∧ t ≠ 0 ∧ t ≠ ∞ ∧
+    Integrable (fun ω => Real.exp (X ω ^ 2 / t.toReal ^ 2)) μ ∧
+      (∫ ω, Real.exp (X ω ^ 2 / t.toReal ^ 2) ∂μ) ≤ 2
+
+noncomputable def PsiTwoGauge {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
+  sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ X t}
+
+theorem psiTwoGauge_finite_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ} :
+    PsiTwoGauge μ X < ∞ ↔
+      ∃ K : ℝ, 0 < K ∧ SubGaussianSquarePoint μ X K := by
+  constructor
+  · intro hGauge
+    by_cases hNonempty : Set.Nonempty {t : ℝ≥0∞ | PsiTwoAdmissible μ X t}
+    · rcases hNonempty with ⟨t, ht⟩
+      rcases ht with ⟨hMeas, ht0, htTop, hInt, hBound⟩
+      have htPos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+      refine ⟨t.toReal, htPos, ?_⟩
+      exact ⟨hMeas, htPos, hInt, hBound⟩
+    · have hEmpty : {t : ℝ≥0∞ | PsiTwoAdmissible μ X t} = ∅ :=
+        Set.not_nonempty_iff_eq_empty.mp hNonempty
+      rw [PsiTwoGauge, hEmpty] at hGauge
+      have : False := by simpa using hGauge
+      exact this.elim
+  · rintro ⟨K, hK, hPoint⟩
+    have ht0 : ENNReal.ofReal K ≠ 0 := (ENNReal.ofReal_ne_zero_iff).2 hK
+    have htTop : ENNReal.ofReal K ≠ ∞ := ENNReal.ofReal_ne_top
+    have htAdmissible : PsiTwoAdmissible μ X (ENNReal.ofReal K) := by
+      refine ⟨hPoint.1, ht0, htTop, ?_, ?_⟩
+      · simpa [ENNReal.toReal_ofReal hK.le] using hPoint.2.2.1
+      · simpa [ENNReal.toReal_ofReal hK.le] using hPoint.2.2.2
+    have hInf : PsiTwoGauge μ X ≤ ENNReal.ofReal K :=
+      sInf_le htAdmissible
+    exact lt_of_le_of_lt hInf ENNReal.ofReal_lt_top
+
 theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
@@ -2214,6 +2254,15 @@ theorem hdp_02_hprop_h2_d5_d2
             ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
               NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj :=
   NumStability.HDP.Scalar.SubGaussian.subGaussianCharacterization hCenter
+
+/-! Stable Chapter 2 alias for Definition 2.5.6 and the `ψ₂` finiteness test. -/
+theorem hdp_02_hdef_h2_d5_d6
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ} :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ ↔
+      ∃ K : ℝ, 0 < K ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePoint μ X K :=
+  NumStability.HDP.Scalar.SubGaussian.psiTwoGauge_finite_iff
 
 /-! Stable Chapter 2 alias for the standard-normal `Lᵖ` moment formula. -/
 theorem hdp_02_hex_h2_d5_d1 (p : ℝ) (hp : 1 ≤ p) :
