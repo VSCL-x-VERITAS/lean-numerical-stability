@@ -2715,6 +2715,29 @@ theorem independentCenteredSubGaussianSum
   · simpa [S, E] using hS_linear
   · exact hGauge .linearMGF (by positivity) hS_linear
 
+/-! The tail form of Theorem 2.6.2.  The positive energy hypothesis keeps the
+    denominator nonzero; the all-zero family is handled separately by the
+    deterministic branch rather than by an undefined quotient. -/
+theorem independentCenteredSubGaussianTail
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {K : ι → ℝ}
+    (hX : ∀ i, SubGaussianLinearMGF μ (X i) (K i))
+    (hIndep : iIndepFun X μ)
+    (hEnergy : 0 < ∑ i, K i ^ 2)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |∑ i, X i ω| ≥ t} ≤
+      2 * Real.exp (-t ^ 2 / (4 * ∑ i, K i ^ 2)) := by
+  let S : Ω → ℝ := fun ω => ∑ i, X i ω
+  let E : ℝ := ∑ i, K i ^ 2
+  have hE : 0 < E := by simpa [E] using hEnergy
+  rcases independentCenteredSubGaussianSum hX hIndep hEnergy with
+    ⟨_, _, hS, _⟩
+  have hTail := subGaussianLinearToTail hS
+  have hBound := hTail.2.2 t ht
+  convert hBound using 1 <;>
+    norm_num [S, E, mul_pow, Real.sq_sqrt hE.le]
+
 /-! The exact gauge is subadditive at the level of admissible scales.  This is
 the analytic core needed before passing to the a.e. quotient in Exercise
 2.5.7. -/
@@ -3656,6 +3679,21 @@ theorem hdp_02_hprop_h2_d6_d1
         ENNReal.ofReal (C * Real.sqrt (∑ i, K i ^ 2)) :=
   NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianSum
     hX hIndep hEnergy
+
+/-! Stable Chapter 2 alias for Theorem 2.6.2. -/
+theorem hdp_02_hthm_h2_d6_d2
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {K : ι → ℝ}
+    (hX : ∀ i,
+      NumStability.HDP.Scalar.SubGaussian.SubGaussianLinearMGF μ (X i) (K i))
+    (hIndep : ProbabilityTheory.iIndepFun X μ)
+    (hEnergy : 0 < ∑ i, K i ^ 2)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |∑ i, X i ω| ≥ t} ≤
+      2 * Real.exp (-t ^ 2 / (4 * ∑ i, K i ^ 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianTail
+    hX hIndep hEnergy ht
 
 /-! Stable Chapter 2 alias for Lemma 2.6.8. -/
 theorem hdp_02_hlem_h2_d6_d8
