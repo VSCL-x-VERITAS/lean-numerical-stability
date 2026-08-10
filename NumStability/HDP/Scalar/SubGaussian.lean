@@ -7,6 +7,7 @@ import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
 import Mathlib.Analysis.SpecificLimits.Basic
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Integral.Gamma
 import Mathlib.MeasureTheory.Function.L1Space.Integrable
@@ -1168,6 +1169,43 @@ theorem mgfToTail
         Real.exp (-t ^ 2 / (4 * K ^ 2)) := add_le_add hupper hlower
     _ = 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) := by ring
 
+/-! The all-parameter MGF bound forces centering (Exercise 2.5.4). -/
+theorem mgfBoundForcesMeanZero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Integrable X μ)
+    (hMGF : ∀ lam : ℝ,
+      Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+        (∫ ω, Real.exp (lam * X ω) ∂μ) ≤ Real.exp (K ^ 2 * lam ^ 2)) :
+    (∫ ω, X ω ∂μ) = 0 := by
+  let m : ℝ := ∫ ω, X ω ∂μ
+  have hquad : ∀ lam : ℝ, lam * m ≤ K ^ 2 * lam ^ 2 := by
+    intro lam
+    have hconv : ConvexOn ℝ Set.univ (fun x : ℝ => Real.exp (lam * x)) := by
+      have hcomp := convexOn_exp.comp_linearMap ((LinearMap.mul ℝ ℝ) lam)
+      simpa [Function.comp_def] using hcomp
+    have hjensen :=
+      NumStability.HDP.Scalar.Preliminaries.jensenIntegral hconv hX (hMGF lam).1
+    have hexp : Real.exp (lam * m) ≤ Real.exp (K ^ 2 * lam ^ 2) := by
+      calc
+        Real.exp (lam * m) ≤
+            ∫ ω, Real.exp (lam * X ω) ∂μ := by
+          simpa [m, NumStability.HDP.Scalar.Preliminaries.expectation,
+            Function.comp_def] using hjensen
+        _ ≤ Real.exp (K ^ 2 * lam ^ 2) := (hMGF lam).2
+    exact Real.exp_le_exp.mp hexp
+  by_contra hm
+  have hm2 : 0 < m ^ 2 := sq_pos_of_ne_zero hm
+  let d : ℝ := 2 * (K ^ 2 + 1)
+  have hd : 0 < d := by
+    dsimp [d]
+    nlinarith [sq_nonneg K]
+  have hbad := hquad (m / d)
+  dsimp [d] at hbad
+  field_simp [ne_of_gt hd] at hbad
+  nlinarith [hm2, sq_nonneg K]
+
 /-! Exercise 2.6.9: a finite two-point sub-Gaussian witness for the strict
 inequality between the centered and uncentered `ψ₂` gauges.  The gauge below
 is the exact Orlicz gauge for a two-point law, written after evaluating its
@@ -1591,6 +1629,18 @@ theorem hdp_02_hlem_hsg_hmgf_hto_htail
     {t : ℝ} (ht : 0 ≤ t) :
     μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / (4 * K ^ 2)) :=
   NumStability.HDP.Scalar.SubGaussian.mgfToTail hX hK hMGF ht
+
+/-! Stable Chapter 2 alias for Exercise 2.5.4. -/
+theorem hdp_02_hex_h2_d5_d4
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hX : Integrable X μ)
+    (hMGF : ∀ lam : ℝ,
+      Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+        (∫ ω, Real.exp (lam * X ω) ∂μ) ≤ Real.exp (K ^ 2 * lam ^ 2)) :
+    (∫ ω, X ω ∂μ) = 0 :=
+  NumStability.HDP.Scalar.SubGaussian.mgfBoundForcesMeanZero hX hMGF
 
 /-! Stable Chapter 2 alias for Exercise 2.6.9. -/
 theorem hdp_02_hex_h2_d6_d9 : hdp_02_hex_h2_d6_d9__contract_type := by
