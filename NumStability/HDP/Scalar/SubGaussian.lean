@@ -494,7 +494,115 @@ theorem standardNormalLpNormGrowth :
           mul_le_mul_of_nonneg_left hBroot hq.le
         _ = 2 * Real.exp 1 * Real.sqrt p := by ring
 
-/-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
+/-! A coarse universal Gamma estimate used by the tail-to-moment conversion. -/
+theorem gammaUpperBound {x : ℝ} (hx : 1 / 2 ≤ x) :
+    Real.Gamma x ≤ 4 * x ^ x := by
+  have hxpos : 0 < x := by linarith
+  by_cases hx1 : x ≤ 1
+  · have hgamma : Real.Gamma x ≤ Real.Gamma (1 / 2) :=
+      Real.Gamma_strictAntiOn_Ioc.antitoneOn
+        (by norm_num)
+        (by exact ⟨hxpos, hx1⟩)
+        hx
+    have hpow : x ≤ x ^ x := by
+      have h := Real.rpow_le_rpow_of_exponent_ge
+        (x := x) (y := (1 : ℝ)) (z := x) hxpos hx1 hx1
+      simpa [Real.rpow_one] using h
+    rw [Real.Gamma_one_half_eq] at hgamma
+    have hsqrt : Real.sqrt Real.pi ≤ 2 := by
+      rw [Real.sqrt_le_iff]
+      constructor <;> nlinarith [Real.pi_le_four]
+    nlinarith
+  · have hxgt : 1 < x := lt_of_not_ge hx1
+    by_cases hx2 : x ≤ 2
+    · have hconv : ConvexOn ℝ (Set.Ioi 0) Real.Gamma := Real.convexOn_Gamma
+      rcases hconv with ⟨_, hineq⟩
+      have h := hineq (x := (1 : ℝ)) (y := (2 : ℝ))
+          (show (1 : ℝ) ∈ Set.Ioi 0 by norm_num)
+          (show (2 : ℝ) ∈ Set.Ioi 0 by norm_num)
+          (a := 2 - x) (b := x - 1)
+          (by linarith) (by linarith) (by ring)
+      have hgamma : Real.Gamma x ≤ 1 := by
+        have harg : (2 - x) • (1 : ℝ) + (x - 1) • (2 : ℝ) = x := by
+          simp [smul_eq_mul]
+          ring
+        have hrhs : (2 - x) • Real.Gamma (1 : ℝ) +
+            (x - 1) • Real.Gamma (2 : ℝ) = 1 := by
+          rw [Real.Gamma_one, Real.Gamma_two]
+          simp [smul_eq_mul]
+          ring
+        rw [← harg]
+        exact h.trans_eq hrhs
+      have hpow : 1 ≤ x ^ x := Real.one_le_rpow (le_of_lt hxgt) (by positivity)
+      nlinarith
+    · have hxgt2 : 2 < x := lt_of_not_ge hx2
+      let n : ℕ := Nat.floor x
+      have hnle : (n : ℝ) ≤ x := by
+        dsimp [n]
+        exact Nat.floor_le hxpos.le
+      have hxlt : x < (n : ℝ) + 1 := by
+        dsimp [n]
+        exact Nat.lt_floor_add_one x
+      have hn2 : 2 ≤ n := by
+        by_contra hn
+        have hn1 : n ≤ 1 := by omega
+        have hn1' : (n : ℝ) ≤ 1 := by exact_mod_cast hn1
+        nlinarith
+      have hconv : ConvexOn ℝ (Set.Ioi 0) Real.Gamma := Real.convexOn_Gamma
+      rcases hconv with ⟨_, hineq⟩
+      have h := hineq (x := (n : ℝ)) (y := (n : ℝ) + 1)
+          (show (n : ℝ) ∈ Set.Ioi 0 by
+            exact Set.mem_Ioi.mpr (by exact_mod_cast (show 0 < n by omega)))
+          (show (n : ℝ) + 1 ∈ Set.Ioi 0 by
+            exact Set.mem_Ioi.mpr (by positivity))
+          (a := (n : ℝ) + 1 - x) (b := x - (n : ℝ))
+          (by linarith) (by linarith) (by ring)
+      have hmono : Real.Gamma (n : ℝ) ≤ Real.Gamma ((n : ℝ) + 1) := by
+        apply Real.Gamma_strictMonoOn_Ici.monotoneOn
+        · exact Set.mem_Ici.mpr (by exact_mod_cast hn2)
+        · exact Set.mem_Ici.mpr (by exact_mod_cast (show 2 ≤ n + 1 by omega))
+        · linarith
+      have hgamma : Real.Gamma x ≤ Real.Gamma ((n : ℝ) + 1) := by
+        calc
+          Real.Gamma x ≤
+              ((n : ℝ) + 1 - x) * Real.Gamma (n : ℝ) +
+                (x - (n : ℝ)) * Real.Gamma ((n : ℝ) + 1) := by
+            have harg : ((n : ℝ) + 1 - x) • (n : ℝ) +
+                (x - (n : ℝ)) • ((n : ℝ) + 1) = x := by
+              simp [smul_eq_mul]
+              ring
+            calc
+              Real.Gamma x = Real.Gamma
+                  (((n : ℝ) + 1 - x) • (n : ℝ) +
+                    (x - (n : ℝ)) • ((n : ℝ) + 1)) := congrArg Real.Gamma harg.symm
+              _ ≤ ((n : ℝ) + 1 - x) • Real.Gamma (n : ℝ) +
+                    (x - (n : ℝ)) • Real.Gamma ((n : ℝ) + 1) := h
+              _ = ((n : ℝ) + 1 - x) * Real.Gamma (n : ℝ) +
+                    (x - (n : ℝ)) * Real.Gamma ((n : ℝ) + 1) := by
+                simp [smul_eq_mul]
+          _ ≤ ((n : ℝ) + 1 - x) * Real.Gamma ((n : ℝ) + 1) +
+                (x - (n : ℝ)) * Real.Gamma ((n : ℝ) + 1) := by
+            gcongr
+            linarith
+          _ = Real.Gamma ((n : ℝ) + 1) := by
+            rw [← add_mul]
+            congr 1
+            ring
+      rw [Real.Gamma_nat_eq_factorial n] at hgamma
+      have hfac : (n.factorial : ℝ) ≤ (n : ℝ) ^ n := by
+        exact_mod_cast Nat.factorial_le_pow n
+      have hbase : (n : ℝ) ^ n ≤ x ^ n := by
+        gcongr
+      have hexp : x ^ (n : ℝ) ≤ x ^ x := by
+        apply Real.rpow_le_rpow_of_exponent_le
+        · linarith
+        · exact hnle
+      have hpow : (n : ℝ) ^ n ≤ x ^ x := by
+        calc
+          (n : ℝ) ^ n ≤ x ^ n := hbase
+          _ = x ^ (n : ℝ) := by rw [Real.rpow_natCast]
+          _ ≤ x ^ x := hexp
+      nlinarith
 
 /- The root-free integral form of the usual `Lᵖ` moment-growth hypothesis. -/
 def LpMomentGrowth {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
@@ -503,6 +611,223 @@ def LpMomentGrowth {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     ∀ p : ℝ, 1 ≤ p →
       Integrable (fun ω => |X ω| ^ p) μ ∧
         (∫ ω, |X ω| ^ p ∂μ) ≤ (K * Real.sqrt p) ^ p
+
+/-! The tail-to-moment direction of Proposition 2.5.2. -/
+theorem tailToAbsoluteMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hX : Measurable X) (hK : 0 < K)
+    (hTail : ∀ t : ℝ, 0 ≤ t →
+      μ {ω | t < |X ω|} ≤ ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)))
+    (p : ℝ) (hp : 1 ≤ p) :
+    NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p ≤
+      ENNReal.ofReal ((8 * Real.exp 1 * K * Real.sqrt p) ^ p) := by
+  have hp0 : 0 < p := lt_of_lt_of_le zero_lt_one hp
+  have hformula := NumStability.HDP.Scalar.Preliminaries.momentTailFormula
+    (μ := μ) (X := X) hX hp0
+  have hupper :
+      (∫⁻ t in Set.Ioi 0,
+        μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))) ≤
+        ∫⁻ t in Set.Ioi 0,
+          ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) *
+            ENNReal.ofReal (t ^ (p - 1)) := by
+    apply MeasureTheory.setLIntegral_mono
+    · fun_prop
+    · intro t ht
+      exact mul_le_mul_right' (hTail t (le_of_lt (Set.mem_Ioi.mp ht))) _
+  have hInt : IntegrableOn
+      (fun t : ℝ => t ^ (p - 1) * Real.exp (-(K⁻¹ ^ 2) * t ^ 2)) (Set.Ioi 0) := by
+    apply integrableOn_rpow_mul_exp_neg_mul_sq
+    · positivity
+    · linarith
+  have hscale : ∀ t : ℝ,
+      ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) *
+          ENNReal.ofReal (t ^ (p - 1)) =
+        ENNReal.ofReal (2 * (t ^ (p - 1) *
+          Real.exp (-(K⁻¹ ^ 2) * t ^ 2))) := by
+    intro t
+    calc
+      ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) *
+          ENNReal.ofReal (t ^ (p - 1)) =
+        ENNReal.ofReal ((2 * Real.exp (-t ^ 2 / K ^ 2)) *
+          (t ^ (p - 1))) := (ENNReal.ofReal_mul (by positivity)).symm
+      _ = ENNReal.ofReal (2 * (t ^ (p - 1) *
+          Real.exp (-(K⁻¹ ^ 2) * t ^ 2))) := by
+        congr 1
+        field_simp
+  have hInt2 : IntegrableOn
+      (fun t : ℝ => 2 * (t ^ (p - 1) *
+        Real.exp (-(K⁻¹ ^ 2) * t ^ 2))) (Set.Ioi 0) := hInt.const_mul _
+  have hEq2 := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt2
+    (by
+      filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioi] with t ht
+      have ht0 : 0 < t := Set.mem_Ioi.mp ht
+      positivity)
+  have hGamma := integral_rpow_mul_exp_neg_mul_rpow
+    (p := (2 : ℝ)) (q := p - 1) (b := K⁻¹ ^ 2) (by norm_num) (by linarith) (by positivity)
+  have hIntEval :
+      (∫ t in Set.Ioi 0,
+        t ^ (p - 1) * Real.exp (-(K⁻¹ ^ 2) * t ^ 2)) =
+        (K⁻¹ ^ 2) ^ (-p / 2) * (1 / 2) * Real.Gamma (p / 2) := by
+    simpa [mul_comm] using hGamma
+  have hupperEval :
+      (∫⁻ t in Set.Ioi 0,
+        ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) *
+          ENNReal.ofReal (t ^ (p - 1))) ≤
+        ENNReal.ofReal (2 * ((K⁻¹ ^ 2) ^ (-p / 2) *
+          (1 / 2) * Real.Gamma (p / 2))) := by
+    rw [MeasureTheory.setLIntegral_congr_fun measurableSet_Ioi
+      (fun t _ => hscale t)]
+    rw [← hEq2, MeasureTheory.integral_const_mul, hIntEval]
+  have hGammaBound : Real.Gamma (p / 2) ≤ 4 * (p / 2) ^ (p / 2) :=
+    gammaUpperBound (by linarith)
+  have hcalc :
+      ENNReal.ofReal p * ENNReal.ofReal
+          (2 * ((K⁻¹ ^ 2) ^ (-p / 2) * (1 / 2) * Real.Gamma (p / 2))) ≤
+        ENNReal.ofReal ((8 * Real.exp 1 * K * Real.sqrt p) ^ p) := by
+    rw [← ENNReal.ofReal_mul (by positivity : 0 ≤ p)]
+    apply ENNReal.ofReal_le_ofReal
+    have hKpow : (K⁻¹ ^ 2) ^ (-p / 2) = K ^ p := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity : 0 ≤ K⁻¹)]
+      rw [show (↑(2 : ℕ) : ℝ) * (-p / 2) = -p by norm_num; ring]
+      rw [Real.inv_rpow (by positivity : 0 ≤ K)]
+      rw [Real.rpow_neg (by positivity : 0 ≤ K)]
+      simp
+    rw [hKpow]
+    have hexp : p ≤ Real.exp p := by
+      nlinarith [Real.add_one_le_exp p]
+    have hroot : 0 ≤ Real.sqrt p := by positivity
+    have hgam : 0 ≤ Real.Gamma (p / 2) :=
+      (Real.Gamma_pos_of_pos (by linarith)).le
+    have hpowp : 0 ≤ p ^ (p / 2) := by positivity
+    have hbase : (p / 2) ^ (p / 2) ≤ p ^ (p / 2) := by
+      apply Real.rpow_le_rpow
+      · positivity
+      · linarith
+      · positivity
+    have hmulGamma : p * K ^ p * Real.Gamma (p / 2) ≤
+        p * K ^ p * (4 * (p / 2) ^ (p / 2)) := by
+      exact mul_le_mul_of_nonneg_left hGammaBound (by positivity)
+    have hmulBase : 4 * p * K ^ p * (p / 2) ^ (p / 2) ≤
+        4 * p * K ^ p * p ^ (p / 2) := by
+      exact mul_le_mul_of_nonneg_left hbase (by positivity)
+    have hcoef : 4 * p ≤ 8 * Real.exp p := by
+      nlinarith [hexp, Real.exp_pos p]
+    have hmulCoef : 4 * p * K ^ p * p ^ (p / 2) ≤
+        8 * Real.exp p * K ^ p * p ^ (p / 2) := by
+      exact mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_right hcoef (by positivity)) (by positivity)
+    have hstep : 2 * p * (K ^ p * (1 / 2) * Real.Gamma (p / 2)) ≤
+        8 * Real.exp p * K ^ p * p ^ (p / 2) := by
+      calc
+        2 * p * (K ^ p * (1 / 2) * Real.Gamma (p / 2)) =
+            p * K ^ p * Real.Gamma (p / 2) := by ring
+        _ ≤ p * K ^ p * (4 * (p / 2) ^ (p / 2)) := hmulGamma
+        _ = 4 * p * K ^ p * (p / 2) ^ (p / 2) := by ring
+        _ ≤ 4 * p * K ^ p * p ^ (p / 2) := hmulBase
+        _ ≤ 8 * Real.exp p * K ^ p * p ^ (p / 2) := hmulCoef
+    have hpnonneg : 0 ≤ p := by linarith
+    have h8 : (8 : ℝ) ≤ (8 : ℝ) ^ p := by
+      have h := Real.rpow_le_rpow_of_exponent_le
+        (x := (8 : ℝ)) (y := (1 : ℝ)) (z := p) (by norm_num) hp
+      simpa using h
+    have hexprpow : Real.exp p = (Real.exp 1) ^ p := by
+      rw [Real.rpow_def_of_pos (Real.exp_pos 1), Real.log_exp]
+      congr 1
+      ring
+    have hconst0 : 8 * Real.exp p ≤ (8 * Real.exp 1) ^ p := by
+      calc
+        8 * Real.exp p ≤ 8 ^ p * Real.exp p :=
+          mul_le_mul_of_nonneg_right h8 (Real.exp_pos p).le
+        _ = 8 ^ p * (Real.exp 1) ^ p := by rw [hexprpow]
+        _ = (8 * Real.exp 1) ^ p := by
+          rw [Real.mul_rpow (by norm_num) (by positivity)]
+    have hconst : 8 * Real.exp p * K ^ p * p ^ (p / 2) ≤
+        (8 * Real.exp 1 * K * Real.sqrt p) ^ p := by
+      have h8e : 0 ≤ (8 : ℝ) * Real.exp 1 := by positivity
+      have h8eK : 0 ≤ (8 : ℝ) * Real.exp 1 * K := by positivity
+      calc
+        8 * Real.exp p * K ^ p * p ^ (p / 2) =
+            (8 * Real.exp p) * (K ^ p * p ^ (p / 2)) := by ring
+        _ ≤ (8 * Real.exp 1) ^ p * (K ^ p * p ^ (p / 2)) := by
+          exact mul_le_mul_of_nonneg_right hconst0 (by positivity)
+        _ = (8 * Real.exp 1) ^ p * (K ^ p * (Real.sqrt p) ^ p) := by
+          rw [Real.sqrt_eq_rpow, ← Real.rpow_mul (by positivity : 0 ≤ p)]
+          congr 2
+          ring
+        _ = (8 * Real.exp 1 * K * Real.sqrt p) ^ p := by
+          rw [Real.mul_rpow h8eK (by positivity), Real.mul_rpow h8e (by positivity)]
+          ring
+    simpa [mul_assoc, mul_left_comm, mul_comm] using hstep.trans hconst
+  calc
+    NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p =
+        ENNReal.ofReal p *
+          (∫⁻ t in Set.Ioi 0,
+            μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))) := hformula.1
+    _ ≤ ENNReal.ofReal p *
+          (∫⁻ t in Set.Ioi 0,
+            ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) *
+              ENNReal.ofReal (t ^ (p - 1))) :=
+      mul_le_mul_left' hupper _
+    _ ≤ ENNReal.ofReal p * ENNReal.ofReal
+          (2 * ((K⁻¹ ^ 2) ^ (-p / 2) * (1 / 2) * Real.Gamma (p / 2))) :=
+      mul_le_mul_left' hupperEval _
+    _ ≤ ENNReal.ofReal ((8 * Real.exp 1 * K * Real.sqrt p) ^ p) := hcalc
+
+theorem tailToLpMomentGrowth
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hX : Measurable X) (hK : 0 < K)
+    (hTail : ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2)) :
+    LpMomentGrowth μ X (8 * Real.exp 1 * K) := by
+  have hTail' : ∀ t : ℝ, 0 ≤ t →
+      μ {ω | t < |X ω|} ≤ ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) := by
+    intro t ht
+    let A : Set Ω := {ω | t < |X ω|}
+    let B : Set Ω := {ω | |X ω| ≥ t}
+    have hAB : A ⊆ B := by
+      intro ω hω
+      change t < |X ω| at hω
+      change t ≤ |X ω|
+      exact le_of_lt hω
+    have hB : μ B ≤ ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) := by
+      rw [← ENNReal.ofReal_toReal (measure_ne_top μ B)]
+      apply ENNReal.ofReal_le_ofReal
+      simpa [B, MeasureTheory.measureReal_def] using hTail t ht
+    exact (measure_mono hAB).trans hB
+  refine ⟨hX.aemeasurable, ?_⟩
+  intro p hp
+  have hmoment := tailToAbsoluteMoment hX hK hTail' p hp
+  have hfinite :
+      NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p < (⊤ : ENNReal) :=
+    lt_of_le_of_lt hmoment (by simp)
+  have hmeas : AEMeasurable (fun ω => |X ω| ^ p) μ := by
+    fun_prop
+  have hInt : Integrable (fun ω => |X ω| ^ p) μ := by
+    refine ⟨hmeas.aestronglyMeasurable, ?_⟩
+    rw [hasFiniteIntegral_iff_norm]
+    change (∫⁻ ω, ENNReal.ofReal ‖|X ω| ^ p‖ ∂μ) < (⊤ : ENNReal)
+    convert hfinite using 1
+    apply MeasureTheory.lintegral_congr_ae
+    filter_upwards [] with ω
+    rw [Real.norm_eq_abs, abs_of_nonneg (Real.rpow_nonneg (abs_nonneg _) _)]
+    rfl
+  constructor
+  · exact hInt
+  · have hEq := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt
+      (Filter.Eventually.of_forall (fun ω => by positivity))
+    have hbound : ENNReal.ofReal (∫ ω, |X ω| ^ p ∂μ) ≤
+        ENNReal.ofReal ((8 * Real.exp 1 * K * Real.sqrt p) ^ p) := by
+      calc
+        ENNReal.ofReal (∫ ω, |X ω| ^ p ∂μ) =
+            NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p := by
+          simpa [NumStability.HDP.Scalar.Preliminaries.absoluteMoment,
+            Real.norm_eq_abs] using hEq
+        _ ≤ ENNReal.ofReal ((8 * Real.exp 1 * K * Real.sqrt p) ^ p) := hmoment
+    exact (ENNReal.ofReal_le_ofReal_iff (by positivity)).mp hbound
+
+/-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
 
 def EvenMomentBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → ℝ) (K : ℝ) : Prop :=
@@ -1565,6 +1890,17 @@ theorem hdp_02_hex_h2_d5_d5a (lam : ℝ) :
     ((Real.sqrt 2)⁻¹ ≤ |lam| →
       ¬ Integrable (fun x : ℝ => Real.exp (lam ^ 2 * x ^ 2)) (gaussianReal 0 1)) :=
   NumStability.HDP.Scalar.SubGaussian.standardNormalSquareMGF lam
+
+/-! Stable Chapter 2 alias for the tail-to-moment direction. -/
+theorem hdp_02_hlem_hsg_htail_hto_hmoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hX : Measurable X) (hK : 0 < K)
+    (hTail : ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2)) :
+    NumStability.HDP.Scalar.SubGaussian.LpMomentGrowth μ X
+      (8 * Real.exp 1 * K) :=
+  NumStability.HDP.Scalar.SubGaussian.tailToLpMomentGrowth hX hK hTail
 
 /-- Stable Chapter 2 alias for the moment-to-square-MGF implication. -/
 theorem hdp_02_hlem_hsg_hmoment_hto_hsquare_hmgf
