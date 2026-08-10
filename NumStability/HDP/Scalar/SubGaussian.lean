@@ -1852,6 +1852,333 @@ theorem independentGaussianSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace 
       rw [Real.coe_toNNReal _ hnonneg]
       simp
 
+/-! Parameterized five-way interface for Proposition 2.5.2. -/
+def SubGaussianTailBound {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2)
+
+def SubGaussianMomentBound {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧ LpMomentGrowth μ X K
+
+def SubGaussianSquareWindow {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    ∀ lam : ℝ, |lam| ≤ K⁻¹ →
+      Integrable (fun ω => Real.exp (lam ^ 2 * X ω ^ 2)) μ ∧
+        (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
+          Real.exp (K ^ 2 * lam ^ 2)
+
+def SubGaussianSquarePoint {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
+      (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ 2
+
+def SubGaussianLinearMGF {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧ Integrable X μ ∧
+    (∫ ω, X ω ∂μ) = 0 ∧
+      ∀ lam : ℝ,
+        Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+          (∫ ω, Real.exp (lam * X ω) ∂μ) ≤ Real.exp (K ^ 2 * lam ^ 2)
+
+inductive SubGaussianPropertyKind
+  | tail
+  | moment
+  | squareWindow
+  | squarePoint
+  | linearMGF
+
+def SubGaussianProperty {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) :
+    SubGaussianPropertyKind → ℝ → Prop
+  | .tail => SubGaussianTailBound μ X
+  | .moment => SubGaussianMomentBound μ X
+  | .squareWindow => SubGaussianSquareWindow μ X
+  | .squarePoint => SubGaussianSquarePoint μ X
+  | .linearMGF => SubGaussianLinearMGF μ X
+
+private theorem subGaussianMomentToSquareWindow
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hK : 0 < K)
+    (hMom : SubGaussianMomentBound μ X K) :
+    SubGaussianSquareWindow μ X (8 * K) := by
+  have he : Real.exp 1 ≤ 4 := by
+    exact le_trans (le_of_lt Real.exp_one_lt_d9) (by norm_num)
+  refine ⟨hMom.1, by positivity, ?_⟩
+  intro lam hlam
+  have hsmall : |lam| ≤ (4 * K)⁻¹ := by
+    calc
+      |lam| ≤ (8 * K)⁻¹ := hlam
+      _ ≤ (4 * K)⁻¹ := by
+        have h := one_div_le_one_div_of_le (by positivity : (0 : ℝ) < 4 * K)
+          (by nlinarith : 4 * K ≤ 8 * K)
+        simpa [one_div] using h
+  have h := momentToSquareMGF hK hMom.2.2 lam hsmall
+  refine ⟨h.1, ?_⟩
+  calc
+    (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
+        Real.exp (4 * Real.exp 1 * (lam * K) ^ 2) := h.2
+    _ ≤ Real.exp ((8 * K) ^ 2 * lam ^ 2) := by
+      apply Real.exp_le_exp.mpr
+      have hmul := mul_le_mul_of_nonneg_right he
+        (by positivity : 0 ≤ 4 * (lam * K) ^ 2)
+      calc
+        4 * Real.exp 1 * (lam * K) ^ 2 ≤ 16 * (lam * K) ^ 2 := by
+          nlinarith
+        _ ≤ 64 * (lam * K) ^ 2 := by
+          nlinarith [sq_nonneg (lam * K)]
+        _ = (8 * K) ^ 2 * lam ^ 2 := by ring
+
+private theorem subGaussianSquareWindowToPoint
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hK : 0 < K)
+    (hSquare : SubGaussianSquareWindow μ X K) :
+    SubGaussianSquarePoint μ X (2 * K) := by
+  have hparam : |(2 * K)⁻¹| ≤ K⁻¹ := by
+    rw [abs_of_pos (by positivity)]
+    have htwo : (0 : ℝ) < 2 * K := by positivity
+    have h := one_div_le_one_div_of_le hK (by nlinarith : K ≤ 2 * K)
+    simpa [one_div, abs_of_pos htwo] using h
+  have h := hSquare.2.2 ((2 * K)⁻¹) hparam
+  have hEq : (fun ω => Real.exp (((2 * K)⁻¹) ^ 2 * X ω ^ 2)) =
+      (fun ω => Real.exp (X ω ^ 2 / (2 * K) ^ 2)) := by
+    funext ω
+    congr 1
+    field_simp
+  refine ⟨hSquare.1, by positivity, ?_, ?_⟩
+  · rw [hEq] at h
+    exact h.1
+  · calc
+      (∫ ω, Real.exp (X ω ^ 2 / (2 * K) ^ 2) ∂μ) =
+          ∫ ω, Real.exp (((2 * K)⁻¹) ^ 2 * X ω ^ 2) ∂μ := by
+            rw [hEq]
+      _ ≤ Real.exp (K ^ 2 * ((2 * K)⁻¹) ^ 2) := h.2
+      _ = Real.exp (1 / 4) := by
+        congr 1
+        field_simp
+        norm_num
+      _ ≤ 2 := by
+        apply le_trans (Real.exp_bound_div_one_sub_of_interval (by norm_num) (by norm_num))
+        norm_num
+
+private theorem subGaussianSquarePointToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hPoint : SubGaussianSquarePoint μ X K) :
+    SubGaussianTailBound μ X K := by
+  refine ⟨hPoint.1, hPoint.2.1, ?_⟩
+  intro t ht
+  exact squareMGFToTail hPoint.1 hPoint.2.1
+    ⟨hPoint.2.2.1, hPoint.2.2.2⟩ ht
+
+private theorem subGaussianTailToMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hTail : SubGaussianTailBound μ X K) :
+    SubGaussianMomentBound μ X (8 * Real.exp 1 * K) := by
+  exact ⟨hTail.1,
+    mul_pos (mul_pos (by norm_num) (Real.exp_pos 1)) hTail.2.1,
+    tailToLpMomentGrowth hTail.1 hTail.2.1 hTail.2.2⟩
+
+private theorem subGaussianSquareWindowToLinear
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hK : 0 < K)
+    (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    (hSquare : SubGaussianSquareWindow μ X K) :
+    SubGaussianLinearMGF μ X (2 * K) := by
+  let Y : Ω → ℝ := fun ω => X ω / K
+  have hY : Measurable Y := by
+    simpa [Y] using hSquare.1.div_const K
+  have hSquareY : SquareMGFLocal μ Y 1 := by
+    refine ⟨hY.aemeasurable, ?_⟩
+    intro t ht
+    have hparam : |t / K| ≤ K⁻¹ := by
+      calc
+        |t / K| = |t| / K := by rw [abs_div, abs_of_pos hK]
+        _ ≤ 1 / K := div_le_div_of_nonneg_right ht hK.le
+        _ = K⁻¹ := by rw [one_div]
+    have h := hSquare.2.2 (t / K) hparam
+    have hEq : (fun ω => Real.exp (t ^ 2 * Y ω ^ 2)) =
+        (fun ω => Real.exp ((t / K) ^ 2 * X ω ^ 2)) := by
+      funext ω
+      congr 1
+      dsimp [Y]
+      field_simp
+    refine ⟨?_, ?_⟩
+    · rw [← hEq] at h
+      exact h.1
+    · calc
+        (∫ ω, Real.exp (t ^ 2 * Y ω ^ 2) ∂μ) =
+            ∫ ω, Real.exp ((t / K) ^ 2 * X ω ^ 2) ∂μ := by rw [hEq]
+        _ ≤ Real.exp (K ^ 2 * (t / K) ^ 2) := h.2
+        _ = Real.exp (1 * t ^ 2) := by
+          congr 1
+          field_simp
+  have hYCenter : Integrable Y μ ∧ (∫ ω, Y ω ∂μ) = 0 := by
+    refine ⟨?_, ?_⟩
+    · simpa [Y, div_eq_inv_mul] using hCenter.1.const_mul K⁻¹
+    · have hInt := hCenter.1.const_mul K⁻¹
+      calc
+        (∫ ω, Y ω ∂μ) = ∫ ω, K⁻¹ * X ω ∂μ := by
+          congr 1
+          funext ω
+          dsimp [Y]
+          field_simp
+        _ = K⁻¹ * (∫ ω, X ω ∂μ) := by rw [integral_const_mul]
+        _ = 0 := by rw [hCenter.2]; ring
+  have h := squareMGFToMGF (by norm_num : (0 : ℝ) ≤ 1)
+    hYCenter hSquareY
+  refine ⟨hSquare.1, by positivity, hCenter.1, hCenter.2, ?_⟩
+  intro lam
+  have h' := h (lam * K)
+  have hEq : (fun ω => Real.exp ((lam * K) * Y ω)) =
+      (fun ω => Real.exp (lam * X ω)) := by
+    funext ω
+    congr 1
+    dsimp [Y]
+    field_simp
+  refine ⟨?_, ?_⟩
+  · simpa [hEq] using h'.1
+  · calc
+      (∫ ω, Real.exp (lam * X ω) ∂μ) =
+          ∫ ω, Real.exp ((lam * K) * Y ω) ∂μ := by rw [hEq]
+      _ ≤ Real.exp ((1 + 1 / 2) * (lam * K) ^ 2) := h'.2
+      _ ≤ Real.exp ((2 * K) ^ 2 * lam ^ 2) := by
+        apply Real.exp_le_exp.mpr
+        nlinarith [sq_nonneg (lam * K)]
+
+private theorem subGaussianLinearToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ}
+    (hLinear : SubGaussianLinearMGF μ X K) :
+    SubGaussianTailBound μ X (2 * K) := by
+  refine ⟨hLinear.1, ?_, ?_⟩
+  · nlinarith [hLinear.2.1]
+  · intro t ht
+    convert mgfToTail hLinear.1 hLinear.2.1 hLinear.2.2.2.2 ht using 1 <;> ring
+
+private theorem subGaussianToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i : SubGaussianPropertyKind) {K : ℝ} (hK : 0 < K)
+    (hProp : SubGaussianProperty μ X i K) :
+    ∃ T : ℝ, 0 < T ∧ T ≤ 16 * K ∧ SubGaussianTailBound μ X T := by
+  cases i with
+  | tail => exact ⟨K, hK, by nlinarith, hProp⟩
+  | moment =>
+      have hSq := subGaussianMomentToSquareWindow hK hProp
+      have hPoint := subGaussianSquareWindowToPoint (by positivity) hSq
+      have hTail := subGaussianSquarePointToTail hPoint
+      refine ⟨16 * K, by positivity, le_rfl, ?_⟩
+      convert hTail using 1 <;> ring
+  | squareWindow =>
+      have hPoint := subGaussianSquareWindowToPoint hK hProp
+      have hTail := subGaussianSquarePointToTail hPoint
+      refine ⟨2 * K, by positivity, by nlinarith, ?_⟩
+      simpa [SubGaussianProperty] using hTail
+  | squarePoint =>
+      have hTail := subGaussianSquarePointToTail hProp
+      refine ⟨K, hK, by nlinarith, ?_⟩
+      simpa [SubGaussianProperty] using hTail
+  | linearMGF =>
+      have hTail := subGaussianLinearToTail hProp
+      refine ⟨2 * K, by positivity, by nlinarith, ?_⟩
+      simpa [SubGaussianProperty] using hTail
+
+private theorem subGaussianFromTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    (i : SubGaussianPropertyKind) {T : ℝ} (hT : 0 < T)
+    (hTail : SubGaussianTailBound μ X T) :
+    ∃ K : ℝ, 0 < K ∧ K ≤ 128 * Real.exp 1 * T ∧
+      SubGaussianProperty μ X i K := by
+  cases i with
+  | tail =>
+      refine ⟨T, hT, ?_, hTail⟩
+      have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+      have h := mul_le_mul_of_nonneg_right
+        (show (1 : ℝ) ≤ 128 * Real.exp 1 by nlinarith) hT.le
+      simpa using h
+  | moment =>
+      let K := 8 * Real.exp 1 * T
+      have hMom := subGaussianTailToMoment hTail
+      refine ⟨K, by dsimp [K]; positivity, ?_, ?_⟩
+      · have h : (8 : ℝ) ≤ 128 := by norm_num
+        have he : 0 ≤ Real.exp 1 * T := by positivity
+        have hbound := mul_le_mul_of_nonneg_right h he
+        simpa [K, mul_assoc] using hbound
+      · simpa [SubGaussianProperty, K] using hMom
+  | squareWindow =>
+      let K := 64 * Real.exp 1 * T
+      have hMom := subGaussianTailToMoment hTail
+      have hSq := subGaussianMomentToSquareWindow (by
+        positivity) hMom
+      refine ⟨K, by dsimp [K]; positivity, ?_, ?_⟩
+      · have h : (64 : ℝ) ≤ 128 := by norm_num
+        have he : 0 ≤ Real.exp 1 * T := by positivity
+        have hbound := mul_le_mul_of_nonneg_right h he
+        simpa [K, mul_assoc] using hbound
+      · convert hSq using 1 <;> simp [SubGaussianProperty, K] <;> ring
+  | squarePoint =>
+      let K := 128 * Real.exp 1 * T
+      have hMom := subGaussianTailToMoment hTail
+      have hSq := subGaussianMomentToSquareWindow (by
+        positivity) hMom
+      have hPoint := subGaussianSquareWindowToPoint (by
+        positivity) hSq
+      refine ⟨K, by dsimp [K]; positivity, le_rfl, ?_⟩
+      convert hPoint using 1 <;> simp [SubGaussianProperty, K] <;> ring
+  | linearMGF =>
+      let K₀ := 64 * Real.exp 1 * T
+      let K := 2 * K₀
+      have hMom := subGaussianTailToMoment hTail
+      have hSq := subGaussianMomentToSquareWindow (by
+        positivity) hMom
+      have hLinear := subGaussianSquareWindowToLinear (by
+        positivity) hCenter hSq
+      refine ⟨K, by dsimp [K, K₀]; positivity, ?_, ?_⟩
+      · dsimp [K, K₀]
+        exact le_of_eq (by ring)
+      · convert hLinear using 1 <;> simp [SubGaussianProperty, K, K₀] <;> ring
+
+/-! Stable compositional form of Proposition 2.5.2. -/
+theorem subGaussianCharacterization
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ i j : SubGaussianPropertyKind, ∀ {Ki : ℝ}, 0 < Ki →
+        SubGaussianProperty μ X i Ki →
+          ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+            SubGaussianProperty μ X j Kj := by
+  have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+  refine ⟨4096 * Real.exp 1, by nlinarith, ?_⟩
+  intro i j Ki hKi hProp
+  rcases subGaussianToTail i hKi hProp with
+    ⟨T, hT, hTbound, hTail⟩
+  rcases subGaussianFromTail hCenter j hT hTail with
+    ⟨Kj, hKj, hKjbound, hResult⟩
+  refine ⟨Kj, hKj, ?_, hResult⟩
+  calc
+    Kj ≤ 128 * Real.exp 1 * T := hKjbound
+    _ ≤ 128 * Real.exp 1 * (16 * Ki) := by
+      exact mul_le_mul_of_nonneg_left hTbound (by positivity)
+    _ = 2048 * Real.exp 1 * Ki := by ring
+    _ ≤ 4096 * Real.exp 1 * Ki := by
+      have hpos : 0 < Real.exp 1 * Ki := mul_pos (Real.exp_pos 1) hKi
+      nlinarith
+
 theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {σ : ι → ℝ≥0} (a : ι → ℝ)
@@ -1874,6 +2201,19 @@ theorem independentGaussianWeightedSumLaw {ι Ω : Type*} [Fintype ι] [Measurab
 end NumStability.HDP.Scalar.SubGaussian
 
 namespace NumStability.HDP.Contract
+
+/-! Stable Chapter 2 alias for Proposition 2.5.2. -/
+theorem hdp_02_hprop_h2_d5_d2
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ i j : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+        ∀ {Ki : ℝ}, 0 < Ki →
+          NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i Ki →
+            ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+              NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj :=
+  NumStability.HDP.Scalar.SubGaussian.subGaussianCharacterization hCenter
 
 /-! Stable Chapter 2 alias for the standard-normal `Lᵖ` moment formula. -/
 theorem hdp_02_hex_h2_d5_d1 (p : ℝ) (hp : 1 ≤ p) :
