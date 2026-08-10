@@ -962,4 +962,14 @@ theorem hdp_01_hthm_hcdf_hdetermines_hlaw
     (∀ t : ℝ, μ (Set.Iic t) = ν (Set.Iic t)) ↔ μ = ν :=
   NumStability.HDP.Scalar.Preliminaries.cdfDeterminesLaw
 
+theorem hdp_01_hrem_h1_d1_d1
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X Y : Ω → ℝ}
+    (hX : MemLp X 2 μ) (hY : MemLp Y 2 μ) :
+    ‖NumStability.HDP.Scalar.Preliminaries.covariance μ X Y‖ ≤
+      NumStability.HDP.Scalar.Preliminaries.standardDeviation μ X *
+        NumStability.HDP.Scalar.Preliminaries.standardDeviation μ Y :=
+  NumStability.HDP.Scalar.Preliminaries.covarianceCauchySchwarzBound hX hY
+
 end NumStability.HDP.Contract
