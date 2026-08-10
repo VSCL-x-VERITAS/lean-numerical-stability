@@ -11,6 +11,8 @@ import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 import Mathlib.MeasureTheory.Integral.Layercake
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
+import Mathlib.Probability.Distributions.Cauchy
+import Mathlib.Analysis.SpecialFunctions.NonIntegrable
 import Mathlib.Analysis.SpecialFunctions.Pow.Integral
 import Mathlib.Tactic
 
@@ -26,6 +28,7 @@ in the centered-variable API, since the textbook suppresses it.
 noncomputable section
 
 open MeasureTheory
+open Probability
 
 namespace NumStability.HDP.Scalar.Preliminaries
 
@@ -523,6 +526,266 @@ theorem exercise122Corrected
             (∫ t in Set.Iio 0, μ.real {a | X a < t})) := by
   exact ⟨exercise122PositiveNegativeLayerCake hX,
     fun hInt => exercise122CorrectedSignedTailFormula hX hInt⟩
+
+/-! The source-level Cauchy obstruction for the unqualified signed formula. -/
+lemma not_integrable_cauchy_pos :
+    ¬ Integrable (fun x : ℝ => max x 0) (cauchyMeasure 0 1) := by
+  intro h
+  have hlin :
+      (∫⁻ x, ENNReal.ofReal (max x 0) ∂cauchyMeasure 0 1) ≠ ⊤ := by
+    apply (MeasureTheory.lintegral_ofReal_ne_top_iff_integrable
+      ((measurable_id.max measurable_const).aestronglyMeasurable)
+      (Filter.Eventually.of_forall (fun x => by positivity))).2
+    exact h
+  have hc : cauchyMeasure (0 : ℝ) (1 : NNReal) =
+      volume.withDensity (cauchyPDF (0 : ℝ) (1 : NNReal)) :=
+    cauchyMeasure_of_scale_ne_zero (0 : ℝ) (γ := (1 : NNReal)) one_ne_zero
+  rw [hc] at hlin
+  have hwd := MeasureTheory.lintegral_withDensity_eq_lintegral_mul₀
+    (μ := (volume : Measure ℝ)) (f := cauchyPDF (0 : ℝ) (1 : NNReal))
+    (g := fun x : ℝ => ENNReal.ofReal (max x 0))
+    (measurable_cauchyPDF (0 : ℝ) (1 : NNReal)).aemeasurable
+    ((measurable_id.max measurable_const).ennreal_ofReal).aemeasurable
+  rw [hwd] at hlin
+  have hprod :
+      (∫⁻ x, ENNReal.ofReal
+        (max x 0 * cauchyPDFReal 0 1 x) ∂volume) ≠ ⊤ := by
+    have hpoint (x : ℝ) :
+        (cauchyPDF (0 : ℝ) (1 : NNReal) x) * ENNReal.ofReal (max x 0) =
+          ENNReal.ofReal (max x 0 * cauchyPDFReal 0 1 x) := by
+      rw [cauchyPDF]
+      calc
+        ENNReal.ofReal (cauchyPDFReal 0 1 x) * ENNReal.ofReal (max x 0) =
+            ENNReal.ofReal (cauchyPDFReal 0 1 x * max x 0) :=
+          (ENNReal.ofReal_mul
+            (cauchyPDF_pos (0 : ℝ) (by simp : (1 : NNReal) ≠ 0) x).le).symm
+        _ = ENNReal.ofReal (max x 0 * cauchyPDFReal 0 1 x) := by
+          rw [mul_comm]
+    simpa only [Pi.mul_apply, hpoint] using hlin
+  have hreal : Integrable
+      (fun x : ℝ => max x 0 * cauchyPDFReal 0 1 x) volume := by
+    apply (MeasureTheory.lintegral_ofReal_ne_top_iff_integrable (by fun_prop)
+      (Filter.Eventually.of_forall (fun x =>
+        mul_nonneg (by positivity)
+          (cauchyPDF_pos (0 : ℝ) (by simp : (1 : NNReal) ≠ 0) x).le))).1
+    exact hprod
+  have htail : Integrable
+      (fun x : ℝ => (2 * Real.pi) * (max x 0 * cauchyPDFReal 0 1 x))
+      (volume.restrict (Set.Ioi 1)) := by
+    apply (hreal.const_mul (2 * Real.pi)).mono_measure
+    exact Measure.restrict_le_self
+  have hinv : Integrable (fun x : ℝ => x⁻¹) (volume.restrict (Set.Ioi 1)) := by
+    apply htail.mono' (by fun_prop)
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    have hx1 : 1 < x := hx
+    have hx0 : 0 < x := lt_trans zero_lt_one hx1
+    rw [Real.norm_eq_abs, abs_of_pos (inv_pos.mpr hx0),
+      max_eq_left (show (0 : ℝ) ≤ x from hx0.le), Probability.cauchyPDFReal_def]
+    norm_num
+    field_simp
+    nlinarith [sq_nonneg x, Real.pi_pos]
+  exact not_integrableOn_Ioi_inv (a := 1) hinv
+
+lemma cauchy_pos_lintegral_top :
+    (∫⁻ x, ENNReal.ofReal (max x 0) ∂cauchyMeasure 0 1) = ⊤ := by
+  by_contra htop
+  apply not_integrable_cauchy_pos
+  apply (MeasureTheory.lintegral_ofReal_ne_top_iff_integrable
+    ((measurable_id.max measurable_const).aestronglyMeasurable)
+    (Filter.Eventually.of_forall (fun x => by positivity))).1
+  exact htop
+
+lemma cauchy_pos_tail_top :
+    (∫⁻ t in Set.Ioi 0,
+      cauchyMeasure 0 1 {x | t < x}) = ⊤ := by
+  have hcake := NumStability.HDP.Scalar.Preliminaries.layerCakeExpectationExtended
+    (μ := cauchyMeasure 0 1) (X := fun x : ℝ => max x 0)
+    (measurable_id.max measurable_const)
+    (fun x => le_max_right x 0)
+  have hset :
+      (∫⁻ t in Set.Ioi 0,
+        cauchyMeasure 0 1 {x | t < max x 0}) =
+        ∫⁻ t in Set.Ioi 0,
+          cauchyMeasure 0 1 {x | t < x} := by
+    apply setLIntegral_congr_fun measurableSet_Ioi
+    intro t ht
+    have ht0 : 0 < t := ht
+    apply congrArg (cauchyMeasure 0 1)
+    ext x
+    constructor
+    · intro h
+      change t < max x 0 at h
+      exact (lt_max_iff.mp h).resolve_right (not_lt_of_ge ht0.le)
+    · intro h
+      change t < x at h
+      exact lt_max_iff.mpr (Or.inl h)
+  calc
+    (∫⁻ t in Set.Ioi 0, cauchyMeasure 0 1 {x | t < x}) =
+        ∫⁻ t in Set.Ioi 0,
+          cauchyMeasure 0 1 {x | t < max x 0} := hset.symm
+    _ = ∫⁻ x, ENNReal.ofReal (max x 0) ∂cauchyMeasure 0 1 :=
+      hcake.symm
+    _ = ⊤ := cauchy_pos_lintegral_top
+
+lemma not_integrable_cauchy_neg :
+    ¬ Integrable (fun x : ℝ => max (-x) 0) (cauchyMeasure 0 1) := by
+  intro h
+  have hlin :
+      (∫⁻ x, ENNReal.ofReal (max (-x) 0) ∂cauchyMeasure 0 1) ≠ ⊤ := by
+    apply (MeasureTheory.lintegral_ofReal_ne_top_iff_integrable
+      ((measurable_neg.max measurable_const).aestronglyMeasurable)
+      (Filter.Eventually.of_forall (fun x => by positivity))).2
+    exact h
+  have hc : cauchyMeasure (0 : ℝ) (1 : NNReal) =
+      volume.withDensity (cauchyPDF (0 : ℝ) (1 : NNReal)) :=
+    cauchyMeasure_of_scale_ne_zero (0 : ℝ) (γ := (1 : NNReal)) one_ne_zero
+  rw [hc] at hlin
+  have hwd := MeasureTheory.lintegral_withDensity_eq_lintegral_mul₀
+    (μ := (volume : Measure ℝ)) (f := cauchyPDF (0 : ℝ) (1 : NNReal))
+    (g := fun x : ℝ => ENNReal.ofReal (max (-x) 0))
+    (measurable_cauchyPDF (0 : ℝ) (1 : NNReal)).aemeasurable
+    ((measurable_neg.max measurable_const).ennreal_ofReal).aemeasurable
+  rw [hwd] at hlin
+  have hprod :
+      (∫⁻ x, ENNReal.ofReal
+        (max (-x) 0 * cauchyPDFReal 0 1 x) ∂volume) ≠ ⊤ := by
+    have hpoint (x : ℝ) :
+        (cauchyPDF (0 : ℝ) (1 : NNReal) x) * ENNReal.ofReal (max (-x) 0) =
+          ENNReal.ofReal (max (-x) 0 * cauchyPDFReal 0 1 x) := by
+      rw [cauchyPDF]
+      calc
+        ENNReal.ofReal (cauchyPDFReal 0 1 x) * ENNReal.ofReal (max (-x) 0) =
+            ENNReal.ofReal (cauchyPDFReal 0 1 x * max (-x) 0) :=
+          (ENNReal.ofReal_mul
+            (cauchyPDF_pos (0 : ℝ) (by simp : (1 : NNReal) ≠ 0) x).le).symm
+        _ = ENNReal.ofReal (max (-x) 0 * cauchyPDFReal 0 1 x) := by
+          rw [mul_comm]
+    simpa only [Pi.mul_apply, hpoint] using hlin
+  have hreal : Integrable
+      (fun x : ℝ => max (-x) 0 * cauchyPDFReal 0 1 x) volume := by
+    apply (MeasureTheory.lintegral_ofReal_ne_top_iff_integrable (by fun_prop)
+      (Filter.Eventually.of_forall (fun x =>
+        mul_nonneg (by positivity)
+          (cauchyPDF_pos (0 : ℝ) (by simp : (1 : NNReal) ≠ 0) x).le))).1
+    exact hprod
+  have htail : Integrable
+      (fun x : ℝ => (2 * Real.pi) * (max (-x) 0 * cauchyPDFReal 0 1 x))
+      (volume.restrict (Set.Iio (-1))) := by
+    apply (hreal.const_mul (2 * Real.pi)).mono_measure
+    exact Measure.restrict_le_self
+  have hinvneg : Integrable (fun x : ℝ => (-x)⁻¹)
+      (volume.restrict (Set.Iio (-1))) := by
+    apply htail.mono' (measurable_neg.inv.aestronglyMeasurable)
+    filter_upwards [ae_restrict_mem measurableSet_Iio] with x hx
+    have hx1 : x < -1 := hx
+    have hx0 : x < 0 := lt_trans hx1 (by norm_num)
+    rw [Real.norm_eq_abs, abs_of_pos (inv_pos.mpr (neg_pos.mpr hx0)),
+      max_eq_left (neg_nonneg.mpr hx0.le), Probability.cauchyPDFReal_def]
+    simp only [sub_zero, NNReal.coe_one, one_pow, mul_one]
+    have hbasic : (-x)⁻¹ ≤ 2 * (-x) / ((-x) ^ 2 + 1) := by
+      rw [inv_eq_one_div]
+      apply (div_le_iff₀ (neg_pos.mpr hx0)).2
+      have hmult : 1 ≤ (2 * (-x) * (-x)) / ((-x) ^ 2 + 1) := by
+        apply (le_div_iff₀ (by positivity : 0 < (-x) ^ 2 + 1)).2
+        nlinarith [sq_nonneg (x + 1)]
+      convert hmult using 1 <;> ring
+    calc
+      (-x)⁻¹ ≤ 2 * (-x) / (x ^ 2 + 1) := by
+        convert hbasic using 1 <;> ring
+      _ = 2 * Real.pi * (-(x) * (Real.pi⁻¹ * (x ^ 2 + 1)⁻¹)) := by
+        field_simp [Real.pi_ne_zero, ne_of_lt hx0]
+  have hpos : IntegrableOn (fun x : ℝ => x⁻¹) (Set.Ioi 1) volume := by
+    have hinvneg_on : IntegrableOn (fun x : ℝ => x⁻¹) (Set.Iio (-1)) volume := by
+      change Integrable (fun x : ℝ => x⁻¹) (volume.restrict (Set.Iio (-1)))
+      exact hinvneg.neg.congr (Filter.Eventually.of_forall (fun x => by
+        simp [inv_neg]))
+    have hcomp : IntegrableOn ((fun y : ℝ => y⁻¹) ∘ Neg.neg)
+        (Neg.neg ⁻¹' Set.Iio (-1)) volume :=
+      ((Measure.measurePreserving_neg (volume : Measure ℝ)).integrableOn_comp_preimage
+        measurableEmbedding_neg).2 hinvneg_on
+    have hcomp_neg : Integrable (fun x : ℝ => -(x⁻¹))
+        (volume.restrict (Set.Ioi 1)) := by
+      simpa [IntegrableOn, Function.comp_def, inv_neg] using hcomp
+    change IntegrableOn (fun x : ℝ => x⁻¹) (Set.Ioi 1) volume
+    change Integrable (fun x : ℝ => x⁻¹) (volume.restrict (Set.Ioi 1))
+    exact hcomp_neg.neg.congr (Filter.Eventually.of_forall (fun x => by
+      simp))
+  exact not_integrableOn_Ioi_inv (a := 1) hpos
+
+lemma cauchy_neg_lintegral_top :
+    (∫⁻ x, ENNReal.ofReal (max (-x) 0) ∂cauchyMeasure 0 1) = ⊤ := by
+  by_contra htop
+  apply not_integrable_cauchy_neg
+  apply (MeasureTheory.lintegral_ofReal_ne_top_iff_integrable
+    ((measurable_neg.max measurable_const).aestronglyMeasurable)
+    (Filter.Eventually.of_forall (fun x => by positivity))).1
+  exact htop
+
+lemma cauchy_neg_tail_top :
+    (∫⁻ t in Set.Iio 0,
+      cauchyMeasure 0 1 {x | x < t}) = ⊤ := by
+  have hcake := NumStability.HDP.Scalar.Preliminaries.layerCakeExpectationExtended
+    (μ := cauchyMeasure 0 1) (X := fun x : ℝ => max (-x) 0)
+    (measurable_neg.max measurable_const)
+    (fun x => le_max_right (-x) 0)
+  have hset :
+      (∫⁻ t in Set.Ioi 0,
+        cauchyMeasure 0 1 {x | t < max (-x) 0}) =
+        ∫⁻ t in Set.Iio 0,
+          cauchyMeasure 0 1 {x | x < t} := by
+    calc
+      (∫⁻ t in Set.Ioi 0,
+          cauchyMeasure 0 1 {x | t < max (-x) 0}) =
+          ∫⁻ t in Set.Ioi 0,
+            cauchyMeasure 0 1 {x | x < -t} := by
+              apply setLIntegral_congr_fun measurableSet_Ioi
+              intro t ht
+              have ht0 : 0 < t := ht
+              apply congrArg (cauchyMeasure 0 1)
+              ext x
+              constructor
+              · intro h
+                change t < max (-x) 0 at h
+                have h' : t < -x :=
+                  (lt_max_iff.mp h).resolve_right (not_lt_of_ge ht0.le)
+                simpa using (neg_lt_neg h')
+              · intro h
+                change x < -t at h
+                have h' : t < -x := by
+                  simpa using (neg_lt_neg h)
+                exact lt_max_iff.mpr (Or.inl h')
+      _ = ∫⁻ t in Set.Iio 0,
+          cauchyMeasure 0 1 {x | x < t} := by
+            have hmp : MeasurePreserving (Neg.neg : ℝ → ℝ)
+                (volume.restrict (Set.Ioi 0))
+                (volume.restrict (Set.Iio 0)) := by
+              have hmp' :=
+                (Measure.measurePreserving_neg (volume : Measure ℝ)).restrict_preimage_emb
+                  measurableEmbedding_neg (Set.Iio 0)
+              have hpre : (Neg.neg : ℝ → ℝ) ⁻¹' Set.Iio 0 = Set.Ioi 0 := by
+                ext x
+                simp
+              rw [hpre] at hmp'
+              exact hmp'
+            have hchange := MeasurePreserving.lintegral_comp_emb hmp
+                measurableEmbedding_neg
+                (fun t : ℝ => cauchyMeasure 0 1 {x | x < t})
+            simpa [Function.comp_def] using hchange
+  calc
+    (∫⁻ t in Set.Iio 0,
+        cauchyMeasure 0 1 {x | x < t}) =
+        ∫⁻ t in Set.Ioi 0,
+          cauchyMeasure 0 1 {x | t < max (-x) 0} := hset.symm
+    _ = ∫⁻ x, ENNReal.ofReal (max (-x) 0) ∂cauchyMeasure 0 1 :=
+      hcake.symm
+    _ = ⊤ := cauchy_neg_lintegral_top
+
+theorem exercise122CauchyObstruction :
+    ((∫⁻ t in Set.Ioi 0,
+        cauchyMeasure 0 1 {x | t < x}) = ⊤) ∧
+      ((∫⁻ t in Set.Iio 0,
+        cauchyMeasure 0 1 {x | x < t}) = ⊤) := by
+  exact ⟨cauchy_pos_tail_top, cauchy_neg_tail_top⟩
 
 /-! The weighted layer-cake identity for positive real moments. -/
 theorem momentTailFormula
