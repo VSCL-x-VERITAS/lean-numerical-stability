@@ -509,6 +509,21 @@ theorem exercise122CorrectedSignedTailFormula
         integral_Iic_eq_integral_Iio
   convert congrArg₂ (· - ·) hpos_tail hneg_tail using 1
 
+theorem exercise122Corrected
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    ((∫⁻ ω, ENNReal.ofReal (max (X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (X ω) 0}) ∧
+      (∫⁻ ω, ENNReal.ofReal (max (-X ω) 0) ∂μ =
+        ∫⁻ t in Set.Ioi 0, μ {ω | t < max (-X ω) 0})) ∧
+      (∀ hInt : Integrable X μ,
+        (∫ ω, X ω ∂μ) =
+          (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
+            (∫ t in Set.Iio 0, μ.real {a | X a < t})) := by
+  exact ⟨exercise122PositiveNegativeLayerCake hX,
+    fun hInt => exercise122CorrectedSignedTailFormula hX hInt⟩
+
 /-! The weighted layer-cake identity for positive real moments. -/
 theorem momentTailFormula
     {Ω : Type*} [MeasurableSpace Ω]
@@ -1045,10 +1060,7 @@ theorem hdp_01_hex_h1_d2_d2
         (∫ ω, X ω ∂μ) =
           (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
             (∫ t in Set.Iio 0, μ.real {a | X a < t})) := by
-  exact ⟨NumStability.HDP.Scalar.Preliminaries.exercise122PositiveNegativeLayerCake hX,
-    fun hInt =>
-      NumStability.HDP.Scalar.Preliminaries.exercise122CorrectedSignedTailFormula
-        hX hInt⟩
+  exact NumStability.HDP.Scalar.Preliminaries.exercise122Corrected hX
 
 theorem hdp_01_hex_h1_d2_d3
     {Ω : Type*} [MeasurableSpace Ω]
