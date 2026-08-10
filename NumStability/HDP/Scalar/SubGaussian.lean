@@ -2738,6 +2738,115 @@ theorem independentCenteredSubGaussianTail
   convert hBound using 1 <;>
     norm_num [S, E, mul_pow, Real.sq_sqrt hE.le]
 
+/-! The weighted linear-form version of Theorem 2.6.3.  As in the preceding
+tail theorem, the source's ψ₂ scale is represented by a common positive
+linear-MGF scale; positive coefficient energy keeps the displayed
+denominator nonzero. -/
+theorem independentWeightedCenteredSubGaussianTail
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {K : ℝ}
+    (hK : 0 < K)
+    (hX : ∀ i, SubGaussianLinearMGF μ (X i) K)
+    (hIndep : iIndepFun X μ)
+    {a : ι → ℝ}
+    (hEnergy : 0 < ∑ i, a i ^ 2)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+      2 * Real.exp (-t ^ 2 / (4 * K ^ 2 * ∑ i, a i ^ 2)) := by
+  let Y : ι → Ω → ℝ := fun i ω => a i * X i ω
+  let S : Ω → ℝ := fun ω => ∑ i, Y i ω
+  let A : ℝ := ∑ i, a i ^ 2
+  have hA : 0 < A := by simpa [A] using hEnergy
+  have hY_meas : ∀ i, Measurable (Y i) := by
+    intro i
+    dsimp [Y]
+    exact measurable_const.mul (hX i).1
+  have hIndepY : iIndepFun Y μ := by
+    have h := hIndep.comp (fun i x => a i * x) (fun i => by fun_prop)
+    simpa [Y, Function.comp_def] using h
+  have hS_meas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ (fun i _ => hY_meas i)
+  have hS_int : Integrable S μ := by
+    dsimp [S]
+    simpa only [Finset.sum_apply] using
+      (integrable_finset_sum (μ := μ) Finset.univ
+        (fun i hi => (hX i).2.2.1.const_mul (a i)))
+  have hS_mean : (∫ ω, S ω ∂μ) = 0 := by
+    dsimp [S]
+    rw [integral_finset_sum]
+    · apply Finset.sum_eq_zero
+      intro i hi
+      rw [integral_const_mul, (hX i).2.2.2.1]
+      ring
+    · exact fun i hi => (hX i).2.2.1.const_mul (a i)
+  have hS_exp (lam : ℝ) :
+      Integrable (fun ω => Real.exp (lam * S ω)) μ := by
+    have h := hIndepY.integrable_exp_mul_sum
+      hY_meas (s := Finset.univ)
+      (fun i hi => by
+        convert ((hX i).2.2.2.2 (lam * a i)).1 using 1 <;>
+          simp [Y] <;> ring)
+    simpa [S] using h
+  have hS_mgf (lam : ℝ) :
+      (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
+        Real.exp (K ^ 2 * lam ^ 2 * A) := by
+    have hFactor (i : ι) :
+        (∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ) ≤
+          Real.exp (K ^ 2 * (lam * a i) ^ 2) := by
+      simpa [Y, mul_assoc, mul_left_comm, mul_comm] using
+        ((hX i).2.2.2.2 (lam * a i)).2
+    have hProd :
+        (∏ i, ∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ) ≤
+          ∏ i, Real.exp (K ^ 2 * (lam * a i) ^ 2) := by
+      apply Finset.prod_le_prod
+      · intro i hi
+        exact integral_nonneg (fun ω => Real.exp_nonneg _)
+      · intro i hi
+        exact hFactor i
+    have hFactorization :=
+      NumStability.HDP.Scalar.IndependentSums.Hoeffding.mgfIndependentSum
+        (μ := μ) (X := Y) lam (fun _ => (1 : ℝ)) hIndepY
+        (fun i => by
+          convert ((hX i).2.2.2.2 (lam * a i)).1 using 1 <;>
+            simp [Y] <;> ring)
+    calc
+      (∫ ω, Real.exp (lam * S ω) ∂μ) =
+          ∏ i, ∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ := by
+            simpa [S] using hFactorization
+      _ ≤ ∏ i, Real.exp (K ^ 2 * (lam * a i) ^ 2) := hProd
+      _ = Real.exp (K ^ 2 * lam ^ 2 * A) := by
+        rw [← Real.exp_sum]
+        congr 1
+        dsimp [A]
+        simp_rw [mul_pow]
+        rw [Finset.mul_sum]
+        ring
+  let L : ℝ := K * Real.sqrt A
+  have hL : 0 < L := by
+    dsimp [L]
+    exact mul_pos hK (Real.sqrt_pos.2 hA)
+  have hS_linear : SubGaussianLinearMGF μ S L := by
+    refine ⟨hS_meas, hL, hS_int, hS_mean, ?_⟩
+    intro lam
+    refine ⟨hS_exp lam, ?_⟩
+    have hLsq : L ^ 2 = K ^ 2 * A := by
+      dsimp [L]
+      rw [mul_pow, Real.sq_sqrt hA.le]
+    calc
+      (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
+          Real.exp (K ^ 2 * lam ^ 2 * A) := hS_mgf lam
+      _ = Real.exp (L ^ 2 * lam ^ 2) := by rw [hLsq]; ring
+  have hBound := (subGaussianLinearToTail hS_linear).2.2 t ht
+  have hDen : (2 * L) ^ 2 = 4 * K ^ 2 * A := by
+    dsimp [L]
+    simp only [mul_pow]
+    rw [Real.sq_sqrt hA.le]
+    ring
+  rw [hDen] at hBound
+  simpa [S, Y, A] using hBound
+
 /-! The exact gauge is subadditive at the level of admissible scales.  This is
 the analytic core needed before passing to the a.e. quotient in Exercise
 2.5.7. -/
@@ -3694,6 +3803,23 @@ theorem hdp_02_hthm_h2_d6_d2
       2 * Real.exp (-t ^ 2 / (4 * ∑ i, K i ^ 2)) :=
   NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianTail
     hX hIndep hEnergy ht
+
+/-! Stable Chapter 2 alias for Theorem 2.6.3. -/
+theorem hdp_02_hthm_h2_d6_d3
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {K : ℝ}
+    (hK : 0 < K)
+    (hX : ∀ i,
+      NumStability.HDP.Scalar.SubGaussian.SubGaussianLinearMGF μ (X i) K)
+    (hIndep : ProbabilityTheory.iIndepFun X μ)
+    {a : ι → ℝ}
+    (hEnergy : 0 < ∑ i, a i ^ 2)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+      2 * Real.exp (-t ^ 2 / (4 * K ^ 2 * ∑ i, a i ^ 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.independentWeightedCenteredSubGaussianTail
+    hK hX hIndep hEnergy ht
 
 /-! Stable Chapter 2 alias for Lemma 2.6.8. -/
 theorem hdp_02_hlem_h2_d6_d8
