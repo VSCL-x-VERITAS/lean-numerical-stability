@@ -1877,6 +1877,216 @@ def SubGaussianSquarePoint {Ω : Type*} [MeasurableSpace Ω]
     Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
       (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ 2
 
+/-! Threshold-parametrized versions of the tail and point square-MGF clauses.
+
+Remark 2.5.3 says that the printed threshold `2` can be replaced by any fixed
+`A > 1`, at the cost of changing the scale by a constant depending only on
+`A`.  These predicates expose that threshold so the rescaling statement can be
+checked directly rather than being hidden in prose. -/
+def SubGaussianTailBoundWithThreshold {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K A : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2)
+
+def SubGaussianSquarePointWithThreshold {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K A : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
+      (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ A
+
+private lemma subGaussianTailThreshold_rescale
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K A B : ℝ} (hA : 1 < A) (hB : 1 < B) (hK : 0 < K)
+    (hTail : ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2)) :
+    ∃ K' : ℝ, 0 < K' ∧
+      ∀ t : ℝ, 0 ≤ t →
+        μ.real {ω | |X ω| ≥ t} ≤ B * Real.exp (-t ^ 2 / K' ^ 2) := by
+  by_cases hAB : A ≤ B
+  · refine ⟨K, hK, fun t ht => ?_⟩
+    calc
+      μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2) := hTail t ht
+      _ ≤ B * Real.exp (-t ^ 2 / K ^ 2) := by
+        exact mul_le_mul_of_nonneg_right hAB (le_of_lt (Real.exp_pos _))
+  · have hBA : B < A := lt_of_not_ge hAB
+    have hLogA : 0 < Real.log A := Real.log_pos hA
+    have hLogB : 0 < Real.log B := Real.log_pos hB
+    have hLogBA : Real.log B < Real.log A := Real.log_lt_log (by linarith) hBA
+    let c : ℝ := Real.log B / Real.log A
+    have hc : 0 < c := div_pos hLogB hLogA
+    have hc1 : c < 1 := (div_lt_one hLogA).2 hLogBA
+    let K' : ℝ := K / Real.sqrt c
+    have hK' : 0 < K' := div_pos hK (Real.sqrt_pos.2 hc)
+    have hSqSqrt : (Real.sqrt c) ^ 2 = c := Real.sq_sqrt hc.le
+    have hKsq : K' ^ 2 = K ^ 2 / c := by
+      dsimp [K']
+      field_simp [ne_of_gt hK, ne_of_gt (Real.sqrt_pos.2 hc)]
+      exact hSqSqrt.symm
+    have hScale (t : ℝ) : t ^ 2 / K' ^ 2 = c * (t ^ 2 / K ^ 2) := by
+      rw [hKsq]
+      field_simp [ne_of_gt hK, ne_of_gt hc]
+    have hSourceExponent (t : ℝ) : -t ^ 2 / K ^ 2 =
+        -(t ^ 2 / K ^ 2) := by ring
+    have hTargetExponent (t : ℝ) : -t ^ 2 / K' ^ 2 =
+        -(c * (t ^ 2 / K ^ 2)) := by
+      calc
+        -t ^ 2 / K' ^ 2 = -(t ^ 2 / K' ^ 2) := by ring
+        _ = -(c * (t ^ 2 / K ^ 2)) := by rw [hScale]
+    have hProb (s : Set Ω) : μ.real s ≤ 1 := by
+      calc
+        μ.real s ≤ μ.real Set.univ := measureReal_mono (Set.subset_univ _)
+        _ = 1 := probReal_univ
+    refine ⟨K', hK', fun t ht => ?_⟩
+    let u : ℝ := t ^ 2 / K ^ 2
+    by_cases hu : u ≤ Real.log A
+    · have hcu : c * u ≤ Real.log B := by
+        have hcLog : c * Real.log A = Real.log B := by
+          dsimp [c]
+          field_simp [ne_of_gt hLogA]
+        nlinarith
+      have hExp : B⁻¹ ≤ Real.exp (-(c * u)) := by
+        calc
+          B⁻¹ = Real.exp (-Real.log B) := by
+            rw [Real.exp_neg, Real.exp_log (by linarith)]
+          _ ≤ Real.exp (-(c * u)) := by
+            apply Real.exp_le_exp.mpr
+            linarith
+      have hOne : (1 : ℝ) ≤ B * Real.exp (-(c * u)) := by
+        calc
+          (1 : ℝ) = B * B⁻¹ := by field_simp [ne_of_gt hB]
+          _ ≤ B * Real.exp (-(c * u)) :=
+            mul_le_mul_of_nonneg_left hExp (by linarith)
+      calc
+        μ.real {ω | |X ω| ≥ t} ≤ 1 := hProb _
+        _ ≤ B * Real.exp (-(c * u)) := hOne
+        _ = B * Real.exp (-t ^ 2 / K' ^ 2) := by
+          rw [hTargetExponent, show u = t ^ 2 / K ^ 2 by rfl]
+    · have hu' : Real.log A < u := lt_of_not_ge hu
+      have hExpCmp : A * Real.exp (-u) ≤ B * Real.exp (-(c * u)) := by
+        rw [← Real.exp_log (by linarith : 0 < A), ← Real.exp_log (by linarith : 0 < B)]
+        rw [← Real.exp_add, ← Real.exp_add]
+        apply Real.exp_le_exp.mpr
+        have hnonneg : 0 ≤ (1 - c) * (u - Real.log A) :=
+          mul_nonneg (by linarith) (by linarith)
+        have hcLog : c * Real.log A = Real.log B := by
+          dsimp [c]
+          field_simp [ne_of_gt hLogA]
+        nlinarith
+      calc
+        μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-u) := by
+          calc
+            μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2) := hTail t ht
+            _ = A * Real.exp (-u) := by rw [hSourceExponent, show u = t ^ 2 / K ^ 2 by rfl]
+        _ ≤ B * Real.exp (-(c * u)) := hExpCmp
+        _ = B * Real.exp (-t ^ 2 / K' ^ 2) := by
+          rw [hTargetExponent, show u = t ^ 2 / K ^ 2 by rfl]
+
+private lemma subGaussianSquarePointThreshold_rescale
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K A B : ℝ} (hX : Measurable X)
+    (hA : 1 < A) (hB : 1 < B) (hK : 0 < K)
+    (hInt : Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ)
+    (hBound : (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ A) :
+    ∃ K' : ℝ, 0 < K' ∧
+      Integrable (fun ω => Real.exp (X ω ^ 2 / K' ^ 2)) μ ∧
+        (∫ ω, Real.exp (X ω ^ 2 / K' ^ 2) ∂μ) ≤ B := by
+  by_cases hAB : A ≤ B
+  · refine ⟨K, hK, hInt, hBound.trans hAB⟩
+  · have hBA : B < A := lt_of_not_ge hAB
+    have hA1 : 0 < A - 1 := by linarith
+    have hB1 : 0 < B - 1 := by linarith
+    let c : ℝ := (B - 1) / (A - 1)
+    have hc : 0 < c := div_pos hB1 hA1
+    have hc1 : c < 1 := (div_lt_one hA1).2 (by linarith)
+    let K' : ℝ := K / Real.sqrt c
+    have hK' : 0 < K' := div_pos hK (Real.sqrt_pos.2 hc)
+    have hSqSqrt : (Real.sqrt c) ^ 2 = c := Real.sq_sqrt hc.le
+    have hKsq : K' ^ 2 = K ^ 2 / c := by
+      dsimp [K']
+      field_simp [ne_of_gt hK, ne_of_gt (Real.sqrt_pos.2 hc)]
+      exact hSqSqrt.symm
+    have hScale (ω : Ω) : X ω ^ 2 / K' ^ 2 =
+        c * (X ω ^ 2 / K ^ 2) := by
+      rw [hKsq]
+      field_simp [ne_of_gt hK, ne_of_gt hc]
+    have hChord (y : ℝ) : Real.exp (c * y) ≤ (1 - c) + c * Real.exp y := by
+      have hConv := convexOn_exp.2 (Set.mem_univ (0 : ℝ))
+        (Set.mem_univ y) (sub_nonneg.mpr hc1.le) hc.le (by ring)
+      simpa only [smul_eq_mul, zero_mul, mul_zero, add_zero, zero_add, Real.exp_zero,
+        mul_one] using hConv
+    let f : Ω → ℝ := fun ω => Real.exp (X ω ^ 2 / K ^ 2)
+    let g : Ω → ℝ := fun ω => (1 - c) + c * f ω
+    have hGInt : Integrable g μ := by
+      dsimp [g]
+      exact (integrable_const (1 - c)).add (hInt.const_mul c)
+    have hTargetInt : Integrable (fun ω => Real.exp (X ω ^ 2 / K' ^ 2)) μ := by
+      refine hGInt.mono' ?_ ?_
+      · fun_prop
+      · filter_upwards [] with ω
+        rw [hScale]
+        simpa [f, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)] using
+          hChord (X ω ^ 2 / K ^ 2)
+    have hTargetBound :
+        (∫ ω, Real.exp (X ω ^ 2 / K' ^ 2) ∂μ) ≤ B := by
+      have hPoint : ∀ᵐ ω ∂μ,
+          Real.exp (X ω ^ 2 / K' ^ 2) ≤ g ω := by
+        filter_upwards [] with ω
+        rw [hScale]
+        simpa [f] using hChord (X ω ^ 2 / K ^ 2)
+      calc
+        (∫ ω, Real.exp (X ω ^ 2 / K' ^ 2) ∂μ) ≤ ∫ ω, g ω ∂μ :=
+          integral_mono_ae hTargetInt hGInt hPoint
+        _ = (1 - c) + c * (∫ ω, f ω ∂μ) := by
+          dsimp [g]
+          rw [integral_add (integrable_const (1 - c)) (hInt.const_mul c)]
+          simp [f, integral_const_mul, probReal_univ]
+        _ ≤ B := by
+          have hBoundF : (∫ ω, f ω ∂μ) ≤ A := by simpa [f] using hBound
+          have hMul := mul_le_mul_of_nonneg_left hBoundF hc.le
+          calc
+            (1 - c) + c * (∫ ω, f ω ∂μ) ≤ (1 - c) + c * A := by linarith
+            _ = B := by
+              dsimp [c]
+              field_simp [ne_of_gt hA1]
+              ring
+    exact ⟨K', hK', hTargetInt, hTargetBound⟩
+
+/-! Remark 2.5.3: the fixed threshold `2` in the tail and point square-MGF
+clauses may be replaced by any fixed `A > 1`, with only an `A`-dependent
+rescaling of the positive parameter. -/
+theorem subGaussianThresholdRemark
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (A : ℝ) (hA : 1 < A) :
+    ((∃ K : ℝ, 0 < K ∧ SubGaussianTailBoundWithThreshold μ X K 2) ↔
+      ∃ K : ℝ, 0 < K ∧ SubGaussianTailBoundWithThreshold μ X K A) ∧
+    ((∃ K : ℝ, 0 < K ∧ SubGaussianSquarePointWithThreshold μ X K 2) ↔
+      ∃ K : ℝ, 0 < K ∧ SubGaussianSquarePointWithThreshold μ X K A) := by
+  constructor
+  · constructor
+    · rintro ⟨K, hK, hTail⟩
+      rcases subGaussianTailThreshold_rescale (A := 2) (B := A)
+          (by norm_num) hA hK hTail.2.2 with ⟨K', hK', hTail'⟩
+      exact ⟨K', hK', hTail.1, hK', hTail',⟩
+    · rintro ⟨K, hK, hTail⟩
+      rcases subGaussianTailThreshold_rescale (A := A) (B := 2)
+          hA (by norm_num) hK hTail.2.2 with ⟨K', hK', hTail'⟩
+      exact ⟨K', hK', hTail.1, hK', hTail',⟩
+  · constructor
+    · rintro ⟨K, hK, hPoint⟩
+      rcases subGaussianSquarePointThreshold_rescale (A := 2) (B := A)
+          hPoint.1 (by norm_num) hA hK hPoint.2.2.1 hPoint.2.2.2 with
+        ⟨K', hK', hInt', hBound'⟩
+      exact ⟨K', hK', hPoint.1, hK', hInt', hBound'⟩
+    · rintro ⟨K, hK, hPoint⟩
+      rcases subGaussianSquarePointThreshold_rescale (A := A) (B := 2)
+          hPoint.1 hA (by norm_num) hK hPoint.2.2.1 hPoint.2.2.2 with
+        ⟨K', hK', hInt', hBound'⟩
+      exact ⟨K', hK', hPoint.1, hK', hInt', hBound'⟩
+
 def SubGaussianLinearMGF {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧ Integrable X μ ∧
@@ -2313,6 +2523,21 @@ theorem hdp_02_hprop_h2_d5_d2
             ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
               NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj :=
   NumStability.HDP.Scalar.SubGaussian.subGaussianCharacterization hCenter
+
+/-! Stable Chapter 2 alias for Remark 2.5.3. -/
+theorem hdp_02_hrem_h2_d5_d3
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (A : ℝ) (hA : 1 < A) :
+    ((∃ K : ℝ, 0 < K ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBoundWithThreshold μ X K 2) ↔
+      ∃ K : ℝ, 0 < K ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBoundWithThreshold μ X K A) ∧
+    ((∃ K : ℝ, 0 < K ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePointWithThreshold μ X K 2) ↔
+      ∃ K : ℝ, 0 < K ∧
+        NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePointWithThreshold μ X K A) :=
+  NumStability.HDP.Scalar.SubGaussian.subGaussianThresholdRemark A hA
 
 /-! Stable Chapter 2 alias for Definition 2.5.6 and the `ψ₂` finiteness test. -/
 theorem hdp_02_hdef_h2_d5_d6
