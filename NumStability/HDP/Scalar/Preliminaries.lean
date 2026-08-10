@@ -554,6 +554,25 @@ theorem minkowskiEpnorm
     eLpNorm (X + Y) p μ ≤ eLpNorm X p μ + eLpNorm Y p μ := by
   exact eLpNorm_add_le hX hY hp
 
+/-! The corrected positive-exponent form of the chapter's Lp monotonicity
+  claim.  Mathlib's representative-level eLpNorm is used directly, so the
+  endpoint q = ∞ is included.  The printed p = 0 endpoint is excluded:
+  under the pinned API eLpNorm X 0 μ = 0, which is not an L0 norm. -/
+theorem lpNormMonoProbability
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {p q : ENNReal}
+    (hpq : p ≤ q) (hX : AEStronglyMeasurable X μ) :
+    eLpNorm X p μ ≤ eLpNorm X q μ := by
+  simpa using
+    (eLpNorm_le_eLpNorm_mul_rpow_measure_univ (f := X) hpq hX)
+
+theorem lpNormExponentZero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} :
+    eLpNorm X 0 μ = 0 := by
+  simp
+
 /-! The source-facing Hölder inequality and its two endpoint branches. -/
 theorem holderIntegralBound
     {Ω : Type*} [MeasurableSpace Ω]
@@ -873,6 +892,22 @@ theorem hdp_01_hthm_hminkowski
     MeasureTheory.eLpNorm (X + Y) p μ ≤
       MeasureTheory.eLpNorm X p μ + MeasureTheory.eLpNorm Y p μ :=
   NumStability.HDP.Scalar.Preliminaries.minkowskiEpnorm hX hY hp
+
+/-! Corrected equation (1.3): positive Lp exponents are monotone on a
+  probability space, with the zero-exponent source endpoint recorded
+  separately as a discrepancy. -/
+theorem hdp_01_hcor_hlp_hmonotone
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {p q : ENNReal}
+    (hpq : p ≤ q) (hX : AEStronglyMeasurable X μ) :
+    MeasureTheory.eLpNorm X p μ ≤ MeasureTheory.eLpNorm X q μ :=
+  NumStability.HDP.Scalar.Preliminaries.lpNormMonoProbability hpq hX
+
+theorem hdp_01_hcor_hlp_hmonotone_zero :
+    ∀ {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ},
+      MeasureTheory.eLpNorm X 0 μ = 0 :=
+  fun {_} {_} {_} => NumStability.HDP.Scalar.Preliminaries.lpNormExponentZero
 
 theorem hdp_01_hthm_hholder
     {Ω : Type*} [MeasurableSpace Ω]
