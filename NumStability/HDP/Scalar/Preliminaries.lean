@@ -10,6 +10,7 @@ import Mathlib.Analysis.Convex.Continuous
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 import Mathlib.MeasureTheory.Integral.Layercake
+import Mathlib.Analysis.SpecialFunctions.Pow.Integral
 import Mathlib.Tactic
 
 /-!
@@ -409,6 +410,38 @@ theorem layerCakeExpectation
   refine ⟨layerCakeExpectationExtended hX hNonneg, ?_⟩
   intro hInt
   exact layerCakeExpectationFinite hX hNonneg hInt
+
+/-! The weighted layer-cake identity for positive real moments. -/
+theorem momentTailFormula
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) {p : ℝ} (hp : 0 < p) :
+    (absoluteMoment μ X p =
+        ENNReal.ofReal p *
+          ∫⁻ t in Set.Ioi 0,
+            μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))) ∧
+      (∀ hfinite :
+          absoluteMoment μ X p < (⊤ : ENNReal) ∨
+            ENNReal.ofReal p *
+                ∫⁻ t in Set.Ioi 0,
+                  μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1)) <
+              (⊤ : ENNReal),
+        (absoluteMoment μ X p).toReal =
+          (ENNReal.ofReal p *
+            ∫⁻ t in Set.Ioi 0,
+              μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))).toReal) := by
+  have hnonneg : 0 ≤ᵐ[μ] (fun ω => |X ω|) :=
+    Filter.Eventually.of_forall (fun ω => abs_nonneg _)
+  have hmeas : AEMeasurable (fun ω => |X ω|) μ :=
+    (hX.norm).aemeasurable
+  have hformula :=
+    MeasureTheory.lintegral_rpow_eq_lintegral_meas_lt_mul
+      (μ := μ) hnonneg hmeas hp
+  constructor
+  · simpa [absoluteMoment, Real.norm_eq_abs] using hformula
+  · intro _
+    exact congrArg ENNReal.toReal (by
+      simpa [absoluteMoment, Real.norm_eq_abs] using hformula)
 
 /-! The pointwise indicator inequality used in the proof of Markov's bound. -/
 theorem markovIndicatorBound {x t : ℝ} (hx : 0 ≤ x) (ht : 0 < t) :
@@ -898,6 +931,27 @@ theorem hdp_01_hlem_h1_d2_d1
         NumStability.HDP.Scalar.Preliminaries.expectation μ X =
           ∫ t in Set.Ioi 0, μ.real {ω | t < X ω}) :=
   NumStability.HDP.Scalar.Preliminaries.layerCakeExpectation hX hNonneg
+
+theorem hdp_01_hex_h1_d2_d3
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) {p : ℝ} (hp : 0 < p) :
+    (NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p =
+        ENNReal.ofReal p *
+          ∫⁻ t in Set.Ioi 0,
+            μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))) ∧
+      (∀ hfinite :
+          NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p <
+              (⊤ : ENNReal) ∨
+            ENNReal.ofReal p *
+                ∫⁻ t in Set.Ioi 0,
+                  μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1)) <
+              (⊤ : ENNReal),
+        (NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p).toReal =
+          (ENNReal.ofReal p *
+            ∫⁻ t in Set.Ioi 0,
+              μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))).toReal) :=
+  NumStability.HDP.Scalar.Preliminaries.momentTailFormula hX hp
 
 theorem hdp_01_hlem_hmarkov_hindicator_hbound {x t : ℝ}
     (hx : 0 ≤ x) (ht : 0 < t) :
