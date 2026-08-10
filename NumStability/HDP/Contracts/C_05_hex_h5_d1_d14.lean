@@ -11,7 +11,7 @@ theorem hdp_05_hex_h5_d1_d14__contract :
     hdp_05_hex_h5_d1_d14__contract_type := by
   intro Ω instΩ instMetric instBorel μ instμ A hAclosed hAnonempty K hK hYint
     hFunctional hAprob
-  exact NumStability.HDP.Concentration.MetricMeasure.hdp_05_hex_h5_d1_d14
+  exact NumStability.HDP.Contract.hdp_05_hex_h5_d1_d14
     hAclosed hAnonempty hK hYint hFunctional hAprob
 
 end NumStability.HDP.Contract

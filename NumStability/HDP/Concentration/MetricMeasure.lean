@@ -1719,6 +1719,24 @@ theorem hdp_05_hex_h5_d1_d13
   exact NumStability.HDP.Concentration.MetricMeasure.medianPsiTwoGaugeComparison
     hZ hm hK hProp
 
+theorem hdp_05_hex_h5_d1_d14
+    {Ω : Type*} [PseudoMetricSpace Ω] [MeasurableSpace Ω] [BorelSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {A : Set Ω} (hAclosed : IsClosed A) (hAnonempty : A.Nonempty)
+    {K : ℝ} (hK : 0 < K)
+    (hYint : Integrable (fun x => Metric.infDist x A) μ)
+    (hFunctional : ∀ {f : Ω → ℝ} {L : NNReal},
+      Measurable f → Integrable f μ → LipschitzWith L f →
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+            (fun x => f x - ∫ y, f y ∂μ) ≤
+          ENNReal.ofReal K * ENNReal.ofNNReal L)
+    (hAprob : (1 / 2 : ENNReal) ≤ μ A) :
+    ∃ c : ℝ, 0 < c ∧ ∀ {t : ℝ}, 0 ≤ t →
+      1 - 2 * Real.exp (-c * t ^ 2 / K ^ 2) ≤
+        μ.real {x | Metric.infDist x A ≤ t} := by
+  exact NumStability.HDP.Concentration.MetricMeasure.hdp_05_hex_h5_d1_d14
+    hAclosed hAnonempty hK hYint hFunctional hAprob
+
 theorem hdp_05_hex_h5_d1_d2 :
     (∀ {α β : Type} [PseudoEMetricSpace α] [PseudoEMetricSpace β]
       {K : NNReal} {f : α → β}, LipschitzWith K f → UniformContinuous f) ∧
