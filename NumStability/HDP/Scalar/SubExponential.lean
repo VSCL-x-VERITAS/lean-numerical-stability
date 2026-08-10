@@ -729,6 +729,463 @@ theorem mgfToMoment
       rw [← Real.mul_rpow (by positivity) (by positivity)]
       ring
 
+/-! Exercise 2.7.2: the four equivalent absolute-value interfaces. -/
+
+def SubExponentialTailBound {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t / K)
+
+def SubExponentialMomentBound {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧ LpMomentGrowth μ X K
+
+def SubExponentialAbsoluteMGFLocal {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    ∀ lam : ℝ, 0 ≤ lam → lam ≤ K⁻¹ →
+      Integrable (fun ω => Real.exp (lam * |X ω|)) μ ∧
+        (∫ ω, Real.exp (lam * |X ω|) ∂μ) ≤ Real.exp (K * lam)
+
+def SubExponentialOnePointMGF {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
+  Measurable X ∧ 0 < K ∧
+    Integrable (fun ω => Real.exp (|X ω| / K)) μ ∧
+      (∫ ω, Real.exp (|X ω| / K) ∂μ) ≤ 2
+
+inductive SubExponentialPropertyKind
+  | tail
+  | moment
+  | absoluteMGF
+  | onePoint
+
+def SubExponentialProperty {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) :
+    SubExponentialPropertyKind → ℝ → Prop
+  | .tail => SubExponentialTailBound μ X
+  | .moment => SubExponentialMomentBound μ X
+  | .absoluteMGF => SubExponentialAbsoluteMGFLocal μ X
+  | .onePoint => SubExponentialOnePointMGF μ X
+
+private theorem subExponentialTailToMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hTail : SubExponentialTailBound μ X K) :
+    SubExponentialMomentBound μ X (8 * Real.exp 1 * K) := by
+  have hTail' : ∀ t : ℝ, 0 ≤ t →
+      μ {ω | t < |X ω|} ≤ ENNReal.ofReal (2 * Real.exp (-t / K)) := by
+    intro t ht
+    let A : Set Ω := {ω | t < |X ω|}
+    let B : Set Ω := {ω | |X ω| ≥ t}
+    have hAB : A ⊆ B := by
+      intro ω hω
+      change t < |X ω| at hω
+      change t ≤ |X ω|
+      exact le_of_lt hω
+    have hB : μ B ≤ ENNReal.ofReal (2 * Real.exp (-t / K)) := by
+      rw [← ENNReal.ofReal_toReal (measure_ne_top μ B)]
+      apply ENNReal.ofReal_le_ofReal
+      simpa [B, MeasureTheory.measureReal_def] using hTail.2.2 t ht
+    exact (measure_mono hAB).trans hB
+  refine ⟨hTail.1,
+    mul_pos (mul_pos (by norm_num) (Real.exp_pos 1)) hTail.2.1, ?_⟩
+  refine ⟨hTail.1.aemeasurable, ?_⟩
+  intro p hp
+  have hp0 : 0 < p := lt_of_lt_of_le (by norm_num) hp
+  have hformula := NumStability.HDP.Scalar.Preliminaries.momentTailFormula
+    (μ := μ) (X := X) hTail.1 hp0
+  have hupper :
+      (∫⁻ t in Set.Ioi 0,
+        μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))) ≤
+        ∫⁻ t in Set.Ioi 0,
+          ENNReal.ofReal (2 * Real.exp (-t / K)) *
+            ENNReal.ofReal (t ^ (p - 1)) := by
+    apply MeasureTheory.setLIntegral_mono
+    · fun_prop
+    · intro t ht
+      exact mul_le_mul_right' (hTail' t (le_of_lt (Set.mem_Ioi.mp ht))) _
+  have hInt : IntegrableOn
+      (fun t : ℝ => t ^ (p - 1) * Real.exp (-(K⁻¹) * t)) (Set.Ioi 0) := by
+    simpa only [Real.rpow_one] using (integrableOn_rpow_mul_exp_neg_mul_rpow
+      (p := (1 : ℝ)) (s := p - 1) (b := K⁻¹)
+      (by linarith) (by norm_num) (inv_pos.mpr hTail.2.1))
+  have hscale : ∀ t : ℝ,
+      ENNReal.ofReal (2 * Real.exp (-t / K)) *
+          ENNReal.ofReal (t ^ (p - 1)) =
+        ENNReal.ofReal (2 * (t ^ (p - 1) * Real.exp (-(K⁻¹) * t))) := by
+    intro t
+    calc
+      ENNReal.ofReal (2 * Real.exp (-t / K)) *
+          ENNReal.ofReal (t ^ (p - 1)) =
+        ENNReal.ofReal ((2 * Real.exp (-t / K)) * (t ^ (p - 1))) :=
+          (ENNReal.ofReal_mul (by positivity)).symm
+      _ = ENNReal.ofReal (2 * (t ^ (p - 1) * Real.exp (-(K⁻¹) * t))) := by
+        congr 1
+        field_simp [ne_of_gt hTail.2.1]
+  have hInt2 : IntegrableOn
+      (fun t : ℝ => 2 * (t ^ (p - 1) * Real.exp (-(K⁻¹) * t))) (Set.Ioi 0) :=
+    hInt.const_mul _
+  have hEq2 := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt2
+    (by
+      filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioi] with t ht
+      have ht0 : 0 < t := Set.mem_Ioi.mp ht
+      positivity)
+  have hGamma := integral_rpow_mul_exp_neg_mul_rpow
+    (p := (1 : ℝ)) (q := p - 1) (b := K⁻¹) (by norm_num) (by linarith)
+      (inv_pos.mpr hTail.2.1)
+  have hIntEval :
+      (∫ t in Set.Ioi 0,
+        t ^ (p - 1) * Real.exp (-(K⁻¹) * t)) =
+        (K⁻¹) ^ (-p) * Real.Gamma p := by
+    have hfun :
+        (fun t : ℝ => t ^ (p - 1) * Real.exp (-(K⁻¹) * t)) =
+          (fun t : ℝ => t ^ (p - 1) * Real.exp (-(K⁻¹) * t ^ (1 : ℝ))) := by
+      funext t
+      rw [Real.rpow_one]
+    rw [hfun]
+    have hGamma' := hGamma
+    rw [show p - 1 + 1 = p by ring] at hGamma'
+    simp only [div_one, one_div, mul_one] at hGamma'
+    convert hGamma' using 1 <;> norm_num <;> ring
+  have hGammaBound : Real.Gamma p ≤ 4 * p ^ p :=
+    NumStability.HDP.Scalar.SubGaussian.gammaUpperBound (by linarith)
+  have hupperEval :
+      (∫⁻ t in Set.Ioi 0,
+        ENNReal.ofReal (2 * Real.exp (-t / K)) *
+          ENNReal.ofReal (t ^ (p - 1))) ≤
+        ENNReal.ofReal (2 * (K⁻¹) ^ (-p) * Real.Gamma p) := by
+    rw [MeasureTheory.setLIntegral_congr_fun measurableSet_Ioi
+      (fun t _ => hscale t)]
+    rw [← hEq2, MeasureTheory.integral_const_mul, hIntEval]
+    simp [mul_assoc]
+  have hcalc :
+      ENNReal.ofReal p * ENNReal.ofReal
+          (2 * (K⁻¹) ^ (-p) * Real.Gamma p) ≤
+        ENNReal.ofReal ((8 * Real.exp 1 * K * p) ^ p) := by
+    rw [← ENNReal.ofReal_mul (by positivity : 0 ≤ p)]
+    apply ENNReal.ofReal_le_ofReal
+    have hKpow : (K⁻¹) ^ (-p) = K ^ p := by
+      rw [Real.rpow_neg (inv_nonneg.mpr hTail.2.1.le)]
+      rw [Real.inv_rpow hTail.2.1.le]
+      simp
+    rw [hKpow]
+    have hgam : 0 ≤ Real.Gamma p := (Real.Gamma_pos_of_pos hp0).le
+    have hKpow_nonneg : 0 ≤ K ^ p := Real.rpow_nonneg hTail.2.1.le _
+    have hstep : 2 * p * (K ^ p * Real.Gamma p) ≤
+        (8 * Real.exp 1 * K * p) ^ p := by
+      calc
+        2 * p * (K ^ p * Real.Gamma p) ≤
+            8 * p * K ^ p * p ^ p := by
+              have hcoef : 0 ≤ 2 * p * K ^ p :=
+                mul_nonneg (mul_nonneg (by positivity) (by positivity)) hKpow_nonneg
+              calc
+                2 * p * (K ^ p * Real.Gamma p) =
+                    (2 * p * K ^ p) * Real.Gamma p := by ring
+                _ ≤ (2 * p * K ^ p) * (4 * p ^ p) :=
+                  mul_le_mul_of_nonneg_left hGammaBound hcoef
+                _ = 8 * p * K ^ p * p ^ p := by ring
+        _ ≤ 8 * Real.exp p * K ^ p * p ^ p := by
+              have hpExp : p ≤ Real.exp p := by
+                nlinarith [Real.add_one_le_exp p]
+              have hcoef : 0 ≤ 8 * K ^ p * p ^ p := by
+                positivity
+              calc
+                8 * p * K ^ p * p ^ p =
+                    (8 * K ^ p * p ^ p) * p := by ring
+                _ ≤ (8 * K ^ p * p ^ p) * Real.exp p :=
+                  mul_le_mul_of_nonneg_left hpExp hcoef
+                _ = 8 * Real.exp p * K ^ p * p ^ p := by ring
+        _ ≤ (8 * Real.exp 1 * K * p) ^ p := by
+              have h8 : (8 : ℝ) ≤ 8 ^ p := by
+                have h := Real.rpow_le_rpow_of_exponent_le
+                  (x := (8 : ℝ)) (y := (1 : ℝ)) (z := p) (by norm_num) hp
+                simpa using h
+              have hexprpow : Real.exp p = (Real.exp 1) ^ p := by
+                rw [Real.rpow_def_of_pos (Real.exp_pos 1), Real.log_exp]
+                congr 1
+                ring
+              rw [hexprpow]
+              calc
+                8 * (Real.exp 1) ^ p * K ^ p * p ^ p ≤
+                    8 ^ p * (Real.exp 1) ^ p * K ^ p * p ^ p := by
+                      have hpos : 0 ≤ (Real.exp 1) ^ p * K ^ p * p ^ p := by
+                        exact mul_nonneg (mul_nonneg (by positivity) hKpow_nonneg)
+                          (by positivity)
+                      convert mul_le_mul_of_nonneg_right h8 hpos using 1 <;> ring
+                _ = (8 * Real.exp 1 * K * p) ^ p := by
+                      symm
+                      rw [Real.mul_rpow
+                        (mul_nonneg (mul_nonneg (by positivity) (Real.exp_pos 1).le)
+                          hTail.2.1.le) hp0.le]
+                      rw [Real.mul_rpow (mul_nonneg (by positivity) (Real.exp_pos 1).le)
+                        hTail.2.1.le]
+                      rw [Real.mul_rpow (by norm_num) (Real.exp_pos 1).le]
+    simpa [mul_assoc, mul_left_comm, mul_comm] using hstep
+  have hmoment : NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p ≤
+      ENNReal.ofReal ((8 * Real.exp 1 * K * p) ^ p) := by
+    calc
+      NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p =
+          ENNReal.ofReal p *
+            (∫⁻ t in Set.Ioi 0,
+              μ {ω | t < |X ω|} * ENNReal.ofReal (t ^ (p - 1))) := hformula.1
+      _ ≤ ENNReal.ofReal p *
+          (∫⁻ t in Set.Ioi 0,
+            ENNReal.ofReal (2 * Real.exp (-t / K)) *
+              ENNReal.ofReal (t ^ (p - 1))) := mul_le_mul_left' hupper _
+      _ ≤ ENNReal.ofReal p * ENNReal.ofReal
+          (2 * (K⁻¹) ^ (-p) * Real.Gamma p) :=
+            mul_le_mul_left' hupperEval _
+      _ ≤ ENNReal.ofReal ((8 * Real.exp 1 * K * p) ^ p) := hcalc
+  have hfinite :
+      NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p < (⊤ : ENNReal) :=
+    lt_of_le_of_lt hmoment (by simp)
+  have hmeasX : AEMeasurable X μ := hTail.1.aemeasurable
+  have hmeas : AEMeasurable (fun ω => |X ω| ^ p) μ := by
+    fun_prop
+  have hInt : Integrable (fun ω => |X ω| ^ p) μ := by
+    refine ⟨hmeas.aestronglyMeasurable, ?_⟩
+    rw [hasFiniteIntegral_iff_norm]
+    change (∫⁻ ω, ENNReal.ofReal ‖|X ω| ^ p‖ ∂μ) < (⊤ : ENNReal)
+    convert hfinite using 1
+    apply MeasureTheory.lintegral_congr_ae
+    filter_upwards [] with ω
+    rw [Real.norm_eq_abs, abs_of_nonneg (Real.rpow_nonneg (abs_nonneg _) _)]
+    change ENNReal.ofReal (|X ω|.rpow p) = ENNReal.ofReal (|X ω|.rpow p)
+    rfl
+  refine ⟨hInt, ?_⟩
+  have hEq := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt
+    (Filter.Eventually.of_forall (fun ω => by positivity))
+  have hbound : ENNReal.ofReal (∫ ω, |X ω| ^ p ∂μ) ≤
+      ENNReal.ofReal ((8 * Real.exp 1 * K * p) ^ p) := by
+    calc
+      ENNReal.ofReal (∫ ω, |X ω| ^ p ∂μ) =
+          NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p := by
+            simpa [NumStability.HDP.Scalar.Preliminaries.absoluteMoment,
+              Real.norm_eq_abs] using hEq
+      _ ≤ _ := hmoment
+  have hBase : 0 ≤ 8 * Real.exp 1 * K * p := by
+    exact mul_nonneg (mul_nonneg (mul_nonneg (by positivity) (Real.exp_pos 1).le)
+      hTail.2.1.le) hp0.le
+  have hRhs : 0 ≤ (8 * Real.exp 1 * K * p) ^ p :=
+    Real.rpow_nonneg hBase _
+  exact (ENNReal.ofReal_le_ofReal_iff hRhs).mp hbound
+
+private theorem subExponentialMomentToAbsoluteMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hMom : SubExponentialMomentBound μ X K) :
+    SubExponentialAbsoluteMGFLocal μ X (4 * Real.exp 1 * K) := by
+  refine ⟨hMom.1, mul_pos (mul_pos (by norm_num) (Real.exp_pos 1)) hMom.2.1, ?_⟩
+  intro lam hlam hLamK
+  have hsmall : |lam| * K ≤ (4 * Real.exp 1)⁻¹ := by
+    rw [abs_of_nonneg hlam]
+    calc
+      lam * K ≤ (4 * Real.exp 1 * K)⁻¹ * K := by
+        exact mul_le_mul_of_nonneg_right hLamK hMom.2.1.le
+      _ = (4 * Real.exp 1)⁻¹ := by field_simp [ne_of_gt hMom.2.1]
+  have h := exp_abs_integrable hMom.2.2 hMom.2.1 hsmall
+  refine ⟨?_, ?_⟩
+  · simpa [abs_of_nonneg hlam] using h.1
+  · calc
+      (∫ ω, Real.exp (lam * |X ω|) ∂μ) =
+          ∫ ω, Real.exp (|lam| * |X ω|) ∂μ := by
+            congr 1
+            funext ω
+            rw [abs_of_nonneg hlam]
+      _ ≤ Real.exp (2 * Real.exp 1 * (|lam| * K)) := h.2
+      _ ≤ Real.exp (4 * Real.exp 1 * K * lam) := by
+        apply Real.exp_le_exp.mpr
+        rw [abs_of_nonneg hlam]
+        nlinarith [mul_nonneg (Real.exp_pos 1).le
+          (mul_nonneg hlam hMom.2.1.le)]
+
+private theorem subExponentialAbsoluteMGFToOnePoint
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hLocal : SubExponentialAbsoluteMGFLocal μ X K) :
+    SubExponentialOnePointMGF μ X (2 * K) := by
+  have hK : 0 < 2 * K := mul_pos (by norm_num) hLocal.2.1
+  have hparam0 : 0 ≤ (2 * K)⁻¹ := (inv_nonneg.mpr hK.le)
+  have hparam : (2 * K)⁻¹ ≤ K⁻¹ := by
+    have h := one_div_le_one_div_of_le hLocal.2.1 (by nlinarith : K ≤ 2 * K)
+    simpa [one_div] using h
+  have h := hLocal.2.2 ((2 * K)⁻¹) hparam0 hparam
+  refine ⟨hLocal.1, hK, ?_, ?_⟩
+  · convert h.1 using 1
+    funext ω
+    congr 1
+    field_simp
+  · have hhalf : K * (2 * K)⁻¹ = (1 / 2 : ℝ) := by
+      field_simp [ne_of_gt hLocal.2.1]
+    calc
+      (∫ ω, Real.exp (|X ω| / (2 * K)) ∂μ) =
+          ∫ ω, Real.exp ((2 * K)⁻¹ * |X ω|) ∂μ := by
+            congr 1
+            funext ω
+            congr 1
+            field_simp
+      _ ≤ Real.exp (K * (2 * K)⁻¹) := h.2
+      _ = Real.exp (1 / 2) := by rw [hhalf]
+      _ ≤ 2 := by
+        exact le_trans (Real.exp_bound_div_one_sub_of_interval (by norm_num) (by norm_num))
+          (by norm_num)
+
+private theorem subExponentialOnePointToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {K : ℝ} (hPoint : SubExponentialOnePointMGF μ X K) :
+    SubExponentialTailBound μ X K := by
+  refine ⟨hPoint.1, hPoint.2.1, ?_⟩
+  intro t ht
+  let Y : Ω → ℝ := fun ω => Real.exp (|X ω| / K)
+  have hY : Measurable Y := by
+    simpa [Y] using (hPoint.1.norm.div_const K).exp
+  have hmarkov := NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
+    (μ := μ) hY (Filter.Eventually.of_forall (fun ω => by
+      exact le_of_lt (Real.exp_pos _))) hPoint.2.2.1 (Real.exp_pos (t / K))
+  have hsubset : {ω | |X ω| ≥ t} ⊆
+      Y ⁻¹' Set.Ici (Real.exp (t / K)) := by
+    intro ω hω
+    change Real.exp (t / K) ≤ Real.exp (|X ω| / K)
+    apply Real.exp_le_exp.mpr
+    exact div_le_div_of_nonneg_right hω hPoint.2.1.le
+  have hmono {A B : Set Ω} (hAB : A ⊆ B) : μ.real A ≤ μ.real B := by
+    rw [Measure.real_def, Measure.real_def]
+    exact ENNReal.toReal_mono (measure_ne_top μ B) (measure_mono hAB)
+  calc
+    μ.real {ω | |X ω| ≥ t} ≤ μ.real (Y ⁻¹' Set.Ici (Real.exp (t / K))) :=
+      hmono hsubset
+    _ ≤ (∫ ω, Y ω ∂μ) / Real.exp (t / K) := by
+      simpa [NumStability.HDP.Scalar.Preliminaries.expectation] using hmarkov
+    _ ≤ 2 / Real.exp (t / K) := by
+      exact div_le_div_of_nonneg_right hPoint.2.2.2
+        (le_of_lt (Real.exp_pos _))
+    _ = 2 * Real.exp (-t / K) := by
+      rw [div_eq_mul_inv, ← Real.exp_neg]
+      ring
+
+private theorem subExponentialToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i : SubExponentialPropertyKind) {K : ℝ} (hK : 0 < K)
+    (hProp : SubExponentialProperty μ X i K) :
+    ∃ T : ℝ, 0 < T ∧ T ≤ 8 * Real.exp 1 * K ∧
+      SubExponentialTailBound μ X T := by
+  cases i with
+  | tail =>
+      refine ⟨K, hK, ?_, hProp⟩
+      have hscale : (1 : ℝ) ≤ 8 * Real.exp 1 := by
+        have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+        nlinarith
+      simpa using (mul_le_mul_of_nonneg_right hscale hK.le)
+  | moment =>
+      have hLocal := subExponentialMomentToAbsoluteMGF hProp
+      have hPoint := subExponentialAbsoluteMGFToOnePoint hLocal
+      have hTail := subExponentialOnePointToTail hPoint
+      refine ⟨8 * Real.exp 1 * K, by positivity, le_rfl, ?_⟩
+      convert hTail using 1 <;> ring
+  | absoluteMGF =>
+      have hPoint := subExponentialAbsoluteMGFToOnePoint hProp
+      have hTail := subExponentialOnePointToTail hPoint
+      refine ⟨2 * K, by positivity, ?_, ?_⟩
+      · have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+        have hscale : (2 : ℝ) ≤ 8 * Real.exp 1 := by nlinarith
+        exact mul_le_mul_of_nonneg_right hscale hK.le
+      · convert hTail using 1 <;> ring
+  | onePoint =>
+      have hTail := subExponentialOnePointToTail hProp
+      refine ⟨K, hK, ?_, hTail⟩
+      have hscale : (1 : ℝ) ≤ 8 * Real.exp 1 := by
+        have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+        nlinarith
+      simpa using (mul_le_mul_of_nonneg_right hscale hK.le)
+
+private theorem subExponentialFromTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i : SubExponentialPropertyKind) {T : ℝ} (hT : 0 < T)
+    (hTail : SubExponentialTailBound μ X T) :
+    ∃ K : ℝ, 0 < K ∧ K ≤ 64 * (Real.exp 1) ^ 2 * T ∧
+      SubExponentialProperty μ X i K := by
+  cases i with
+  | tail =>
+      refine ⟨T, hT, ?_, hTail⟩
+      have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+      have he2 : (1 : ℝ) ≤ (Real.exp 1) ^ 2 := by
+        nlinarith [mul_nonneg (sub_nonneg.mpr he) (Real.exp_pos 1).le]
+      have hscale : (1 : ℝ) ≤ 64 * (Real.exp 1) ^ 2 := by nlinarith
+      simpa using (mul_le_mul_of_nonneg_right hscale hT.le)
+  | moment =>
+      let K := 8 * Real.exp 1 * T
+      have hMom := subExponentialTailToMoment hTail
+      refine ⟨K, by dsimp [K]; positivity, ?_, ?_⟩
+      · have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+        dsimp [K]
+        have he2 : (1 : ℝ) ≤ (Real.exp 1) ^ 2 := by
+          nlinarith [mul_nonneg (sub_nonneg.mpr he) (Real.exp_pos 1).le]
+        have hscale : 8 * Real.exp 1 ≤ 64 * (Real.exp 1) ^ 2 := by
+          nlinarith
+        exact mul_le_mul_of_nonneg_right hscale hT.le
+      · simpa [SubExponentialProperty, K] using hMom
+  | absoluteMGF =>
+      let K := 32 * (Real.exp 1) ^ 2 * T
+      have hMom := subExponentialTailToMoment hTail
+      have hLocal := subExponentialMomentToAbsoluteMGF hMom
+      refine ⟨K, by dsimp [K]; positivity, ?_, ?_⟩
+      · dsimp [K]
+        have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+        exact mul_le_mul_of_nonneg_right (by nlinarith [he]) hT.le
+      · change SubExponentialAbsoluteMGFLocal μ X K
+        convert hLocal using 1 <;> dsimp [K] <;> ring
+  | onePoint =>
+      let K := 64 * (Real.exp 1) ^ 2 * T
+      have hMom := subExponentialTailToMoment hTail
+      have hLocal := subExponentialMomentToAbsoluteMGF hMom
+      have hPoint := subExponentialAbsoluteMGFToOnePoint hLocal
+      refine ⟨K, by dsimp [K]; positivity, le_rfl, ?_⟩
+      change SubExponentialOnePointMGF μ X K
+      convert hPoint using 1 <;> dsimp [K] <;> ring
+
+/-! Reusable four-way characterization for Exercise 2.7.2. -/
+theorem subExponentialCharacterization
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ i j : SubExponentialPropertyKind, ∀ {Ki : ℝ}, 0 < Ki →
+        SubExponentialProperty μ X i Ki →
+          ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+            SubExponentialProperty μ X j Kj := by
+  let C : ℝ := 4096 * (Real.exp 1) ^ 3
+  have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+  have he3 : (1 : ℝ) ≤ (Real.exp 1) ^ 3 := by
+    have he2 : (1 : ℝ) ≤ (Real.exp 1) ^ 2 := by
+      nlinarith [mul_nonneg (sub_nonneg.mpr he) (Real.exp_pos 1).le]
+    have hsq : 0 ≤ (Real.exp 1) ^ 2 := by positivity
+    nlinarith [mul_le_mul_of_nonneg_left he hsq]
+  refine ⟨C, by dsimp [C]; nlinarith [he3], ?_⟩
+  intro i j Ki hKi hProp
+  rcases subExponentialToTail i hKi hProp with ⟨T, hT, hTbound, hTail⟩
+  rcases subExponentialFromTail j hT hTail with ⟨Kj, hKj, hKjbound, hResult⟩
+  refine ⟨Kj, hKj, ?_, hResult⟩
+  dsimp [C]
+  have hmul := mul_le_mul_of_nonneg_left hTbound
+    (by positivity : 0 ≤ 64 * (Real.exp 1) ^ 2)
+  calc
+    Kj ≤ 64 * (Real.exp 1) ^ 2 * T := hKjbound
+    _ ≤ 64 * (Real.exp 1) ^ 2 * (8 * Real.exp 1 * Ki) := hmul
+    _ ≤ 4096 * (Real.exp 1) ^ 3 * Ki := by
+      have he3nonneg : 0 ≤ (Real.exp 1) ^ 3 := by positivity
+      have hcoeff : 512 * (Real.exp 1) ^ 3 ≤ 4096 * (Real.exp 1) ^ 3 := by
+        nlinarith
+      have hKi0 : 0 ≤ Ki := hKi.le
+      calc
+        64 * (Real.exp 1) ^ 2 * (8 * Real.exp 1 * Ki) =
+            512 * (Real.exp 1) ^ 3 * Ki := by ring
+        _ ≤ 4096 * (Real.exp 1) ^ 3 * Ki :=
+          mul_le_mul_of_nonneg_right hcoeff hKi0
+
 /-! Remark 2.7.9: a bounded centered unit-variance witness and the domain of the
 rate-one exponential MGF.  The symmetric two-point law makes the local Taylor
 calculation exact, while the exponential-law calculation is kept in extended
@@ -1299,6 +1756,19 @@ theorem hdp_02_hlem_hse_hmgf_hto_hmoment
     NumStability.HDP.Scalar.SubExponential.LpMomentGrowth μ X
       (2 * Real.exp C * K) :=
   NumStability.HDP.Scalar.SubExponential.mgfToMoment hK hC hMGF
+
+/-! Stable Chapter 2 alias for Exercise 2.7.2. -/
+theorem hdp_02_hex_h2_d7_d2
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ i j : NumStability.HDP.Scalar.SubExponential.SubExponentialPropertyKind,
+        ∀ {Ki : ℝ}, 0 < Ki →
+          NumStability.HDP.Scalar.SubExponential.SubExponentialProperty μ X i Ki →
+            ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+              NumStability.HDP.Scalar.SubExponential.SubExponentialProperty μ X j Kj := by
+  exact NumStability.HDP.Scalar.SubExponential.subExponentialCharacterization
 
 /-! Stable Chapter 2 alias for Remark 2.7.9. -/
 theorem hdp_02_hrem_h2_d7_d9 : hdp_02_hrem_h2_d7_d9__contract_type := by
