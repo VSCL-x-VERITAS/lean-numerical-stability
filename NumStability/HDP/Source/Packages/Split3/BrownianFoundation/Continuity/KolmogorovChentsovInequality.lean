@@ -3,9 +3,9 @@ Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.Topology
-import NumStability.HDP.Process.BrownianFoundation.Continuity.IsKolmogorovProcess
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.StochasticProcesses
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.Topology
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Continuity.IsKolmogorovProcess
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.StochasticProcesses
 import Mathlib.Topology.EMetricSpace.Paracompact
 import Mathlib.Topology.Separation.CompletelyRegular
 import Mathlib.Data.Set.FiniteExhaustion

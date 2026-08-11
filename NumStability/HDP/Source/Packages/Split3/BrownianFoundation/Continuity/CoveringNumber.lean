@@ -3,9 +3,9 @@ Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.ENNReal
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.MeasureTheory
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.Nat
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.ENNReal
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.MeasureTheory
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.Nat
 import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Topology.MetricSpace.CoveringNumbers
 

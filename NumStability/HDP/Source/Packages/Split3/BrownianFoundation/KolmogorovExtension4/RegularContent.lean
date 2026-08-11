@@ -3,7 +3,7 @@ Copyright (c) 2023 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne, Peter Pfaffelhuber
 -/
-import NumStability.HDP.Process.BrownianFoundation.KolmogorovExtension4.CompactSystem
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.KolmogorovExtension4.CompactSystem
 import Mathlib.MeasureTheory.Measure.AddContent
 
 open scoped ENNReal

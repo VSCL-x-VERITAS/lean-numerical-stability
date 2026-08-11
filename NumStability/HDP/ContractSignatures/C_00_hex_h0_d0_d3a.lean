@@ -6,7 +6,7 @@ open scoped BigOperators InnerProductSpace MeasureTheory
 /-- Frozen proof-free proposition for the outbound contract supplied by
 `HDP-00-EX-0.0.3A`. -/
 def NumStability.HDP.Contract.hdp_00_hex_h0_d0_d3a__contract_type : Prop :=
-  ∀ {ι Ω E : Type*} [Fintype ι] [MeasurableSpace Ω]
+  ∀ {ι Ω E : Type} [Fintype ι] [MeasurableSpace Ω]
     {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
     [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]

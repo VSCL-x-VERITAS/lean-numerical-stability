@@ -3,7 +3,7 @@ Copyright (c) 2025 Etienne Marion. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Etienne Marion
 -/
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.HasGaussianLaw
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.HasGaussianLaw
 import Mathlib.Probability.Independence.Process
 import Mathlib.Probability.Process.FiniteDimensionalLaws
 import Mathlib.Probability.Distributions.Gaussian.IsGaussianProcess.Basic

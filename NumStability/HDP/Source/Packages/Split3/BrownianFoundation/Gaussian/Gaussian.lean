@@ -1,5 +1,5 @@
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.CovMatrix
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.HasLaw
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.CovMatrix
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.HasLaw
 import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.CharFun
 import Mathlib.Probability.Moments.CovarianceBilinDual

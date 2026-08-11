@@ -3,10 +3,10 @@ Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.NNReal
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.GaussianProcess
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.MultivariateGaussian
-import NumStability.HDP.Process.BrownianFoundation.KolmogorovExtension4.KolmogorovExtension
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.NNReal
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.GaussianProcess
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.MultivariateGaussian
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.KolmogorovExtension4.KolmogorovExtension
 import Mathlib.Analysis.InnerProductSpace.GramMatrix
 
 /-!

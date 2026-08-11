@@ -3,8 +3,8 @@ Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.ContinuousBilinForm
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.MeasureTheory
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.ContinuousBilinForm
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.MeasureTheory
 import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.MeasureTheory.SpecificCodomains.WithLp
 import Mathlib.Probability.Distributions.Gaussian.Fernique

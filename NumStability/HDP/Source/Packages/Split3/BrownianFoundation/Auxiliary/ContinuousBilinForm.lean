@@ -1,4 +1,4 @@
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.LinearAlgebra
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.LinearAlgebra
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.InnerProductSpace.Positive

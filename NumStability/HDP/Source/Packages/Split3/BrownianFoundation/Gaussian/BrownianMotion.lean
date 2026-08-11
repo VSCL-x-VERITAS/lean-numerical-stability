@@ -3,10 +3,10 @@ Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import NumStability.HDP.Process.BrownianFoundation.Continuity.KolmogorovChentsov
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.GaussianProcess
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.Moment
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.ProjectiveLimit
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Continuity.KolmogorovChentsov
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.GaussianProcess
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.Moment
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.ProjectiveLimit
 import Mathlib.Probability.Independence.BoundedContinuousFunction
 import Mathlib.Topology.ContinuousMap.SecondCountableSpace
 import Mathlib.Probability.ConditionalExpectation

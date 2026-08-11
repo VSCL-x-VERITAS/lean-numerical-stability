@@ -13,7 +13,7 @@ import Mathlib.Probability.Independence.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.BrownianMotion
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.BrownianMotion
 
 /-!
 # Deterministic interfaces for Gaussian comparison

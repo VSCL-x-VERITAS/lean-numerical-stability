@@ -1,4 +1,4 @@
-import NumStability.HDP.Process.BrownianFoundation.Gaussian.Gaussian
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.Gaussian
 import Mathlib.MeasureTheory.Constructions.Cylinders
 import Mathlib.Probability.Independence.CharacteristicFunction
 

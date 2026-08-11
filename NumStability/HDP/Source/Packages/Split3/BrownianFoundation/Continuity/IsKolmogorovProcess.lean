@@ -3,10 +3,10 @@ Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.FiniteInf
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.MeanInequalities
-import NumStability.HDP.Process.BrownianFoundation.Continuity.Chaining
-import NumStability.HDP.Process.BrownianFoundation.Continuity.HasBoundedInternalCoveringNumber
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.FiniteInf
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.MeanInequalities
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Continuity.Chaining
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Continuity.HasBoundedInternalCoveringNumber
 import Mathlib.Analysis.SpecialFunctions.Log.Base
 import Mathlib.Order.CompleteLattice.Group
 import Mathlib.Probability.Process.Kolmogorov

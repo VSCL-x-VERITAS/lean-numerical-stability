@@ -1,6 +1,6 @@
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.Algebra
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.Metric
-import NumStability.HDP.Process.BrownianFoundation.Auxiliary.WithLp
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.Algebra
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.Metric
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Auxiliary.WithLp
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Probability.Independence.ZeroOne
