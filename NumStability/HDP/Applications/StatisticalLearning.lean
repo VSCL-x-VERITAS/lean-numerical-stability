@@ -45,6 +45,11 @@ noncomputable def empiricalSquaredRisk {n : ℕ} {Ω S : Type*}
     (X : Fin n → Ω → S) (target hypothesis : S → ℝ) (ω : Ω) : ℝ :=
   Process.Empirical.empiricalAverage X (squaredLoss target hypothesis) ω
 
+/-- Number of sample points at which a Boolean hypothesis is mislabeled. -/
+def empiricalMisclassificationCount {n : ℕ} {Ω S : Type*}
+    (X : Fin n → Ω → S) (target hypothesis : S → Bool) (ω : Ω) : ℕ :=
+  (Finset.univ.filter fun i ↦ hypothesis (X i ω) ≠ target (X i ω)).card
+
 /-- A certified exact population-risk minimizer in a hypothesis class. -/
 def IsPopulationRiskMinimizer {S : Type*} [MeasurableSpace S]
     (ν : Measure S) (target : S → ℝ) (H : Set (S → ℝ))
@@ -153,6 +158,47 @@ theorem excessRisk_le_two_mul_uniformDeviation
   have hStarBounds := abs_le.mp (hdev fStar hStar)
   constructor <;> linarith
 
+/-- On Boolean hypotheses, empirical squared risk is the normalized number of
+mislabeled sample points. -/
+theorem empiricalSquaredRisk_boolean_eq_count
+    {n : ℕ} {Ω S : Type*} (X : Fin n → Ω → S)
+    (target hypothesis : S → Bool) (ω : Ω) :
+    empiricalSquaredRisk X (booleanLabel ∘ target) (booleanLabel ∘ hypothesis) ω =
+      (n : ℝ)⁻¹ * empiricalMisclassificationCount X target hypothesis ω := by
+  simp only [empiricalSquaredRisk, Process.Empirical.empiricalAverage,
+    empiricalMisclassificationCount, squaredLoss, Function.comp_apply]
+  congr 1
+  rw [Finset.card_eq_sum_ones, Nat.cast_sum, Finset.sum_filter]
+  apply Finset.sum_congr rfl
+  intro i _
+  cases ht : target (X i ω) <;> cases hh : hypothesis (X i ω) <;>
+    simp [booleanLabel]
+
+/-- A Boolean empirical-risk minimizer minimizes the number of mislabeled
+sample points.  This includes the circle-hypothesis example as a special case.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.4.7,
+printed page 220 (`HDP-08-EX-8.4.7`). -/
+theorem empiricalRiskMinimizer_minimizes_misclassifications
+    {n : ℕ} {Ω S : Type*} (hn : 0 < n) (X : Fin n → Ω → S)
+    (target : S → Bool) (H : Set (S → Bool)) (fHat : S → Bool) (ω : Ω)
+    (hHat : fHat ∈ H)
+    (hERM : IsMinOn
+      (fun f ↦ empiricalSquaredRisk X (booleanLabel ∘ target) (booleanLabel ∘ f) ω)
+      H fHat) :
+    fHat ∈ H ∧ IsMinOn (fun f ↦ empiricalMisclassificationCount X target f ω) H fHat := by
+  refine ⟨hHat, isMinOn_iff.mpr ?_⟩
+  intro f hf
+  have hrisk := (isMinOn_iff.mp hERM) f hf
+  rw [empiricalSquaredRisk_boolean_eq_count,
+    empiricalSquaredRisk_boolean_eq_count] at hrisk
+  have hscale : 0 < (n : ℝ)⁻¹ := inv_pos.mpr (Nat.cast_pos.mpr hn)
+  have hcast :
+      (empiricalMisclassificationCount X target fHat ω : ℝ) ≤
+        empiricalMisclassificationCount X target f ω := by
+    nlinarith
+  exact_mod_cast hcast
+
 end NumStability.HDP.Applications.StatisticalLearning
 
 namespace NumStability.HDP.Contract
@@ -224,5 +270,23 @@ theorem hdp_08_hlem_h8_d4_d5
       population fHat - population fStar ≤ 2 * δ :=
   Applications.StatisticalLearning.excessRisk_le_two_mul_uniformDeviation
     population empirical H fStar fHat δ hStar hHat hPop hEmp hdev
+
+/-- Stable source alias for `HDP-08-EX-8.4.7`. -/
+theorem hdp_08_hex_h8_d4_d7
+    {n : ℕ} {Ω S : Type*} (hn : 0 < n) (X : Fin n → Ω → S)
+    (target : S → Bool) (H : Set (S → Bool)) (fHat : S → Bool) (ω : Ω)
+    (hHat : fHat ∈ H)
+    (hERM : IsMinOn
+      (fun f ↦ Applications.StatisticalLearning.empiricalSquaredRisk X
+        (Applications.StatisticalLearning.booleanLabel ∘ target)
+        (Applications.StatisticalLearning.booleanLabel ∘ f) ω)
+      H fHat) :
+    fHat ∈ H ∧
+      IsMinOn
+        (fun f ↦ Applications.StatisticalLearning.empiricalMisclassificationCount
+          X target f ω)
+        H fHat :=
+  Applications.StatisticalLearning.empiricalRiskMinimizer_minimizes_misclassifications
+    hn X target H fHat ω hHat hERM
 
 end NumStability.HDP.Contract
