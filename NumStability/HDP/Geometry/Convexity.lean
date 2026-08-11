@@ -3,12 +3,14 @@ import Mathlib.Analysis.Convex.Caratheodory
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Nat.Choose.Sum
+import Mathlib.Data.ENNReal.BigOperators
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Sym.Card
 import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.Probability.Independence.Basic
+import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 import Mathlib.Topology.MetricSpace.CoveringNumbers
 import Mathlib.Topology.MetricSpace.Isometry
@@ -203,6 +205,79 @@ theorem simplexCentroid_not_mem_convexHull_without_vertex
   have hcard : (Fintype.card ι : ℝ) ≠ 0 := by
     exact_mod_cast Fintype.card_ne_zero
   exact (inv_ne_zero hcard) (by simpa using hzero)
+
+/-- Total real weight of the fiber of `point` over `z`. -/
+noncomputable def fiberWeight {ι E : Type*} [Fintype ι]
+    (point : ι → E) (weight : ι → ℝ) (z : E) : ℝ := by
+  classical
+  exact ∑ i with point i = z, weight i
+
+/-- Nonnegative normalized real weights define a probability law on their
+finite index set.  Mapping the index-valued random variable through `point`
+adds the masses of every fiber, and its Bochner expectation is the original
+weighted sum.
+
+This is the corrected version of the point-mass construction in the source:
+when displayed vertices repeat, the law lives on indices and the mass at a
+geometric point is the sum over all indices mapping to it.
+
+Source: Vershynin, proof of Theorem 0.0.2, printed page 2
+(`HDP-00-LEM-FINITE-LAW-FROM-WEIGHTS`). -/
+theorem finiteWeightPMF_exists
+    {ι E : Type*} [Fintype ι]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    (point : ι → E) (weight : ι → ℝ)
+    (hweight : ∀ i, 0 ≤ weight i) (hsum : ∑ i, weight i = 1) :
+    ∃ p : PMF ι,
+      (∀ i, p i = ENNReal.ofReal (weight i)) ∧
+      (∀ z, (p.map point) z =
+        ENNReal.ofReal (fiberWeight point weight z)) ∧
+      (∫ i, point i ∂p.toMeasure) = ∑ i, weight i • point i := by
+  classical
+  have hmass : ∑ i, ENNReal.ofReal (weight i) = 1 := by
+    rw [← ENNReal.ofReal_sum_of_nonneg (s := Finset.univ)
+      (fun i _ ↦ hweight i)]
+    simp [hsum]
+  let p : PMF ι := PMF.ofFintype (fun i ↦ ENNReal.ofReal (weight i)) hmass
+  refine ⟨p, ?_, ?_, ?_⟩
+  · intro i
+    exact PMF.ofFintype_apply hmass i
+  · intro z
+    unfold fiberWeight
+    rw [PMF.map_apply, tsum_fintype]
+    simp only [p, PMF.ofFintype_apply]
+    rw [ENNReal.ofReal_sum_of_nonneg
+      (s := Finset.univ.filter fun i ↦ point i = z) (fun i _ ↦ hweight i)]
+    simp only [Finset.sum_filter]
+    apply Finset.sum_congr rfl
+    intro i _
+    simp only [eq_comm]
+  · rw [PMF.integral_eq_sum]
+    apply Finset.sum_congr rfl
+    intro i _
+    simp only [p, PMF.ofFintype_apply, ENNReal.toReal_ofReal (hweight i)]
+
+/-- If two distinct indices carry the same point and both weights are
+positive, the geometric point mass is strictly larger than either displayed
+individual weight.  Thus the source assertion `P(Z = z_i) = λ_i` cannot hold
+for repeated vertices. -/
+theorem weight_lt_fiberWeight_of_coincident
+    {ι E : Type*} [Fintype ι]
+    (point : ι → E) (weight : ι → ℝ) (hweight : ∀ k, 0 ≤ weight k)
+    {i j : ι} (hij : i ≠ j) (hpoint : point i = point j)
+    (hj : 0 < weight j) :
+    weight i < fiberWeight point weight (point i) := by
+  classical
+  let fiber := Finset.univ.filter fun k ↦ point k = point i
+  have hiFiber : i ∈ fiber := by simp [fiber]
+  have hjErase : j ∈ fiber.erase i := by simp [fiber, hij.symm, hpoint.symm]
+  have hj_le : weight j ≤ ∑ k ∈ fiber.erase i, weight k :=
+    Finset.single_le_sum (fun k _ ↦ hweight k) hjErase
+  have hdecomp := Finset.sum_erase_add fiber weight hiFiber
+  unfold fiberWeight
+  change weight i < ∑ k ∈ fiber, weight k
+  linarith
 
 /-- The book's diameter notation, bound directly to Mathlib's metric
 diameter.  For unbounded sets, statements using this real-valued diameter
@@ -707,6 +782,20 @@ theorem hdp_00_hexample_hsimplex_hsharpness
       convexHull ℝ (point '' {i | i ≠ j}) :=
   Geometry.Convexity.simplexCentroid_not_mem_convexHull_without_vertex
     point hindependent j
+
+/-- Stable source alias for `HDP-00-LEM-FINITE-LAW-FROM-WEIGHTS`. -/
+theorem hdp_00_hlem_hfinite_hlaw_hfrom_hweights
+    {ι E : Type*} [Fintype ι]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    (point : ι → E) (weight : ι → ℝ)
+    (hweight : ∀ i, 0 ≤ weight i) (hsum : ∑ i, weight i = 1) :
+    ∃ p : PMF ι,
+      (∀ i, p i = ENNReal.ofReal (weight i)) ∧
+      (∀ z, (p.map point) z =
+        ENNReal.ofReal (Geometry.Convexity.fiberWeight point weight z)) ∧
+      (∫ i, point i ∂p.toMeasure) = ∑ i, weight i • point i :=
+  Geometry.Convexity.finiteWeightPMF_exists point weight hweight hsum
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
