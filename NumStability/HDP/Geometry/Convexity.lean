@@ -389,14 +389,6 @@ theorem hdp_00_hlem_hexpectation_hwitness
     ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
   Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
 
-/-- Stable source alias for `HDP-00-EX-0.0.5`. -/
-theorem hdp_00_hex_h0_d0_d5 (m n : ℕ) (hm : 1 ≤ m) (hmn : m ≤ n) :
-    ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) ∧
-      (n.choose m : ℝ) ≤ ∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ) ∧
-      (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
-        (Real.exp 1 * (n : ℝ) / m) ^ m :=
-  Geometry.Convexity.binomialCoefficientBounds m n hm hmn
-
 /-- Stable source alias for `HDP-00-LEM-ORDERED-AVERAGE-CARD`. -/
 theorem hdp_00_hlem_hordered_haverage_hcard
     {α E : Type*} [Fintype α] [AddCommMonoid E] [Module ℝ E]
