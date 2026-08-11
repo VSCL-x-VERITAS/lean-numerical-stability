@@ -600,6 +600,41 @@ theorem pajorInequality_booleanFinset {Ω : Type*} [Fintype Ω]
     _ ≤ (booleanFinsetSupportFamily 𝒽).shatterer.card :=
       Finset.card_le_card_shatterer _
 
+/-- Restrictions of the four-string support family along the branch where
+the third coordinate is present. -/
+def fourStringThirdMemberBranch : Finset (Finset (Fin 3)) :=
+  fourStringSupportFamily.memberSubfamily 2
+
+/-- Restrictions of the four-string support family along the branch where
+the third coordinate is absent. -/
+def fourStringThirdNonMemberBranch : Finset (Finset (Fin 3)) :=
+  fourStringSupportFamily.nonMemberSubfamily 2
+
+/-- Complete finite enumeration of the third-coordinate deletion recurrence
+for the four-string class.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.14,
+printed pages 206--207 (`HDP-08-EG-8.3.14`). -/
+theorem fourStringPajorDeletionEnumeration :
+    (Finset.univ : Finset (Fin 3)).card = 3 ∧
+      fourStringThirdMemberBranch = {∅, {0, 1}} ∧
+      fourStringThirdNonMemberBranch = {{0}, {1}} ∧
+      (fourStringThirdMemberBranch ∪ fourStringThirdNonMemberBranch).card = 4 ∧
+      (fourStringThirdMemberBranch ∩ fourStringThirdNonMemberBranch).card = 0 ∧
+      (fourStringThirdMemberBranch ∪
+          fourStringThirdNonMemberBranch).shatterer.card = 4 ∧
+      (fourStringThirdMemberBranch ∩
+          fourStringThirdNonMemberBranch).shatterer.card = 0 ∧
+      fourStringSupportFamily.card =
+        (fourStringThirdMemberBranch ∪ fourStringThirdNonMemberBranch).card +
+          (fourStringThirdMemberBranch ∩ fourStringThirdNonMemberBranch).card := by
+  constructor
+  · exact Finset.card_fin 3
+  · unfold fourStringThirdMemberBranch fourStringThirdNonMemberBranch
+      fourStringSupportFamily Finset.memberSubfamily Finset.nonMemberSubfamily
+      Finset.shatterer Finset.Shatters
+    native_decide
+
 /-- Binary strings in the Hamming ball are in bijection with subsets of
 cardinality at most `d`. -/
 def hammingBallEquivBoundedFinsets (n d : ℕ) :
@@ -717,6 +752,26 @@ theorem hdp_08_hlem_h8_d3_d13 {Ω : Type*} [Fintype Ω] [DecidableEq Ω]
     (𝒽 : Finset (Ω → Bool)) :
     𝒽.card ≤ (Process.VC.booleanFinsetSupportFamily 𝒽).shatterer.card :=
   Process.VC.pajorInequality_booleanFinset 𝒽
+
+/-- Stable source alias for `HDP-08-EG-8.3.14`. -/
+theorem hdp_08_heg_h8_d3_d14 :
+    (Finset.univ : Finset (Fin 3)).card = 3 ∧
+      Process.VC.fourStringThirdMemberBranch = {∅, {0, 1}} ∧
+      Process.VC.fourStringThirdNonMemberBranch = {{0}, {1}} ∧
+      (Process.VC.fourStringThirdMemberBranch ∪
+          Process.VC.fourStringThirdNonMemberBranch).card = 4 ∧
+      (Process.VC.fourStringThirdMemberBranch ∩
+          Process.VC.fourStringThirdNonMemberBranch).card = 0 ∧
+      (Process.VC.fourStringThirdMemberBranch ∪
+          Process.VC.fourStringThirdNonMemberBranch).shatterer.card = 4 ∧
+      (Process.VC.fourStringThirdMemberBranch ∩
+          Process.VC.fourStringThirdNonMemberBranch).shatterer.card = 0 ∧
+      Process.VC.fourStringSupportFamily.card =
+        (Process.VC.fourStringThirdMemberBranch ∪
+            Process.VC.fourStringThirdNonMemberBranch).card +
+          (Process.VC.fourStringThirdMemberBranch ∩
+            Process.VC.fourStringThirdNonMemberBranch).card :=
+  Process.VC.fourStringPajorDeletionEnumeration
 
 /-- Stable source alias for `HDP-08-EX-8.3.5`. -/
 theorem hdp_08_hex_h8_d3_d5 :
