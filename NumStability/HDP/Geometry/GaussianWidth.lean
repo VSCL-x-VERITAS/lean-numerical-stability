@@ -770,17 +770,4 @@ theorem hdp_07_hdef_hdirectional_hwidth
         Geometry.GaussianWidth.directionalWidth θ T ≤ b - a :=
   Geometry.GaussianWidth.directionalWidth_eq_minimum_slab hθ hTne hT
 
-/-- Stable source alias for `HDP-07-EXAMPLE-7.5.8`. -/
-theorem hdp_07_hexample_h7_d5_d8 (n : ℕ) :
-    Geometry.GaussianWidth.gaussianWidth
-        (Geometry.GaussianWidth.gaussianCube n) =
-        (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i|
-          ∂Geometry.GaussianWidth.standardGaussian n) ∧
-      (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i|
-          ∂Geometry.GaussianWidth.standardGaussian n) =
-        (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) ∧
-      (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) =
-        Real.sqrt (2 / Real.pi) * n :=
-  Geometry.GaussianWidth.gaussianWidth_gaussianCube n
-
 end NumStability.HDP.Contract
