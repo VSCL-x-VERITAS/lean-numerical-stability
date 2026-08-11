@@ -5,7 +5,9 @@ import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Mathlib.MeasureTheory.Integral.Gamma
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
+import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Topology.Order.Bornology
 
 /-!
@@ -17,12 +19,186 @@ hyperplane is assumed to meet a nonclosed set.
 -/
 
 open Set
-open scoped InnerProductSpace Pointwise
+open MeasureTheory ProbabilityTheory
+open scoped BigOperators InnerProductSpace NNReal Pointwise
 open scoped Nat
 
 namespace NumStability.HDP.Geometry.GaussianWidth
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-! ### Standard Gaussian width and the coordinate cube -/
+
+/-- The standard Gaussian measure on Euclidean coordinate space, represented
+as the product of independent scalar `N(0,1)` laws transported to `ℓ₂`. -/
+noncomputable def standardGaussian (n : ℕ) :
+    Measure (EuclideanSpace ℝ (Fin n)) :=
+  (Measure.pi (fun _ : Fin n ↦ gaussianReal 0 1)).map
+    (MeasurableEquiv.toLp 2 (Fin n → ℝ))
+
+/-- The support value of `T` in direction `g`.  This is real-valued here;
+bounded nonempty sets are the source-facing domain in Section 7.5. -/
+noncomputable def gaussianSupport {n : ℕ}
+    (T : Set (EuclideanSpace ℝ (Fin n)))
+    (g : EuclideanSpace ℝ (Fin n)) : ℝ :=
+  sSup ((fun x ↦ ⟪g, x⟫_ℝ) '' T)
+
+/-- Gaussian width as the expected support value under the standard Gaussian
+law. -/
+noncomputable def gaussianWidth {n : ℕ}
+    (T : Set (EuclideanSpace ℝ (Fin n))) : ℝ :=
+  ∫ g, gaussianSupport T g ∂standardGaussian n
+
+/-- The coordinate cube `[-1,1]ⁿ` in Euclidean space. -/
+def gaussianCube (n : ℕ) : Set (EuclideanSpace ℝ (Fin n)) :=
+  {x | ∀ i, |x i| ≤ 1}
+
+private noncomputable def cubeSupportPoint {n : ℕ}
+    (g : EuclideanSpace ℝ (Fin n)) : EuclideanSpace ℝ (Fin n) :=
+  WithLp.toLp 2 (fun i ↦ if 0 ≤ g i then 1 else -1)
+
+private theorem cubeSupportPoint_mem {n : ℕ}
+    (g : EuclideanSpace ℝ (Fin n)) : cubeSupportPoint g ∈ gaussianCube n := by
+  intro i
+  by_cases hgi : 0 ≤ g i <;> simp [cubeSupportPoint, hgi]
+
+private theorem inner_le_cube_l1 {n : ℕ}
+    (g x : EuclideanSpace ℝ (Fin n)) (hx : x ∈ gaussianCube n) :
+    ⟪g, x⟫_ℝ ≤ ∑ i, |g i| := by
+  rw [PiLp.inner_apply]
+  apply Finset.sum_le_sum
+  intro i hi
+  change x i * g i ≤ |g i|
+  calc
+    x i * g i ≤ |x i * g i| := le_abs_self _
+    _ = |g i| * |x i| := by rw [abs_mul, mul_comm]
+    _ ≤ |g i| * 1 := mul_le_mul_of_nonneg_left (hx i) (abs_nonneg _)
+    _ = |g i| := mul_one _
+
+private theorem inner_cubeSupportPoint {n : ℕ}
+    (g : EuclideanSpace ℝ (Fin n)) :
+    ⟪g, cubeSupportPoint g⟫_ℝ = ∑ i, |g i| := by
+  rw [PiLp.inner_apply]
+  apply Finset.sum_congr rfl
+  intro i hi
+  change (if 0 ≤ g i then 1 else -1) * g i = |g i|
+  by_cases hgi : 0 ≤ g i
+  · simp [hgi, abs_of_nonneg hgi]
+  · have hgi' : g i ≤ 0 := le_of_not_ge hgi
+    simp [hgi, abs_of_nonpos hgi']
+
+/-- The support function of the coordinate cube is the coordinate `ℓ₁`
+norm. -/
+theorem gaussianSupport_gaussianCube {n : ℕ}
+    (g : EuclideanSpace ℝ (Fin n)) :
+    gaussianSupport (gaussianCube n) g = ∑ i, |g i| := by
+  let S : Set ℝ := (fun x ↦ ⟪g, x⟫_ℝ) '' gaussianCube n
+  have hmax : (∑ i, |g i|) ∈ S :=
+    ⟨cubeSupportPoint g, cubeSupportPoint_mem g, inner_cubeSupportPoint g⟩
+  have hupper : ∀ r ∈ S, r ≤ ∑ i, |g i| := by
+    rintro r ⟨x, hx, rfl⟩
+    exact inner_le_cube_l1 g x hx
+  have hbdd : BddAbove S := ⟨∑ i, |g i|, hupper⟩
+  change sSup S = ∑ i, |g i|
+  exact le_antisymm (csSup_le ⟨_, hmax⟩ hupper) (le_csSup hbdd hmax)
+
+/-- The mean absolute value of a standard scalar Gaussian is
+`sqrt (2 / π)`. -/
+theorem integral_abs_standardGaussianReal :
+    (∫ x : ℝ, |x| ∂gaussianReal 0 1) = Real.sqrt (2 / Real.pi) := by
+  have hv : (1 : ℝ≥0) ≠ 0 := one_ne_zero
+  rw [integral_gaussianReal_eq_integral_smul hv]
+  simp only [smul_eq_mul, gaussianPDFReal]
+  have hhalf :
+      (∫ x : ℝ in Set.Ioi 0,
+          x ^ (1 : ℝ) * Real.exp (-((1 / 2 : ℝ)) * x ^ (2 : ℝ))) = 1 := by
+    rw [integral_rpow_mul_exp_neg_mul_rpow
+      (show (0 : ℝ) < 2 by norm_num)
+      (show (-1 : ℝ) < 1 by norm_num)
+      (show (0 : ℝ) < 1 / 2 by norm_num)]
+    have hneg : (-(1 + 1 : ℝ) / 2) = -1 := by norm_num
+    have hone : ((1 + 1 : ℝ) / 2) = 1 := by norm_num
+    rw [hneg, hone, Real.rpow_neg_one, Real.Gamma_one]
+    norm_num
+  simp only [Real.rpow_one] at hhalf
+  have habs :
+      (∫ x : ℝ, |x| * Real.exp (-x ^ 2 / 2)) = 2 := by
+    have hfold := integral_comp_abs
+      (f := fun y : ℝ ↦ y * Real.exp (-y ^ 2 / 2))
+    simp only [sq_abs] at hfold
+    have hhalf' :
+        (∫ x : ℝ in Set.Ioi 0, x * Real.exp (-x ^ 2 / 2)) = 1 := by
+      convert hhalf using 1
+      apply setIntegral_congr_fun measurableSet_Ioi
+      intro x hx
+      dsimp only
+      have hpow : x ^ (2 : ℝ) = x ^ (2 : ℕ) := Real.rpow_natCast x 2
+      rw [hpow]
+      congr 2
+      ring
+    rw [hfold, hhalf']
+    norm_num
+  rw [show (∫ x : ℝ,
+      (Real.sqrt (2 * Real.pi * (1 : ℝ≥0)))⁻¹ *
+        Real.exp (-(x - 0) ^ 2 / (2 * (1 : ℝ≥0))) * |x|) =
+      (Real.sqrt (2 * Real.pi))⁻¹ *
+        ∫ x : ℝ, |x| * Real.exp (-x ^ 2 / 2) by
+    rw [← integral_const_mul]
+    congr 1
+    funext x
+    norm_num
+    ring]
+  rw [habs]
+  have hpi : 0 < Real.pi := Real.pi_pos
+  rw [Real.sqrt_div (by positivity), Real.sqrt_mul (by norm_num : (0 : ℝ) ≤ 2)]
+  have hsqrt2 : Real.sqrt 2 ≠ 0 := ne_of_gt (Real.sqrt_pos.2 (by norm_num))
+  have hsqrtpi : Real.sqrt Real.pi ≠ 0 :=
+    ne_of_gt (Real.sqrt_pos.2 Real.pi_pos)
+  field_simp [hsqrt2, hsqrtpi]
+  nlinarith [Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)]
+
+/-- The expected coordinate `ℓ₁` norm of a standard Gaussian vector is the
+dimension times the scalar mean absolute value. -/
+theorem integral_l1_standardGaussian (n : ℕ) :
+    (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i| ∂standardGaussian n) =
+      (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) := by
+  rw [standardGaussian, integral_map]
+  · simp only [MeasurableEquiv.toLp_apply, PiLp.toLp_apply]
+    rw [integral_finset_sum]
+    · have hcoord : ∀ i : Fin n,
+          (∫ a : Fin n → ℝ, |a i| ∂Measure.pi fun _ : Fin n ↦ gaussianReal 0 1) =
+            ∫ x : ℝ, |x| ∂gaussianReal 0 1 := by
+        intro i
+        exact integral_comp_eval (i := i) (by fun_prop)
+      simp_rw [hcoord]
+      rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    · intro i hi
+      exact integrable_comp_eval
+        (by
+          simpa [Real.norm_eq_abs] using
+            ((memLp_id_gaussianReal (μ := 0) (v := 1) 1).integrable
+              (by norm_num)).norm)
+  · fun_prop
+  · fun_prop
+
+/-- Exact Gaussian-width calibration for the coordinate cube.
+
+Source: Vershynin, Example 7.5.8, printed page 177
+(`HDP-07-EXAMPLE-7.5.8`). -/
+theorem gaussianWidth_gaussianCube (n : ℕ) :
+    gaussianWidth (gaussianCube n) =
+        (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i| ∂standardGaussian n) ∧
+      (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i| ∂standardGaussian n) =
+        (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) ∧
+      (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) =
+        Real.sqrt (2 / Real.pi) * n := by
+  constructor
+  · simp only [gaussianWidth, gaussianSupport_gaussianCube]
+  constructor
+  · exact integral_l1_standardGaussian n
+  · rw [integral_abs_standardGaussianReal]
+    ring
+
 
 /-- Scalar projection onto a direction. -/
 def projection (θ x : E) : ℝ :=
@@ -593,5 +769,18 @@ theorem hdp_07_hdef_hdirectional_hwidth
       ∀ a b, T ⊆ Geometry.GaussianWidth.slab θ a b →
         Geometry.GaussianWidth.directionalWidth θ T ≤ b - a :=
   Geometry.GaussianWidth.directionalWidth_eq_minimum_slab hθ hTne hT
+
+/-- Stable source alias for `HDP-07-EXAMPLE-7.5.8`. -/
+theorem hdp_07_hexample_h7_d5_d8 (n : ℕ) :
+    Geometry.GaussianWidth.gaussianWidth
+        (Geometry.GaussianWidth.gaussianCube n) =
+        (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i|
+          ∂Geometry.GaussianWidth.standardGaussian n) ∧
+      (∫ g : EuclideanSpace ℝ (Fin n), ∑ i, |g i|
+          ∂Geometry.GaussianWidth.standardGaussian n) =
+        (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) ∧
+      (n : ℝ) * (∫ x : ℝ, |x| ∂gaussianReal 0 1) =
+        Real.sqrt (2 / Real.pi) * n :=
+  Geometry.GaussianWidth.gaussianWidth_gaussianCube n
 
 end NumStability.HDP.Contract
