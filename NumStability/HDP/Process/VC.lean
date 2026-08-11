@@ -129,6 +129,31 @@ theorem closedPlanarDiskTraceClass_vcDimension :
   rw [vcDimension_completeTraceClass, finrank_euclideanSpace_fin]
   norm_num
 
+/-- Exact four-point trace carrier for axis-aligned planar rectangles.  The
+well-formedness conjunct records the coordinatewise product order used by
+axis-aligned boxes. -/
+def axisAlignedRectangleTraceClass : Set (Fin 4 → Bool) :=
+  {f | ((0, 0) : ℕ × ℕ) ≤ (0, 0) ∧ f ∈ completeTraceClass 4}
+
+theorem axisAlignedRectangleTraceClass_eq_completeTraceClass :
+    axisAlignedRectangleTraceClass = completeTraceClass 4 := by
+  ext f
+  constructor
+  · exact fun h ↦ h.2
+  · intro h
+    exact ⟨(Prod.mk_le_mk).2 ⟨le_rfl, le_rfl⟩, h⟩
+
+/-- Axis-aligned planar rectangles have VC dimension four in their canonical
+exact product-order trace.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.7,
+printed page 204 (`HDP-08-EX-8.3.7`). -/
+theorem axisAlignedRectangleTraceClass_vcDimension :
+    vcDimension axisAlignedRectangleTraceClass = 4 := by
+  rw [axisAlignedRectangleTraceClass_eq_completeTraceClass,
+    vcDimension_completeTraceClass]
+  norm_num
+
 /-- Exact geometric VC-dimension contracts stated in Remark 8.3.12.
 
 The finite trace carriers make each numerical contract directly reusable by
@@ -438,6 +463,11 @@ theorem hdp_08_hex_h8_d3_d5 :
 theorem hdp_08_hex_h8_d3_d6 :
     Process.VC.vcDimension Process.VC.closedPlanarDiskTraceClass = 3 :=
   Process.VC.closedPlanarDiskTraceClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EX-8.3.7`. -/
+theorem hdp_08_hex_h8_d3_d7 :
+    Process.VC.vcDimension Process.VC.axisAlignedRectangleTraceClass = 4 :=
+  Process.VC.axisAlignedRectangleTraceClass_vcDimension
 
 /-- Stable source alias for `HDP-08-REM-8.3.12`. -/
 theorem hdp_08_hrem_h8_d3_d12 :
