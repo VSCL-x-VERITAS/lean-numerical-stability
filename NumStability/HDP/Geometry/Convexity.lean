@@ -318,6 +318,58 @@ theorem independentMeanZero_euclidean_secondMoment_sum
       ∑ i, ∫ ω, ‖Z i ω‖ ^ 2 ∂μ :=
   independentMeanZero_secondMoment_sum Z hZ hmean hindep
 
+/-- Centering subtracts exactly the squared norm of the mean from the second
+moment of a square-integrable random variable in a real Hilbert space.
+
+Source: Vershynin, Exercise 0.0.3(b), printed page 3
+(`HDP-00-EX-0.0.3B`). -/
+theorem centered_secondMoment
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    (Z : Ω → E) (hZ : MeasureTheory.MemLp Z 2 μ) :
+    (∫ ω, ‖Z ω - ∫ ω, Z ω ∂μ‖ ^ 2 ∂μ) =
+      (∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ‖∫ ω, Z ω ∂μ‖ ^ 2 := by
+  let m : E := ∫ ω, Z ω ∂μ
+  have hZi : MeasureTheory.Integrable Z μ := hZ.integrable (by norm_num)
+  have hsq : MeasureTheory.Integrable (fun ω ↦ ‖Z ω‖ ^ 2) μ :=
+    hZ.integrable_norm_pow'
+  have hinner : MeasureTheory.Integrable (fun ω ↦ ⟪Z ω, m⟫_ℝ) μ :=
+    hZi.inner_const m
+  have htwice : MeasureTheory.Integrable (fun ω ↦ 2 * ⟪Z ω, m⟫_ℝ) μ :=
+    hinner.const_mul 2
+  have hconst : MeasureTheory.Integrable (fun _ : Ω ↦ ‖m‖ ^ 2) μ :=
+    MeasureTheory.integrable_const _
+  have hint : (∫ ω, ⟪Z ω, m⟫_ℝ ∂μ) = ⟪m, m⟫_ℝ := by
+    simpa only [real_inner_comm] using
+      (integral_inner (𝕜 := ℝ) hZi m)
+  change (∫ ω, ‖Z ω - m‖ ^ 2 ∂μ) =
+    (∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ‖m‖ ^ 2
+  simp_rw [norm_sub_sq_real]
+  calc
+    (∫ ω, ‖Z ω‖ ^ 2 - 2 * ⟪Z ω, m⟫_ℝ + ‖m‖ ^ 2 ∂μ) =
+        (∫ ω, ‖Z ω‖ ^ 2 - 2 * ⟪Z ω, m⟫_ℝ ∂μ) +
+          ∫ _ : Ω, ‖m‖ ^ 2 ∂μ :=
+      MeasureTheory.integral_add (hsq.sub htwice) hconst
+    _ = ((∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ∫ ω, 2 * ⟪Z ω, m⟫_ℝ ∂μ) +
+          ∫ _ : Ω, ‖m‖ ^ 2 ∂μ := by
+      rw [MeasureTheory.integral_sub hsq htwice]
+    _ = (∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ‖m‖ ^ 2 := by
+      rw [MeasureTheory.integral_const_mul, hint]
+      simp only [MeasureTheory.integral_const, MeasureTheory.probReal_univ,
+        one_smul, real_inner_self_eq_norm_sq]
+      ring
+
+/-- Euclidean specialization of `centered_secondMoment`. -/
+theorem centered_euclidean_secondMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    (n : ℕ) (Z : Ω → EuclideanSpace ℝ (Fin n))
+    (hZ : MeasureTheory.MemLp Z 2 μ) :
+    (∫ ω, ‖Z ω - ∫ ω, Z ω ∂μ‖ ^ 2 ∂μ) =
+      (∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ‖∫ ω, Z ω ∂μ‖ ^ 2 :=
+  centered_secondMoment Z hZ
+
 /-- The product-form lower bound for a binomial coefficient. -/
 theorem chooseLowerBoundReal : ∀ (m n : ℕ), 1 ≤ m → m ≤ n →
     ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) := by
@@ -502,6 +554,16 @@ theorem hdp_00_hlem_hexpectation_hwitness
     (hEa : (∫ ω, Y ω ∂μ) ≤ a) (hN : μ N = 0) :
     ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
   Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
+
+/-- Stable source alias for `HDP-00-EX-0.0.3B`. -/
+theorem hdp_00_hex_h0_d0_d3b
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    (Z : Ω → E) (hZ : MeasureTheory.MemLp Z 2 μ) :
+    (∫ ω, ‖Z ω - ∫ ω, Z ω ∂μ‖ ^ 2 ∂μ) =
+      (∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ‖∫ ω, Z ω ∂μ‖ ^ 2 :=
+  Geometry.Convexity.centered_secondMoment Z hZ
 
 /-- Stable source alias for `HDP-00-LEM-ORDERED-AVERAGE-CARD`. -/
 theorem hdp_00_hlem_hordered_haverage_hcard
