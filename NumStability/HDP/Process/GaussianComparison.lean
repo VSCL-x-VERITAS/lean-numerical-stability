@@ -1628,6 +1628,11 @@ def samplePathToContinuousMap {Ω : Type*} (X : NNReal → Ω → ℝ) (ω : Ω)
     (hω : Continuous fun t ↦ X t ω) : C(NNReal, ℝ) :=
   ContinuousMap.mk (fun t ↦ X t ω) hω
 
+theorem continuous_samplePathToContinuousMap {Ω : Type*}
+    (X : NNReal → Ω → ℝ) (ω : Ω) (hω : Continuous fun t ↦ X t ω) :
+    Continuous ⇑(samplePathToContinuousMap X ω hω) :=
+  ContinuousMap.continuous _
+
 /-- The process starts at zero almost surely.  This is the condition omitted
 from the printed characterization in Example 7.1.4. -/
 def IsAnchoredAtZero {Ω : Type*} [MeasurableSpace Ω]
