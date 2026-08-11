@@ -640,6 +640,123 @@ theorem centered_euclidean_secondMoment
       (∫ ω, ‖Z ω‖ ^ 2 ∂μ) - ‖∫ ω, Z ω ∂μ‖ ^ 2 :=
   centered_secondMoment Z hZ
 
+/-- Exact mean-square error of an empirical average of independent copies.
+The common centered second moment is named `σ2`; for identically distributed
+copies it is the variance term of any one copy.
+
+Source: Vershynin, displayed computation in the proof of Theorem 0.0.2,
+printed pages 2--3 (`HDP-00-LEM-MEAN-SQUARE-EMPIRICAL`). -/
+theorem meanSquare_empiricalAverage
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (k : ℕ) (hk : 0 < k) (Z : Fin k → Ω → E) (m : E) (σ2 : ℝ)
+    (hZ : ∀ j, MeasureTheory.MemLp (Z j) 2 μ)
+    (hmean : ∀ j, ∫ ω, Z j ω ∂μ = m)
+    (hmoment : ∀ j, (∫ ω, ‖Z j ω - m‖ ^ 2 ∂μ) = σ2)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) :
+    (∫ ω, ‖(k : ℝ)⁻¹ • (∑ j, Z j ω) - m‖ ^ 2 ∂μ) =
+      (k : ℝ)⁻¹ * σ2 := by
+  let W : Fin k → Ω → E := fun j ω ↦ Z j ω - m
+  have hW : ∀ j, MeasureTheory.MemLp (W j) 2 μ := fun j ↦
+    (hZ j).sub (MeasureTheory.memLp_const m)
+  have hWmean : ∀ j, ∫ ω, W j ω ∂μ = 0 := by
+    intro j
+    rw [show (fun ω ↦ W j ω) = (fun ω ↦ Z j ω - m) from rfl,
+      MeasureTheory.integral_sub ((hZ j).integrable (by norm_num))
+        (MeasureTheory.integrable_const m), hmean j,
+      MeasureTheory.integral_const, MeasureTheory.probReal_univ, one_smul, sub_self]
+  have hWindep : ProbabilityTheory.iIndepFun W μ := by
+    simpa only [W, Function.comp_def] using
+      hindep.comp (fun _ z ↦ z - m) (fun _ ↦ by fun_prop)
+  have hsumMoment :
+      (∫ ω, ‖∑ j, W j ω‖ ^ 2 ∂μ) = k * σ2 := by
+    rw [independentMeanZero_secondMoment_sum W hW hWmean hWindep]
+    have hWmoment (j : Fin k) : (∫ ω, ‖W j ω‖ ^ 2 ∂μ) = σ2 := by
+      simpa only [W] using hmoment j
+    simp_rw [hWmoment]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  have hkReal : (k : ℝ) ≠ 0 := by exact_mod_cast hk.ne'
+  have hcenter (ω : Ω) :
+      (k : ℝ)⁻¹ • (∑ j, Z j ω) - m =
+        (k : ℝ)⁻¹ • (∑ j, W j ω) := by
+    simp only [W, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
+      Fintype.card_fin, smul_sub]
+    rw [← Nat.cast_smul_eq_nsmul ℝ, ← mul_smul, inv_mul_cancel₀ hkReal, one_smul]
+  simp_rw [hcenter]
+  have hnorm (ω : Ω) :
+      ‖(k : ℝ)⁻¹ • (∑ j, W j ω)‖ ^ 2 =
+        ((k : ℝ)⁻¹) ^ 2 * ‖∑ j, W j ω‖ ^ 2 := by
+    rw [norm_smul, Real.norm_eq_abs, abs_inv,
+      abs_of_nonneg (show 0 ≤ (k : ℝ) by positivity)]
+    ring
+  simp_rw [hnorm]
+  rw [MeasureTheory.integral_const_mul, hsumMoment]
+  field_simp [hkReal]
+
+/-- The corresponding bound when the common centered second moment is at
+most `R²`. -/
+theorem meanSquare_empiricalAverage_le
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (k : ℕ) (hk : 0 < k) (Z : Fin k → Ω → E) (m : E) (σ2 R : ℝ)
+    (hZ : ∀ j, MeasureTheory.MemLp (Z j) 2 μ)
+    (hmean : ∀ j, ∫ ω, Z j ω ∂μ = m)
+    (hmoment : ∀ j, (∫ ω, ‖Z j ω - m‖ ^ 2 ∂μ) = σ2)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) (hσ : σ2 ≤ R ^ 2) :
+    (∫ ω, ‖(k : ℝ)⁻¹ • (∑ j, Z j ω) - m‖ ^ 2 ∂μ) ≤
+      (k : ℝ)⁻¹ * R ^ 2 := by
+  rw [meanSquare_empiricalAverage k hk Z m σ2 hZ hmean hmoment hindep]
+  exact mul_le_mul_of_nonneg_left hσ (inv_nonneg.mpr (Nat.cast_nonneg k))
+
+/-- A square-integrable Hilbert-space-valued random variable supported in the
+closed ball of radius `R` has centered second moment at most `R²`. -/
+theorem centered_secondMoment_le_sq_of_ae_norm_le
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    (Z : Ω → E) (hZ : MeasureTheory.MemLp Z 2 μ) (R : ℝ) (hR : 0 ≤ R)
+    (hbound : ∀ᵐ ω ∂μ, ‖Z ω‖ ≤ R) :
+    (∫ ω, ‖Z ω - ∫ ω, Z ω ∂μ‖ ^ 2 ∂μ) ≤ R ^ 2 := by
+  rw [centered_secondMoment Z hZ]
+  have hsq : MeasureTheory.Integrable (fun ω ↦ ‖Z ω‖ ^ 2) μ :=
+    hZ.integrable_norm_pow (by norm_num)
+  have hconst : MeasureTheory.Integrable (fun _ : Ω ↦ R ^ 2) μ :=
+    MeasureTheory.integrable_const _
+  have hsecond : (∫ ω, ‖Z ω‖ ^ 2 ∂μ) ≤ R ^ 2 := by
+    calc
+      (∫ ω, ‖Z ω‖ ^ 2 ∂μ) ≤ ∫ _ : Ω, R ^ 2 ∂μ :=
+        MeasureTheory.integral_mono_ae hsq hconst <|
+          hbound.mono fun ω hω ↦
+            (sq_le_sq₀ (norm_nonneg (Z ω)) hR).2 hω
+      _ = R ^ 2 := by
+        simp only [MeasureTheory.integral_const, MeasureTheory.probReal_univ, one_smul]
+  exact (sub_le_self _ (sq_nonneg _)).trans hsecond
+
+/-- Radius-bound form of the empirical mean-square estimate.  Since all
+copies have the same centered second moment, it suffices to impose the
+almost-sure radius bound on the first copy. -/
+theorem meanSquare_empiricalAverage_le_of_ae_norm_le
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (k : ℕ) (hk : 0 < k) (Z : Fin k → Ω → E) (m : E) (σ2 R : ℝ)
+    (hZ : ∀ j, MeasureTheory.MemLp (Z j) 2 μ)
+    (hmean : ∀ j, ∫ ω, Z j ω ∂μ = m)
+    (hmoment : ∀ j, (∫ ω, ‖Z j ω - m‖ ^ 2 ∂μ) = σ2)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) (hR : 0 ≤ R)
+    (hbound : ∀ᵐ ω ∂μ, ‖Z ⟨0, hk⟩ ω‖ ≤ R) :
+    (∫ ω, ‖(k : ℝ)⁻¹ • (∑ j, Z j ω) - m‖ ^ 2 ∂μ) ≤
+      (k : ℝ)⁻¹ * R ^ 2 := by
+  apply meanSquare_empiricalAverage_le k hk Z m σ2 R hZ hmean hmoment hindep
+  rw [← hmoment ⟨0, hk⟩, ← hmean ⟨0, hk⟩]
+  exact centered_secondMoment_le_sq_of_ae_norm_le
+    (Z ⟨0, hk⟩) (hZ ⟨0, hk⟩) R hR hbound
+
 /-- The product-form lower bound for a binomial coefficient. -/
 theorem chooseLowerBoundReal : ∀ (m n : ℕ), 1 ≤ m → m ≤ n →
     ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) := by
@@ -868,6 +985,22 @@ theorem hdp_00_hlem_hindependent_hcopies_hfinite
       (∀ j, MeasureTheory.Integrable (Z j) P) ∧
       ∀ j, (∫ ω, Z j ω ∂P) = ∑ i, weight i • point i :=
   Geometry.Convexity.finiteWeight_iidCopies point weight hweight hsum k
+
+/-- Stable source alias for `HDP-00-LEM-MEAN-SQUARE-EMPIRICAL`. -/
+theorem hdp_00_hlem_hmean_hsquare_hempirical
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (k : ℕ) (hk : 0 < k) (Z : Fin k → Ω → E) (m : E) (σ2 : ℝ)
+    (hZ : ∀ j, MeasureTheory.MemLp (Z j) 2 μ)
+    (hmean : ∀ j, ∫ ω, Z j ω ∂μ = m)
+    (hmoment : ∀ j, (∫ ω, ‖Z j ω - m‖ ^ 2 ∂μ) = σ2)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) :
+    (∫ ω, ‖(k : ℝ)⁻¹ • (∑ j, Z j ω) - m‖ ^ 2 ∂μ) =
+      (k : ℝ)⁻¹ * σ2 :=
+  Geometry.Convexity.meanSquare_empiricalAverage
+    k hk Z m σ2 hZ hmean hmoment hindep
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
