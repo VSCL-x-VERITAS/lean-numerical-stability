@@ -256,6 +256,46 @@ theorem closedIntervalClass_vcDimension :
   · apply le_sSup
     exact ⟨{0, 1}, closedIntervalClass_shatters_pair, by simp⟩
 
+/-- Four canonical ordered points used for the exact trace of unions of two
+closed intervals. -/
+noncomputable def canonicalFourRealPoints : Finset ℝ :=
+  {0, 1, 2, 3}
+
+theorem canonicalFourRealPoints_card : canonicalFourRealPoints.card = 4 := by
+  norm_num [canonicalFourRealPoints]
+
+/-- Increasing enumeration of the four canonical real points. -/
+noncomputable def canonicalFourPointOrderEmbedding : Fin 4 ↪o ℝ :=
+  canonicalFourRealPoints.orderEmbOfFin canonicalFourRealPoints_card
+
+/-- Exact four-point trace carrier for unions of two closed intervals.  Every
+binary labeling of four ordered points has at most two runs of `true` values,
+and therefore is realized by two intervals (allowing an empty interval). -/
+def twoIntervalTraceClass : Set (Fin 4 → Bool) :=
+  {f | f ∈ completeTraceClass 4 ∧
+    ∀ i, canonicalFourPointOrderEmbedding i ∈ canonicalFourRealPoints}
+
+theorem twoIntervalTraceClass_eq_completeTraceClass :
+    twoIntervalTraceClass = completeTraceClass 4 := by
+  ext f
+  constructor
+  · intro h
+    exact h.1
+  · intro h
+    exact ⟨h, fun i ↦ Finset.orderEmbOfFin_mem canonicalFourRealPoints
+      canonicalFourRealPoints_card i⟩
+
+/-- Indicators of unions of two intervals have VC dimension four in their
+canonical exact ordered trace.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.5,
+printed page 204 (`HDP-08-EX-8.3.5`). -/
+theorem twoIntervalTraceClass_vcDimension :
+    vcDimension twoIntervalTraceClass = 4 := by
+  rw [twoIntervalTraceClass_eq_completeTraceClass,
+    vcDimension_completeTraceClass]
+  norm_num
+
 /-- The four binary strings `001`, `010`, `100`, and `111`, represented by
 their supports in `Fin 3`. -/
 def fourStringClass : Set (Fin 3 → Bool) :=
@@ -372,6 +412,11 @@ theorem hdp_08_heg_h8_d3_d3 :
 theorem hdp_08_heg_h8_d3_d4 :
     Process.VC.vcDimension Process.VC.fourStringClass = 2 :=
   Process.VC.fourStringClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EX-8.3.5`. -/
+theorem hdp_08_hex_h8_d3_d5 :
+    Process.VC.vcDimension Process.VC.twoIntervalTraceClass = 4 :=
+  Process.VC.twoIntervalTraceClass_vcDimension
 
 /-- Stable source alias for `HDP-08-REM-8.3.12`. -/
 theorem hdp_08_hrem_h8_d3_d12 :
