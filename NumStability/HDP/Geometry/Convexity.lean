@@ -2,6 +2,7 @@ import Mathlib.Analysis.Convex.Combination
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Sym.Card
+import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.Topology.MetricSpace.CoveringNumbers
 import Mathlib.Topology.MetricSpace.Isometry
 
@@ -163,6 +164,44 @@ theorem card_unorderedSelections_empty_succ (k : ℕ) :
     Fintype.card (UnorderedSelections (Fin 0) (k + 1)) = 0 := by
   simp
 
+/-- An expectation upper bound has a pointwise witness outside any prescribed
+null exceptional set.  Integrability is the finiteness hypothesis needed to
+prevent the Bochner integral's nonintegrable convention from creating a false
+statement. -/
+theorem exists_notMem_null_le_of_integral_le
+    {Ω : Type*} [MeasurableSpace Ω] {μ : MeasureTheory.Measure Ω}
+    [MeasureTheory.IsProbabilityMeasure μ] {Y : Ω → ℝ} {a : ℝ} {N : Set Ω}
+    (hY : MeasureTheory.Integrable Y μ) (hEa : (∫ ω, Y ω ∂μ) ≤ a)
+    (hN : μ N = 0) :
+    ∃ ω, ω ∉ N ∧ Y ω ≤ a := by
+  rcases MeasureTheory.exists_notMem_null_le_integral hY hN with ⟨ω, hωN, hω⟩
+  exact ⟨ω, hωN, hω.trans hEa⟩
+
+/-- The source-facing nonnegative first-moment witness, retaining the
+nonnegativity information at the selected realization.
+
+Source: Vershynin, final paragraph of the proof of Theorem 0.0.2, printed
+page 3 (`HDP-00-LEM-EXPECTATION-WITNESS`). -/
+theorem nonnegativeExpectationWitness
+    {Ω : Type*} [MeasurableSpace Ω] {μ : MeasureTheory.Measure Ω}
+    [MeasureTheory.IsProbabilityMeasure μ] {Y : Ω → ℝ} {a : ℝ} {N : Set Ω}
+    (hY : MeasureTheory.Integrable Y μ) (hYnonneg : ∀ ω, 0 ≤ Y ω)
+    (hEa : (∫ ω, Y ω ∂μ) ≤ a) (hN : μ N = 0) :
+    ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a := by
+  rcases exists_notMem_null_le_of_integral_le hY hEa hN with ⟨ω, hωN, hω⟩
+  exact ⟨ω, hωN, hYnonneg ω, hω⟩
+
+/-- Specialization to the squared norm error used in the empirical-method
+argument. -/
+theorem sqNormErrorWitness
+    {Ω E : Type*} [MeasurableSpace Ω] {μ : MeasureTheory.Measure Ω}
+    [MeasureTheory.IsProbabilityMeasure μ] [SeminormedAddCommGroup E]
+    {Z : Ω → E} {x : E} {a : ℝ} {N : Set Ω}
+    (hY : MeasureTheory.Integrable (fun ω ↦ ‖x - Z ω‖ ^ 2) μ)
+    (hEa : (∫ ω, ‖x - Z ω‖ ^ 2 ∂μ) ≤ a) (hN : μ N = 0) :
+    ∃ ω, ω ∉ N ∧ ‖x - Z ω‖ ^ 2 ≤ a :=
+  exists_notMem_null_le_of_integral_le hY hEa hN
+
 end NumStability.HDP.Geometry.Convexity
 
 namespace NumStability.HDP.Contract
@@ -187,5 +226,14 @@ theorem hdp_00_hlem_hmultiset_hcount (N k : ℕ) :
     Fintype.card (Geometry.Convexity.UnorderedSelections (Fin N) k) =
       (N + k - 1).choose k :=
   Geometry.Convexity.card_unorderedSelections_fin N k
+
+/-- Stable source alias for `HDP-00-LEM-EXPECTATION-WITNESS`. -/
+theorem hdp_00_hlem_hexpectation_hwitness
+    {Ω : Type*} [MeasurableSpace Ω] {μ : MeasureTheory.Measure Ω}
+    [MeasureTheory.IsProbabilityMeasure μ] {Y : Ω → ℝ} {a : ℝ} {N : Set Ω}
+    (hY : MeasureTheory.Integrable Y μ) (hYnonneg : ∀ ω, 0 ≤ Y ω)
+    (hEa : (∫ ω, Y ω ∂μ) ≤ a) (hN : μ N = 0) :
+    ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
+  Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
 
 end NumStability.HDP.Contract
