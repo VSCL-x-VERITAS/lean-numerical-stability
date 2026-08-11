@@ -1,4 +1,5 @@
 import Mathlib.Analysis.Convex.Combination
+import Mathlib.Analysis.Convex.Caratheodory
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Nat.Choose.Sum
@@ -8,6 +9,7 @@ import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.Probability.Independence.Basic
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 import Mathlib.Topology.MetricSpace.CoveringNumbers
 import Mathlib.Topology.MetricSpace.Isometry
 
@@ -22,6 +24,8 @@ than representing a combination only by a set of distinct points.
 open scoped BigOperators InnerProductSpace
 
 namespace NumStability.HDP.Geometry.Convexity
+
+universe u
 
 /-- A finite convex combination over explicit support.  The stored value is
 certified to be the weighted sum, the weights are nonnegative on the support,
@@ -146,6 +150,28 @@ theorem mem_finitePolytope_iff_of_card
         (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
           (∀ i, point i ∈ vertices) ∧ ∑ i, weight i • point i = x :=
   mem_finitePolytope_iff_finiteCoefficients
+
+/-- Carathéodory's theorem in the finite-dimensional form used by the book.
+Every point of the convex hull has a convex representation indexed by at
+most `finrank ℝ E + 1` points.  The returned points are in fact affinely
+independent and the weights positive; the statement records the weaker
+nonnegativity needed by later arguments.
+
+Source: Vershynin, Theorem 0.0.1, printed pages 1--2
+(`HDP-00-THM-0.0.1`). -/
+theorem caratheodory_sparse_convexCombination
+    {E : Type u} [AddCommGroup E] [Module ℝ E] [FiniteDimensional ℝ E]
+    {T : Set E} {x : E} (hx : x ∈ convexHull ℝ T) :
+    ∃ (ι : Type u) (_ : Fintype ι) (point : ι → E) (weight : ι → ℝ),
+      Fintype.card ι ≤ Module.finrank ℝ E + 1 ∧
+        (∀ i, point i ∈ T) ∧ (∀ i, 0 ≤ weight i) ∧
+          (∑ i, weight i = 1) ∧ ∑ i, weight i • point i = x := by
+  obtain ⟨ι, _, point, weight, hpoint, hindependent, hweight, hsum, hvalue⟩ :=
+    eq_pos_convex_span_of_mem_convexHull hx
+  refine ⟨ι, inferInstance, point, weight, ?_,
+    fun i ↦ hpoint (Set.mem_range_self i), fun i ↦ (hweight i).le, hsum, hvalue⟩
+  exact hindependent.card_le_finrank_succ.trans
+    (Nat.add_le_add_right (Submodule.finrank_le _) 1)
 
 /-- The book's diameter notation, bound directly to Mathlib's metric
 diameter.  For unbounded sets, statements using this real-valued diameter
@@ -630,6 +656,16 @@ theorem hdp_00_hdef_hpolytope_hvertices
         (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
           (∀ i, point i ∈ vertices) ∧ ∑ i, weight i • point i = x :=
   Geometry.Convexity.mem_finitePolytope_iff_finiteCoefficients
+
+/-- Stable source alias for `HDP-00-THM-0.0.1`. -/
+theorem hdp_00_hthm_h0_d0_d1
+    {E : Type u} [AddCommGroup E] [Module ℝ E] [FiniteDimensional ℝ E]
+    {T : Set E} {x : E} (hx : x ∈ convexHull ℝ T) :
+    ∃ (ι : Type u) (_ : Fintype ι) (point : ι → E) (weight : ι → ℝ),
+      Fintype.card ι ≤ Module.finrank ℝ E + 1 ∧
+        (∀ i, point i ∈ T) ∧ (∀ i, 0 ≤ weight i) ∧
+          (∑ i, weight i = 1) ∧ ∑ i, weight i • point i = x :=
+  Geometry.Convexity.caratheodory_sparse_convexCombination hx
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
