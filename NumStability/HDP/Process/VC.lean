@@ -186,4 +186,11 @@ theorem hdp_08_hrem_h8_d3_d12 :
       ∀ n, Process.VC.vcDimension (Process.VC.halfspaceTraceClass n) = n + 1 :=
   Process.VC.exactGeometricVCDimensions
 
+/-- Stable source alias for `HDP-08-EX-8.3.15`. -/
+theorem hdp_08_hex_h8_d3_d15 (n d : ℕ) :
+    Nat.card {f : Fin n → Bool // f ∈ Process.VC.hammingBallClass n d} =
+      Nat.card {A : Finset (Fin n) //
+        Process.VC.Shatters (Process.VC.hammingBallClass n d) A} :=
+  Process.VC.pajorSharpness_hammingBall n d
+
 end NumStability.HDP.Contract
