@@ -1,5 +1,7 @@
 import Mathlib.Analysis.Convex.Combination
 import Mathlib.Analysis.Normed.Group.Basic
+import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Nat.Choose.Sum
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Sym.Card
 import Mathlib.MeasureTheory.Integral.Average
@@ -202,6 +204,132 @@ theorem sqNormErrorWitness
     ∃ ω, ω ∉ N ∧ ‖x - Z ω‖ ^ 2 ≤ a :=
   exists_notMem_null_le_of_integral_le hY hEa hN
 
+/-- The product-form lower bound for a binomial coefficient. -/
+theorem chooseLowerBoundReal : ∀ (m n : ℕ), 1 ≤ m → m ≤ n →
+    ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) := by
+  intro m
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      intro n hm hmn
+      by_cases hm0 : m = 0
+      · subst m
+        simp
+      have hmpos : 0 < m := Nat.pos_of_ne_zero hm0
+      have hnpos : 0 < n := lt_of_lt_of_le (Nat.succ_pos m) hmn
+      have himn : m ≤ n - 1 := by omega
+      have hratio : (n : ℝ) / (m + 1) ≤ ((n - 1 : ℕ) : ℝ) / m := by
+        rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < m + 1)
+          (by positivity : (0 : ℝ) < m)]
+        norm_num only [Nat.cast_add, Nat.cast_one]
+        rw [Nat.cast_sub (Nat.one_le_iff_ne_zero.mpr hnpos.ne')]
+        norm_num only [Nat.cast_one]
+        have hcast : (m : ℝ) ≤ ((n - 1 : ℕ) : ℝ) := by exact_mod_cast himn
+        have hmnR : ((m + 1 : ℕ) : ℝ) ≤ n := by exact_mod_cast hmn
+        norm_num only [Nat.cast_add, Nat.cast_one] at hmnR
+        nlinarith
+      have hratio_nonneg : 0 ≤ (n : ℝ) / (m + 1) := by positivity
+      have hpow := pow_le_pow_left₀ hratio_nonneg hratio m
+      have hih := ih (n - 1) (by omega) himn
+      have hmul := mul_le_mul_of_nonneg_left (hpow.trans hih) hratio_nonneg
+      calc
+        ((n : ℝ) / ↑(m + 1)) ^ (m + 1) =
+            ((n : ℝ) / ↑(m + 1)) * ((n : ℝ) / ↑(m + 1)) ^ m := by
+              rw [pow_succ']
+        _ ≤ ((n : ℝ) / ↑(m + 1)) * ((n - 1).choose m : ℝ) := by
+          simpa only [Nat.cast_add, Nat.cast_one] using hmul
+        _ = (n.choose (m + 1) : ℝ) := by
+          rw [div_mul_eq_mul_div]
+          apply (div_eq_iff (by positivity : ((m + 1 : ℕ) : ℝ) ≠ 0)).2
+          have hnat : n * (n - 1).choose m = n.choose (m + 1) * (m + 1) := by
+            simpa [Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr hnpos.ne')] using
+              Nat.add_one_mul_choose_eq (n - 1) m
+          exact_mod_cast hnat
+
+/-- The binomial-theorem upper bound for the partial sum through rank `m`. -/
+theorem choosePartialSumUpperBoundReal (m n : ℕ) (hm : 1 ≤ m) (hmn : m ≤ n) :
+    (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+      (Real.exp 1 * (n : ℝ) / m) ^ m := by
+  let x : ℝ := (m : ℝ) / n
+  have hn : 0 < n := lt_of_lt_of_le (Nat.zero_lt_of_lt hm) hmn
+  have hx : 0 < x := by
+    dsimp [x]
+    positivity
+  have hxle : x ≤ 1 := by
+    dsimp [x]
+    exact (div_le_one (by positivity : (0 : ℝ) < n)).2 (by exact_mod_cast hmn)
+  have hweighted :
+      x ^ m * (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+        (x + 1) ^ n := by
+    calc
+      x ^ m * (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) =
+          ∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ) * x ^ m := by
+            rw [Finset.mul_sum]
+            apply Finset.sum_congr rfl
+            intro k hk
+            ring
+      _ ≤ ∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ) * x ^ k := by
+        apply Finset.sum_le_sum
+        intro k hk
+        apply mul_le_mul_of_nonneg_left
+        · exact pow_le_pow_of_le_one hx.le hxle
+            (Nat.le_of_lt_succ <| Finset.mem_range.1 hk)
+        · positivity
+      _ ≤ ∑ k ∈ Finset.range (n + 1), (n.choose k : ℝ) * x ^ k := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg
+        · intro k hk
+          simp only [Finset.mem_range] at hk ⊢
+          omega
+        · intro k _hk _hnot
+          positivity
+      _ = (x + 1) ^ n := by
+        rw [add_pow]
+        apply Finset.sum_congr rfl
+        intro k hk
+        simp only [one_pow, mul_one]
+        ring
+  have hexp : (x + 1) ^ n ≤ Real.exp 1 ^ m := by
+    calc
+      (x + 1) ^ n ≤ (Real.exp x) ^ n := by
+        apply pow_le_pow_left₀
+        · positivity
+        · simpa [add_comm] using Real.add_one_le_exp x
+      _ = Real.exp ((n : ℝ) * x) := (Real.exp_nat_mul x n).symm
+      _ = Real.exp (m : ℝ) := by
+        congr 1
+        dsimp [x]
+        field_simp
+      _ = Real.exp 1 ^ m := by
+        rw [← Real.exp_nat_mul]
+        norm_num
+  have hprod :
+      x ^ m * (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+        Real.exp 1 ^ m := hweighted.trans hexp
+  calc
+    (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+        Real.exp 1 ^ m / x ^ m := by
+          rw [le_div_iff₀ (pow_pos hx m)]
+          simpa [mul_comm] using hprod
+    _ = (Real.exp 1 / x) ^ m := (div_pow (Real.exp 1) x m).symm
+    _ = (Real.exp 1 * (n : ℝ) / m) ^ m := by
+      congr 1
+      dsimp [x]
+      field_simp
+
+/-- The three binomial-coefficient inequalities of Exercise 0.0.5.
+
+Source: Vershynin, Exercise 0.0.5, printed page 4
+(`HDP-00-EX-0.0.5`). -/
+theorem binomialCoefficientBounds (m n : ℕ) (hm : 1 ≤ m) (hmn : m ≤ n) :
+    ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) ∧
+      (n.choose m : ℝ) ≤ ∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ) ∧
+      (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+        (Real.exp 1 * (n : ℝ) / m) ^ m := by
+  refine ⟨chooseLowerBoundReal m n hm hmn, ?_,
+    choosePartialSumUpperBoundReal m n hm hmn⟩
+  exact Finset.single_le_sum (s := Finset.range (m + 1))
+    (f := fun k ↦ (n.choose k : ℝ)) (fun k _hk ↦ by positivity) (by simp)
+
 /-- The averages obtained from ordered `k`-tuples of a finite generating
 set.  Distinct tuples are intentionally allowed to determine the same
 average. -/
@@ -260,6 +388,14 @@ theorem hdp_00_hlem_hexpectation_hwitness
     (hEa : (∫ ω, Y ω ∂μ) ≤ a) (hN : μ N = 0) :
     ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
   Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
+
+/-- Stable source alias for `HDP-00-EX-0.0.5`. -/
+theorem hdp_00_hex_h0_d0_d5 (m n : ℕ) (hm : 1 ≤ m) (hmn : m ≤ n) :
+    ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) ∧
+      (n.choose m : ℝ) ≤ ∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ) ∧
+      (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+        (Real.exp 1 * (n : ℝ) / m) ^ m :=
+  Geometry.Convexity.binomialCoefficientBounds m n hm hmn
 
 /-- Stable source alias for `HDP-00-LEM-ORDERED-AVERAGE-CARD`. -/
 theorem hdp_00_hlem_hordered_haverage_hcard
