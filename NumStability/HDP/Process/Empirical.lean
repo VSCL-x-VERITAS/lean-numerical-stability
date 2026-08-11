@@ -146,6 +146,24 @@ theorem empiricalProcess_interface
   · intro F ω
     rfl
 
+/-- Definition 8.2.5 specialized to a measurable, population-integrable
+function class.  The sign is sample minus population, as in equation (8.21).
+
+Source: Vershynin, *High-Dimensional Probability*, Definition 8.2.5,
+printed pages 199--200 (`HDP-08-DEF-8.2.5`). -/
+theorem empiricalProcess_definition
+    {n : ℕ} {Ω S A : Type*} [MeasurableSpace Ω] [MeasurableSpace S]
+    [MeasurableSingletonClass S]
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (ν : Measure S) [IsProbabilityMeasure ν]
+    (X : IIDSample (Fin n) Ω S P ν)
+    (f : A → S → ℝ) (hf : ∀ a, Measurable (f a))
+    (_hfInt : ∀ a, Integrable (f a) ν) :
+    ∀ a ω,
+      (empiricalIndexedProcess P ν X.eval X.measurable_eval f hf).eval a ω =
+        (n : ℝ)⁻¹ * ∑ i, f a (X.eval i ω) - ∫ x, f a x ∂ν :=
+  (empiricalProcess_interface P ν X f hf).1
+
 /-- A probability measure has finite first moment when distance from one
 (and hence every) base point is integrable. -/
 def HasFiniteFirstMoment {X : Type*} [PseudoMetricSpace X]
@@ -221,6 +239,20 @@ theorem hdp_08_hiface_hempirical
           sSup ((fun g ↦
             |(n : ℝ)⁻¹ * ∑ i, g (X.eval i ω) - ∫ x, g x ∂ν|) '' F)) :=
   Process.Empirical.empiricalProcess_interface P ν X f hf
+
+/-- Stable source alias for `HDP-08-DEF-8.2.5`. -/
+theorem hdp_08_hdef_h8_d2_d5
+    {n : ℕ} {Ω S A : Type*} [MeasurableSpace Ω] [MeasurableSpace S]
+    [MeasurableSingletonClass S]
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (ν : Measure S) [IsProbabilityMeasure ν]
+    (X : Process.Empirical.IIDSample (Fin n) Ω S P ν)
+    (f : A → S → ℝ) (hf : ∀ a, Measurable (f a))
+    (hfInt : ∀ a, Integrable (f a) ν) :
+    ∀ a ω,
+      (Process.Empirical.empiricalIndexedProcess P ν X.eval X.measurable_eval f hf).eval a ω =
+        (n : ℝ)⁻¹ * ∑ i, f a (X.eval i ω) - ∫ x, f a x ∂ν :=
+  Process.Empirical.empiricalProcess_definition P ν X f hf hfInt
 
 /-- Stable source alias for `HDP-08-IFACE-TRANSPORT`. -/
 theorem hdp_08_hiface_htransport
