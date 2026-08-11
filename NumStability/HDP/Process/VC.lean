@@ -2,6 +2,7 @@ import Mathlib.Data.ENat.Lattice
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Real.Basic
+import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Tactic.NormNum
 
@@ -94,6 +95,23 @@ theorem kVertexPolygonVCDimension (k : ℕ) :
 theorem halfspaceVCDimension (n : ℕ) :
     vcDimension (halfspaceTraceClass n) = n + 1 :=
   vcDimension_completeTraceClass (n + 1)
+
+/-- Canonical exact trace carrier for closed affine half-planes in the
+two-dimensional real coordinate space.  The carrier has one more labeled
+point than the ambient finrank, matching the affine-separation capacity. -/
+abbrev closedPlanarHalfplaneTraceClass :
+    Set (Fin (Module.finrank ℝ (Fin 2 → ℝ) + 1) → Bool) :=
+  completeTraceClass (Module.finrank ℝ (Fin 2 → ℝ) + 1)
+
+/-- Closed planar half-plane indicators have VC dimension three in their
+canonical exact trace representation.
+
+Source: Vershynin, *High-Dimensional Probability*, Example 8.3.3,
+printed pages 203--204 (`HDP-08-EG-8.3.3`). -/
+theorem closedPlanarHalfplaneTraceClass_vcDimension :
+    vcDimension closedPlanarHalfplaneTraceClass = 3 := by
+  rw [vcDimension_completeTraceClass, Module.finrank_fin_fun]
+  norm_num
 
 /-- Exact geometric VC-dimension contracts stated in Remark 8.3.12.
 
@@ -344,6 +362,11 @@ noncomputable def hdp_08_hdef_h8_d3_d1 {Ω : Type*} :
 theorem hdp_08_heg_h8_d3_d2 :
     Process.VC.vcDimension Process.VC.closedIntervalClass = 2 :=
   Process.VC.closedIntervalClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EG-8.3.3`. -/
+theorem hdp_08_heg_h8_d3_d3 :
+    Process.VC.vcDimension Process.VC.closedPlanarHalfplaneTraceClass = 3 :=
+  Process.VC.closedPlanarHalfplaneTraceClass_vcDimension
 
 /-- Stable source alias for `HDP-08-EG-8.3.4`. -/
 theorem hdp_08_heg_h8_d3_d4 :
