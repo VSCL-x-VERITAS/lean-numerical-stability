@@ -1,4 +1,5 @@
 import NumStability.HDP.Geometry.GaussianWidth
+import NumStability.HDP.Process.GaussianMatrices
 
 /-!
 # Gaussian projection substrate
@@ -8,6 +9,7 @@ Gaussian projection rows without changing the evidence-bound width module.
 -/
 
 open Set
+open MeasureTheory ProbabilityTheory
 open scoped BigOperators InnerProductSpace Pointwise
 
 namespace NumStability.HDP.Geometry.GaussianProjection
@@ -17,11 +19,64 @@ vector with independent scalar `N(0,1)` coordinates. -/
 abbrev GaussianMatrixSample (m n : ℕ) :=
   EuclideanSpace ℝ (Fin m × Fin n)
 
+/-- The standard Gaussian law on flattened `m × n` matrix samples. -/
+noncomputable abbrev standardGaussianMatrix (m n : ℕ) :
+    Measure (GaussianMatrixSample m n) :=
+  stdGaussian (GaussianMatrixSample m n)
+
 /-- Matrix-vector multiplication by a flattened Gaussian matrix. -/
 noncomputable def gaussianMatrixMul {m n : ℕ}
     (G : GaussianMatrixSample m n) (x : EuclideanSpace ℝ (Fin n)) :
     EuclideanSpace ℝ (Fin m) :=
   WithLp.toLp 2 (fun i ↦ ∑ j, G (i, j) * x j)
+
+/-- The flattened rank-one direction for the scalar projection
+`⟪z, Gx⟫`. -/
+def gaussianMatrixProjectionDirection {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    GaussianMatrixSample m n :=
+  WithLp.toLp 2 (fun p ↦ z p.1 * x p.2)
+
+private theorem real_inner_eq_mul (a b : ℝ) : ⟪a, b⟫_ℝ = a * b := by
+  rw [show a = a • (1 : ℝ) by simp, show b = b • (1 : ℝ) by simp]
+  simp only [real_inner_smul_left, real_inner_smul_right]
+  simp [mul_comm]
+
+/-- Scalar projections of `Gx` are linear functionals of the flattened
+Gaussian matrix. -/
+theorem inner_gaussianMatrixMul_eq_inner_projectionDirection {m n : ℕ}
+    (G : GaussianMatrixSample m n)
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    ⟪z, gaussianMatrixMul G x⟫_ℝ =
+      ⟪gaussianMatrixProjectionDirection z x, G⟫_ℝ := by
+  rw [gaussianMatrixMul, gaussianMatrixProjectionDirection]
+  simp only [PiLp.inner_apply, Fintype.sum_prod_type, real_inner_eq_mul]
+  calc
+    ∑ i, z i * ∑ j, G (i, j) * x j =
+        ∑ i, ∑ j, z i * (G (i, j) * x j) := by
+      apply Finset.sum_congr rfl
+      intro i hi
+      rw [Finset.mul_sum]
+    _ = ∑ i, ∑ j, z i * x j * G (i, j) := by
+      apply Finset.sum_congr rfl
+      intro i hi
+      apply Finset.sum_congr rfl
+      intro j hj
+      ring
+
+/-- The scalar family `(z,x,G) ↦ ⟪z,Gx⟫` is a Gaussian process under the
+standard Gaussian matrix law. -/
+theorem gaussianMatrixProjection_isGaussianProcess {m n : ℕ} :
+    IsGaussianProcess
+      (fun zx : EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n) ↦
+        fun G : GaussianMatrixSample m n ↦ ⟪zx.1, gaussianMatrixMul G zx.2⟫_ℝ)
+      (standardGaussianMatrix m n) := by
+  refine (Process.GaussianMatrices.isGaussianProcess_inner_stdGaussian
+    (fun zx : EuclideanSpace ℝ (Fin m) × EuclideanSpace ℝ (Fin n) ↦
+      gaussianMatrixProjectionDirection zx.1 zx.2)).congr ?_
+  intro zx
+  filter_upwards with G
+  exact (inner_gaussianMatrixMul_eq_inner_projectionDirection G zx.1 zx.2).symm
 
 /-- Image of a set under a flattened Gaussian matrix. -/
 noncomputable def gaussianMatrixImage {m n : ℕ}
@@ -107,5 +162,26 @@ theorem norm_le_two_finset_sup_halfNet {m : ℕ}
     have hzs : ⟪z, y⟫_ℝ ≤ N.sup' hNne (fun z ↦ ⟪z, y⟫_ℝ) :=
       Finset.le_sup' (s := N) (f := fun z ↦ ⟪z, y⟫_ℝ) hzN
     nlinarith
+
+/-- If every scalar projection indexed by a half-net is bounded on `T - T`,
+then the Gaussian image diameter is bounded by twice that scalar envelope. -/
+theorem gaussianMatrixImageDiameter_le_two_halfNet_projection_bound {m n : ℕ}
+    (G : GaussianMatrixSample m n) (T : Set (EuclideanSpace ℝ (Fin n)))
+    {N : Finset (EuclideanSpace ℝ (Fin m))} (hNne : N.Nonempty)
+    (hN : IsHalfNetOfUnitSphere N) (A : ℝ) (hA0 : 0 ≤ A)
+    (hA : ∀ z ∈ N, ∀ x ∈ (T - T : Set (EuclideanSpace ℝ (Fin n))),
+      ⟪z, gaussianMatrixMul G x⟫_ℝ ≤ A) :
+    gaussianMatrixImageDiameter G T ≤ 2 * A := by
+  refine gaussianMatrixImageDiameter_le_difference_sup G T (2 * A)
+    (mul_nonneg (by norm_num) hA0) ?_
+  intro x hx
+  calc
+    ‖gaussianMatrixMul G x‖ ≤
+        2 * N.sup' hNne (fun z ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ) :=
+      norm_le_two_finset_sup_halfNet hNne hN (gaussianMatrixMul G x)
+    _ ≤ 2 * A := by
+      gcongr
+      rw [Finset.sup'_le_iff]
+      exact fun z hz ↦ hA z hz x hx
 
 end NumStability.HDP.Geometry.GaussianProjection
