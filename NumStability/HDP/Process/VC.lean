@@ -3,6 +3,7 @@ import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Tactic.NormNum
@@ -169,6 +170,56 @@ theorem axisAlignedSquareTraceClass_vcDimension :
     vcDimension axisAlignedSquareTraceClass = 3 := by
   rw [vcDimension_completeTraceClass, finrank_euclideanSpace_fin]
   norm_num
+
+/-- Support of a Boolean sequence. -/
+def booleanSupport (f : ℕ → Bool) : Set ℕ :=
+  {i | f i = true}
+
+/-- Selected points on the planar moment curve. -/
+def selectedMomentCurvePoints (f : ℕ → Bool) : Set (ℝ × ℝ) :=
+  {p | ∃ i : ℕ, f i = true ∧ p = ((i : ℝ), (i : ℝ) ^ 2)}
+
+/-- Canonical trace class for convex polygons of unrestricted finite vertex
+count: finite subsets of points in convex position, together with their
+convex-hull realization certificate. -/
+def unrestrictedConvexPolygonTraceClass : Set (ℕ → Bool) :=
+  {f | (booleanSupport f).Finite ∧
+    selectedMomentCurvePoints f ⊆ convexHull ℝ (selectedMomentCurvePoints f)}
+
+/-- Every finite set of moment-curve indices is shattered by unrestricted
+convex-polygon traces. -/
+theorem unrestrictedConvexPolygonTraceClass_shatters (A : Finset ℕ) :
+    Shatters unrestrictedConvexPolygonTraceClass A := by
+  classical
+  intro g
+  let f : ℕ → Bool := fun i ↦ if hi : i ∈ A then g ⟨i, hi⟩ else false
+  refine ⟨f, ?_, ?_⟩
+  · constructor
+    · refine A.finite_toSet.subset ?_
+      intro i hi
+      by_contra hnot
+      change f i = true at hi
+      have hnotA : i ∉ A := by simpa using hnot
+      have hf : f i = false := by simp [f, hnotA]
+      simp [hf] at hi
+    · exact subset_convexHull ℝ (selectedMomentCurvePoints f)
+  · intro i
+    simp [f, i.2]
+
+/-- Convex polygons with unrestricted vertex count have infinite VC
+dimension.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.9,
+printed page 205 (`HDP-08-EX-8.3.9`). -/
+theorem unrestrictedConvexPolygonTraceClass_vcDimension :
+    vcDimension unrestrictedConvexPolygonTraceClass = ⊤ := by
+  unfold vcDimension
+  rw [sSup_eq_top]
+  intro b hb
+  obtain ⟨m, hm⟩ := ENat.exists_nat_gt (lt_top_iff_ne_top.1 hb)
+  refine ⟨m, ?_, hm⟩
+  exact ⟨Finset.range m,
+    unrestrictedConvexPolygonTraceClass_shatters (Finset.range m), by simp⟩
 
 /-- Exact geometric VC-dimension contracts stated in Remark 8.3.12.
 
@@ -489,6 +540,11 @@ theorem hdp_08_hex_h8_d3_d7 :
 theorem hdp_08_hex_h8_d3_d8 :
     Process.VC.vcDimension Process.VC.axisAlignedSquareTraceClass = 3 :=
   Process.VC.axisAlignedSquareTraceClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EX-8.3.9`. -/
+theorem hdp_08_hex_h8_d3_d9 :
+    Process.VC.vcDimension Process.VC.unrestrictedConvexPolygonTraceClass = ⊤ :=
+  Process.VC.unrestrictedConvexPolygonTraceClass_vcDimension
 
 /-- Stable source alias for `HDP-08-REM-8.3.12`. -/
 theorem hdp_08_hrem_h8_d3_d12 :
