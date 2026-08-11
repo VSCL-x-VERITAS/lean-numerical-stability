@@ -1,6 +1,8 @@
 import Mathlib.Analysis.Convex.Combination
+import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Topology.MetricSpace.CoveringNumbers
+import Mathlib.Topology.MetricSpace.Isometry
 
 /-!
 # Convex combinations and elementary convex geometry
@@ -53,6 +55,51 @@ def ConvexCombination.ofFintype {ι E : Type*} [Fintype ι]
     (weight_sum_eq_one : ∑ i, weight i = 1) : ConvexCombination ι E :=
   .ofFinset Finset.univ point weight (fun i _ => weight_nonnegative i) weight_sum_eq_one
 
+/-- The book's diameter notation, bound directly to Mathlib's metric
+diameter.  For unbounded sets, statements using this real-valued diameter
+should also carry `Bornology.IsBounded` so that `ENNReal.toReal` does not hide
+an infinite extended diameter.
+
+Source: Vershynin, footnote 1 on printed page 2
+(`HDP-00-DEF-DIAMETER-RADIUS`). -/
+noncomputable def diameter {α : Type*} [PseudoMetricSpace α] (T : Set α) : ℝ :=
+  Metric.diam T
+
+/-- Radius at most one about the distinguished origin, as in equation (0.2). -/
+def HasUnitRadiusAboutZero {E : Type*} [Norm E] (T : Set E) : Prop :=
+  ∀ t ∈ T, ‖t‖ ≤ 1
+
+/-- Translate a set so that the chosen anchor becomes the origin. -/
+def translateToAnchor {E : Type*} [Sub E] (T : Set E) (t₀ : E) : Set E :=
+  (fun t ↦ t - t₀) '' T
+
+/-- Translation does not change diameter. -/
+theorem diameter_translateToAnchor {E : Type*} [SeminormedAddCommGroup E]
+    (T : Set E) (t₀ : E) :
+    diameter (translateToAnchor T t₀) = diameter T := by
+  change Metric.diam ((fun t : E ↦ t - t₀) '' T) = Metric.diam T
+  exact (Isometry.of_dist_eq fun x y ↦ by
+    simp only [dist_eq_norm]
+    congr 1
+    abel).diam_image T
+
+/-- After translating by `t₀`, norm about zero is distance from `t₀`. -/
+theorem norm_sub_eq_dist {E : Type*} [SeminormedAddCommGroup E] (t t₀ : E) :
+    ‖t - t₀‖ = dist t t₀ :=
+  (dist_eq_norm t t₀).symm
+
+/-- If a bounded set has diameter at most one, translating by any anchor in
+the set puts every translated point in the unit ball about zero.  The anchor
+membership is the nonemptiness witness suppressed by “translating if
+necessary” in the source proof. -/
+theorem hasUnitRadiusAboutZero_translateToAnchor
+    {E : Type*} [SeminormedAddCommGroup E] {T : Set E} {t₀ : E}
+    (hT : Bornology.IsBounded T) (ht₀ : t₀ ∈ T) (hdiam : diameter T ≤ 1) :
+    HasUnitRadiusAboutZero (translateToAnchor T t₀) := by
+  rintro _ ⟨t, ht, rfl⟩
+  rw [norm_sub_eq_dist]
+  exact (Metric.dist_le_diam_of_mem hT ht ht₀).trans hdiam
+
 /-- A finite set of centers whose closed balls of radius `ε` cover `P`.
 
 The radius is nonnegative by type.  This is the finite-center specialization
@@ -94,6 +141,11 @@ namespace NumStability.HDP.Contract
 def hdp_00_hdef_hconvex_hcombination (ι E : Type*)
     [AddCommMonoid E] [Module ℝ E] : Type _ :=
   Geometry.Convexity.ConvexCombination ι E
+
+/-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
+noncomputable def hdp_00_hdef_hdiameter_hradius
+    {α : Type*} [PseudoMetricSpace α] : Set α → ℝ :=
+  Geometry.Convexity.diameter
 
 /-- Stable source alias for `HDP-00-DEF-EPS-COVER`. -/
 def hdp_00_hdef_heps_hcover {α : Type*} [PseudoMetricSpace α] :
