@@ -10,6 +10,7 @@ import Mathlib.MeasureTheory.Integral.Pi
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Probability.Independence.Basic
+import Mathlib.Probability.Moments.Covariance
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
@@ -27,6 +28,83 @@ open scoped BigOperators
 namespace NumStability.HDP.Process.GaussianComparison
 
 variable {ι : Type*} [Fintype ι]
+
+/-! ### Covariance of Gaussian interpolation -/
+
+/-- The covariance matrix of a finite real random vector. -/
+noncomputable def randomVectorCovariance {Ω : Type*} [MeasurableSpace Ω]
+    {n : ℕ} (X : Ω → Fin n → ℝ) (μ : MeasureTheory.Measure Ω) :
+    Matrix (Fin n) (Fin n) ℝ :=
+  fun i j ↦ ProbabilityTheory.covariance (fun ω ↦ X ω i) (fun ω ↦ X ω j) μ
+
+/-- The interpolation `√u X + √(1-u) Y` between two finite random vectors. -/
+noncomputable def gaussianInterpolation {Ω : Type*} {n : ℕ}
+    (u : ℝ) (X Y : Ω → Fin n → ℝ) : Ω → Fin n → ℝ :=
+  fun ω ↦ Real.sqrt u • X ω + Real.sqrt (1 - u) • Y ω
+
+/-- The covariance matrix of the interpolation is the linear interpolation of
+the covariance matrices.  The argument only needs independence and second
+moments, so it applies in particular to the independent centered Gaussian
+vectors in the source.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 7.2.2,
+printed page 162 (`HDP-07-EX-7.2.2`). -/
+theorem covariance_gaussianInterpolation {Ω : Type*} [MeasurableSpace Ω]
+    {n : ℕ} (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X Y : Ω → Fin n → ℝ)
+    (hX : ∀ i, MeasureTheory.MemLp (fun ω ↦ X ω i) 2 μ)
+    (hY : ∀ i, MeasureTheory.MemLp (fun ω ↦ Y ω i) 2 μ)
+    (hXY : ProbabilityTheory.IndepFun X Y μ)
+    (u : ℝ) (hu : 0 ≤ u) (hu1 : u ≤ 1) :
+    randomVectorCovariance (gaussianInterpolation u X Y) μ =
+      u • randomVectorCovariance X μ + (1 - u) • randomVectorCovariance Y μ := by
+  ext i j
+  let Xi : Ω → ℝ := fun ω ↦ X ω i
+  let Xj : Ω → ℝ := fun ω ↦ X ω j
+  let Yi : Ω → ℝ := fun ω ↦ Y ω i
+  let Yj : Ω → ℝ := fun ω ↦ Y ω j
+  let a := Real.sqrt u
+  let b := Real.sqrt (1 - u)
+  have hXi : MeasureTheory.MemLp Xi 2 μ := hX i
+  have hXj : MeasureTheory.MemLp Xj 2 μ := hX j
+  have hYi : MeasureTheory.MemLp Yi 2 μ := hY i
+  have hYj : MeasureTheory.MemLp Yj 2 μ := hY j
+  have hXYij : ProbabilityTheory.IndepFun Xi Yj μ := by
+    simpa only [Xi, Yj, Function.comp_apply] using
+      hXY.comp (measurable_pi_apply i) (measurable_pi_apply j)
+  have hXYji : ProbabilityTheory.IndepFun Xj Yi μ := by
+    simpa only [Xj, Yi, Function.comp_apply] using
+      hXY.comp (measurable_pi_apply j) (measurable_pi_apply i)
+  have hcrossXY : ProbabilityTheory.covariance Xi Yj μ = 0 :=
+    hXYij.covariance_eq_zero hXi hYj
+  have hcrossYX : ProbabilityTheory.covariance Yi Xj μ = 0 := by
+    rw [ProbabilityTheory.covariance_comm]
+    exact hXYji.covariance_eq_zero hXj hYi
+  have haXi := hXi.const_smul a
+  have haXj := hXj.const_smul a
+  have hbYi := hYi.const_smul b
+  have hbYj := hYj.const_smul b
+  change ProbabilityTheory.covariance (a • Xi + b • Yi) (a • Xj + b • Yj) μ =
+    u * ProbabilityTheory.covariance Xi Xj μ +
+      (1 - u) * ProbabilityTheory.covariance Yi Yj μ
+  rw [ProbabilityTheory.covariance_add_left haXi hbYi (haXj.add hbYj),
+    ProbabilityTheory.covariance_add_right haXi haXj hbYj,
+    ProbabilityTheory.covariance_add_right hbYi haXj hbYj]
+  simp_rw [ProbabilityTheory.covariance_smul_left,
+    ProbabilityTheory.covariance_smul_right]
+  rw [hcrossXY, hcrossYX]
+  simp only [mul_zero, add_zero, zero_add]
+  have ha_sq : a * a = u := by
+    simpa only [a, pow_two] using Real.sq_sqrt hu
+  have hb_sq : b * b = 1 - u := by
+    simpa only [b, pow_two] using Real.sq_sqrt (sub_nonneg.mpr hu1)
+  calc
+    a * (a * ProbabilityTheory.covariance Xi Xj μ) +
+        b * (b * ProbabilityTheory.covariance Yi Yj μ) =
+      (a * a) * ProbabilityTheory.covariance Xi Xj μ +
+        (b * b) * ProbabilityTheory.covariance Yi Yj μ := by ring
+    _ = u * ProbabilityTheory.covariance Xi Xj μ +
+        (1 - u) * ProbabilityTheory.covariance Yi Yj μ := by rw [ha_sq, hb_sq]
 
 /-- The partition function in the log-sum-exp smoothing. -/
 noncomputable def logSumExpPartition (β : ℝ) (x : ι → ℝ) : ℝ :=
@@ -1813,6 +1891,21 @@ theorem hdp_07_hthm_hgordon_hexpectation_hnoeqvar
       Process.GaussianComparison.rightGaussianMinMaxExpectation (K := K) b :=
   Process.GaussianComparison.gordonExpectationComparisonNoEqualVariances
     a b hI hwithin hcross
+
+/-- Stable source alias for `HDP-07-EX-7.2.2`. -/
+theorem hdp_07_hex_h7_d2_d2 {Ω : Type*} [MeasurableSpace Ω]
+    {n : ℕ} (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X Y : Ω → Fin n → ℝ)
+    (hX : ∀ i, MeasureTheory.MemLp (fun ω ↦ X ω i) 2 μ)
+    (hY : ∀ i, MeasureTheory.MemLp (fun ω ↦ Y ω i) 2 μ)
+    (hXY : ProbabilityTheory.IndepFun X Y μ)
+    (u : ℝ) (hu : 0 ≤ u) (hu1 : u ≤ 1) :
+    Process.GaussianComparison.randomVectorCovariance
+        (Process.GaussianComparison.gaussianInterpolation u X Y) μ =
+      u • Process.GaussianComparison.randomVectorCovariance X μ +
+        (1 - u) • Process.GaussianComparison.randomVectorCovariance Y μ :=
+  Process.GaussianComparison.covariance_gaussianInterpolation
+    μ X Y hX hY hXY u hu hu1
 
 /-- Stable source alias for `HDP-07-EXAMPLE-7.1.4`. -/
 theorem hdp_07_hexample_h7_d1_d4 :
