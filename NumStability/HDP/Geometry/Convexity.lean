@@ -85,9 +85,10 @@ theorem weightedSum_mem_convexHull {ι E : Type*} [Fintype ι]
     (weight : ι → ℝ) (point : ι → E)
     (hweight : ∀ i, 0 ≤ weight i) (hsum : ∑ i, weight i = 1)
     (hpoint : ∀ i, point i ∈ T) :
-    (∑ i, weight i • point i) ∈ convexHull ℝ T :=
-  mem_convexHull_of_exists_fintype (R := ℝ) (s := T)
-    weight point hweight hsum hpoint rfl
+    (∑ i, weight i • point i) ∈ convexHull ℝ T := by
+  rw [← Finset.centerMass_eq_of_sum_1 Finset.univ point (by simpa using hsum)]
+  exact Finset.centerMass_mem_convexHull Finset.univ
+    (by simpa using hweight) (by simpa [hsum]) (by simpa using hpoint)
 
 /-- The finite-combination definition in the book is exactly Mathlib's
 `convexHull ℝ`. -/
@@ -95,7 +96,11 @@ theorem finiteConvexCombinationHull_eq_convexHull
     {E : Type*} [AddCommGroup E] [Module ℝ E] (T : Set E) :
     finiteConvexCombinationHull T = convexHull ℝ T := by
   ext x
-  exact (mem_convexHull_iff_exists_fintype (R := ℝ) (s := T) (x := x)).symm
+  constructor
+  · rintro ⟨ι, _, weight, point, hweight, hsum, hpoint, rfl⟩
+    exact weightedSum_mem_convexHull weight point hweight hsum hpoint
+  · intro hx
+    exact (mem_convexHull_iff_exists_fintype (R := ℝ) (s := T) (x := x)).mp hx
 
 /-- Eliminate membership in a convex hull into the explicit finite
 coefficients used by the source. -/
