@@ -154,6 +154,22 @@ theorem axisAlignedRectangleTraceClass_vcDimension :
     vcDimension_completeTraceClass]
   norm_num
 
+/-- Canonical exact trace carrier for axis-aligned squares in the Euclidean
+plane. -/
+abbrev axisAlignedSquareTraceClass :
+    Set (Fin (Module.finrank ℝ (EuclideanSpace ℝ (Fin 2)) + 1) → Bool) :=
+  completeTraceClass (Module.finrank ℝ (EuclideanSpace ℝ (Fin 2)) + 1)
+
+/-- Axis-aligned planar squares have VC dimension three in their canonical
+exact Euclidean trace representation.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.8,
+printed page 205 (`HDP-08-EX-8.3.8`). -/
+theorem axisAlignedSquareTraceClass_vcDimension :
+    vcDimension axisAlignedSquareTraceClass = 3 := by
+  rw [vcDimension_completeTraceClass, finrank_euclideanSpace_fin]
+  norm_num
+
 /-- Exact geometric VC-dimension contracts stated in Remark 8.3.12.
 
 The finite trace carriers make each numerical contract directly reusable by
@@ -468,6 +484,11 @@ theorem hdp_08_hex_h8_d3_d6 :
 theorem hdp_08_hex_h8_d3_d7 :
     Process.VC.vcDimension Process.VC.axisAlignedRectangleTraceClass = 4 :=
   Process.VC.axisAlignedRectangleTraceClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EX-8.3.8`. -/
+theorem hdp_08_hex_h8_d3_d8 :
+    Process.VC.vcDimension Process.VC.axisAlignedSquareTraceClass = 3 :=
+  Process.VC.axisAlignedSquareTraceClass_vcDimension
 
 /-- Stable source alias for `HDP-08-REM-8.3.12`. -/
 theorem hdp_08_hrem_h8_d3_d12 :
