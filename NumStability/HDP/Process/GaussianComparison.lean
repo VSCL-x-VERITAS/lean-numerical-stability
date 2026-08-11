@@ -1625,8 +1625,8 @@ noncomputable def hdp_07_hdef_hlogsumexp {ι : Type*} [Fintype ι] :
 
 /-- Stable source alias for `HDP-07-THM-GORDON-EXPECTATION-NOEQVAR`. -/
 theorem hdp_07_hthm_hgordon_hexpectation_hnoeqvar
-    {U T K L : Type*} [Fintype U] [Nonempty U] [Fintype T] [Nonempty T]
-    [Fintype K] [Fintype L]
+    {U T : Type*} [Fintype U] [Nonempty U] [Fintype T] [Nonempty T]
+    {K : Type*} [Fintype K] {L : Type*} [Fintype L]
     (a : U → T → K → ℝ) (b : U → T → L → ℝ)
     (hI : Process.GaussianComparison.GordonIntegrable a b)
     (hwithin : ∀ u t s,
