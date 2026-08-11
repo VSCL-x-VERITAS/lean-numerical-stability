@@ -718,6 +718,89 @@ theorem pajorSharpness_hammingBall (n d : ℕ) :
       right_inv := fun _ ↦ rfl }
   exact Nat.card_congr ((hammingBallEquivBoundedFinsets n d).trans shatteredEquiv)
 
+/-- Executable finite Hamming ball. -/
+def finiteHammingBallClass (n d : ℕ) : Finset (Fin n → Bool) :=
+  Finset.univ.filter fun f ↦ (trueSupport f).card ≤ d
+
+/-- Finite subsets of `Fin n` having cardinality at most `d`. -/
+def boundedCoordinateSubsets (n d : ℕ) : Finset (Finset (Fin n)) :=
+  Finset.univ.filter fun A ↦ A.card ≤ d
+
+theorem supportFamily_finiteHammingBallClass (n d : ℕ) :
+    booleanFinsetSupportFamily (finiteHammingBallClass n d) =
+      boundedCoordinateSubsets n d := by
+  classical
+  ext A
+  constructor
+  · simp only [booleanFinsetSupportFamily, Finset.mem_image,
+      finiteHammingBallClass, Finset.mem_filter, Finset.mem_univ, true_and]
+    rintro ⟨f, hf, rfl⟩
+    simp [boundedCoordinateSubsets, hf]
+  · intro hA
+    have hcard : A.card ≤ d := by
+      simpa [boundedCoordinateSubsets] using hA
+    refine Finset.mem_image.2 ⟨finsetIndicator A, ?_, by simp⟩
+    simp [finiteHammingBallClass, hcard]
+
+theorem card_boundedCoordinateSubsets (n d : ℕ) :
+    (boundedCoordinateSubsets n d).card =
+      ∑ k ∈ Finset.range (d + 1), n.choose k := by
+  classical
+  have hunion : boundedCoordinateSubsets n d =
+      (Finset.Iic d).biUnion fun k ↦
+        (Finset.univ : Finset (Fin n)).powersetCard k := by
+    ext A
+    simp [boundedCoordinateSubsets]
+  have hdisjoint : (↑(Finset.Iic d) : Set ℕ).PairwiseDisjoint
+      (fun k ↦ (Finset.univ : Finset (Fin n)).powersetCard k) := by
+    intro i _hi j _hj hij
+    change Disjoint ((Finset.univ : Finset (Fin n)).powersetCard i)
+      ((Finset.univ : Finset (Fin n)).powersetCard j)
+    rw [Finset.disjoint_left]
+    intro A hiA hjA
+    have hiCard := (Finset.mem_powersetCard.mp hiA).2
+    have hjCard := (Finset.mem_powersetCard.mp hjA).2
+    exact hij (hiCard.symm.trans hjCard)
+  calc
+    (boundedCoordinateSubsets n d).card =
+        ((Finset.Iic d).biUnion fun k ↦
+          (Finset.univ : Finset (Fin n)).powersetCard k).card := by rw [hunion]
+    _ = ∑ k ∈ Finset.Iic d,
+          ((Finset.univ : Finset (Fin n)).powersetCard k).card :=
+      Finset.card_biUnion hdisjoint
+    _ = ∑ k ∈ Finset.Iic d, n.choose k := by simp
+    _ = ∑ k ∈ Finset.range (d + 1), n.choose k := by
+      rw [Nat.range_succ_eq_Iic]
+
+/-- Hamming balls attain the Sauer--Shelah bound throughout the valid range.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.17,
+printed page 207 (`HDP-08-EX-8.3.17`). -/
+theorem hammingBallAttainsSauerShelah (n d : ℕ) (hdn : d ≤ n) :
+    (finiteHammingBallClass n d).card =
+        ∑ k ∈ Finset.range (d + 1), n.choose k ∧
+      vcDimension (hammingBallClass n d) = d := by
+  constructor
+  · calc
+      (finiteHammingBallClass n d).card =
+          (booleanFinsetSupportFamily (finiteHammingBallClass n d)).card := by
+        symm
+        exact Finset.card_image_of_injective _ trueSupport_injective
+      _ = (boundedCoordinateSubsets n d).card := by
+        rw [supportFamily_finiteHammingBallClass]
+      _ = ∑ k ∈ Finset.range (d + 1), n.choose k :=
+        card_boundedCoordinateSubsets n d
+  · apply le_antisymm
+    · apply sSup_le
+      rintro _ ⟨A, hA, rfl⟩
+      exact_mod_cast (shatters_hammingBallClass_iff n d A).1 hA
+    · have hcardUniv : d ≤ (Finset.univ : Finset (Fin n)).card := by
+        simpa using hdn
+      obtain ⟨A, _hA, hcard⟩ := Finset.exists_subset_card_eq hcardUniv
+      apply le_sSup
+      exact ⟨A, (shatters_hammingBallClass_iff n d A).2 (by omega), by
+        exact_mod_cast hcard.symm⟩
+
 end NumStability.HDP.Process.VC
 
 namespace NumStability.HDP.Contract
@@ -853,5 +936,12 @@ theorem hdp_08_hex_h8_d3_d15 (n d : ℕ) :
       Nat.card {A : Finset (Fin n) //
         Process.VC.Shatters (Process.VC.hammingBallClass n d) A} :=
   Process.VC.pajorSharpness_hammingBall n d
+
+/-- Stable source alias for `HDP-08-EX-8.3.17`. -/
+theorem hdp_08_hex_h8_d3_d17 (n d : ℕ) (hdn : d ≤ n) :
+    (Process.VC.finiteHammingBallClass n d).card =
+        ∑ k ∈ Finset.range (d + 1), n.choose k ∧
+      Process.VC.vcDimension (Process.VC.hammingBallClass n d) = d :=
+  Process.VC.hammingBallAttainsSauerShelah n d hdn
 
 end NumStability.HDP.Contract
