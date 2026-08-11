@@ -1,6 +1,7 @@
 import Mathlib.Analysis.Convex.Combination
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Sym.Card
 import Mathlib.Topology.MetricSpace.CoveringNumbers
 import Mathlib.Topology.MetricSpace.Isometry
 
@@ -133,6 +134,35 @@ noncomputable def internalCoveringNumber {α : Type*} [PseudoMetricSpace α]
     (P : Set α) (ε : NNReal) : ℕ∞ :=
   Metric.coveringNumber ε P
 
+/-- Unordered selections of exactly `k` elements of `α`, with repetition.
+The symmetric power is Mathlib's type-level model of fixed-cardinality
+multisets. -/
+abbrev UnorderedSelections (α : Type*) (k : ℕ) :=
+  Sym α k
+
+/-- Stars and bars: unordered selections of `k` elements from an `N`-element
+set, with repetition, are counted by `choose (N + k - 1) k`.
+
+The natural subtraction gives the intended edge conventions: for `N = 0`
+the count is one when `k = 0` and zero when `k > 0`.
+
+Source: Vershynin, hint to Exercise 0.0.6, printed page 4
+(`HDP-00-LEM-MULTISET-COUNT`). -/
+theorem card_unorderedSelections_fin (N k : ℕ) :
+    Fintype.card (UnorderedSelections (Fin N) k) = (N + k - 1).choose k := by
+  simpa using Sym.card_sym_eq_choose (α := Fin N) k
+
+/-- Selecting no elements has exactly one unordered outcome, including from
+the empty ground set. -/
+theorem card_unorderedSelections_zero (N : ℕ) :
+    Fintype.card (UnorderedSelections (Fin N) 0) = 1 := by
+  simp
+
+/-- A positive-size selection from an empty ground set is impossible. -/
+theorem card_unorderedSelections_empty_succ (k : ℕ) :
+    Fintype.card (UnorderedSelections (Fin 0) (k + 1)) = 0 := by
+  simp
+
 end NumStability.HDP.Geometry.Convexity
 
 namespace NumStability.HDP.Contract
@@ -151,5 +181,11 @@ noncomputable def hdp_00_hdef_hdiameter_hradius
 def hdp_00_hdef_heps_hcover {α : Type*} [PseudoMetricSpace α] :
     Set α → Finset α → NNReal → Prop :=
   Geometry.Convexity.IsFiniteClosedCover
+
+/-- Stable source alias for `HDP-00-LEM-MULTISET-COUNT`. -/
+theorem hdp_00_hlem_hmultiset_hcount (N k : ℕ) :
+    Fintype.card (Geometry.Convexity.UnorderedSelections (Fin N) k) =
+      (N + k - 1).choose k :=
+  Geometry.Convexity.card_unorderedSelections_fin N k
 
 end NumStability.HDP.Contract
