@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Convex.Combination
 import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Nat.Choose.Sum
@@ -1130,6 +1131,158 @@ theorem finitePolytope_orderedAverage_cover
   · simpa only [vertex, Fintype.card_coe] using
       card_orderedAverageSet_le vertex k
 
+/-- Average represented by an unordered selection with repetition. -/
+noncomputable def unorderedAverage {α E : Type*} [AddCommMonoid E] [Module ℝ E]
+    (point : α → E) {k : ℕ} (selection : UnorderedSelections α k) : E :=
+  (k : ℝ)⁻¹ • ((selection : Multiset α).map point).sum
+
+/-- The finite set of averages indexed by size-`k` multisets. -/
+noncomputable def unorderedAverageSet {α E : Type*} [Fintype α]
+    [AddCommMonoid E] [Module ℝ E] (point : α → E) (k : ℕ) : Finset E := by
+  classical
+  exact (Finset.univ : Finset (UnorderedSelections α k)).image
+    (unorderedAverage point)
+
+/- Passing from unordered selections to their averages cannot increase
+cardinality, so stars and bars gives the sharp combinatorial count. -/
+set_option maxHeartbeats 800000 in
+theorem card_unorderedAverageSet_le_choose {α E : Type*} [Fintype α]
+    [AddCommMonoid E] [Module ℝ E] (point : α → E) (k : ℕ) :
+    (unorderedAverageSet point k).card ≤
+      (Fintype.card α + k - 1).choose k := by
+  classical
+  calc
+    (unorderedAverageSet point k).card ≤
+        Fintype.card (UnorderedSelections α k) := by
+      rw [unorderedAverageSet]
+      exact Finset.card_image_le.trans_eq Finset.card_univ
+    _ = (Fintype.card α + k - 1).choose k :=
+      Sym.card_sym_eq_choose k
+
+/- Every ordered tuple determines the same average as its underlying
+multiset, so the unordered-average set retains the cover from Corollary
+0.0.4. -/
+set_option maxHeartbeats 800000 in
+theorem finitePolytope_unorderedAverage_cover
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (vertices : Finset E) (hdiam : diameter (vertices : Set E) ≤ 1)
+    (ε : NNReal) (hε : 0 < ε) :
+    let k := Nat.ceil (1 / (ε : ℝ) ^ 2)
+    IsFiniteClosedCover (finitePolytope vertices)
+      (unorderedAverageSet (fun v : ↥vertices ↦ (v : E)) k) ε := by
+  classical
+  let k : ℕ := Nat.ceil (1 / (ε : ℝ) ^ 2)
+  let vertex : ↥vertices → E := fun v ↦ (v : E)
+  change IsFiniteClosedCover (finitePolytope vertices)
+    (unorderedAverageSet vertex k) ε
+  have hordered : IsFiniteClosedCover (finitePolytope vertices)
+      (orderedAverageSet vertex k) ε := by
+    simpa only [k, vertex] using
+      (finitePolytope_orderedAverage_cover vertices hdiam ε hε).1
+  rw [isFiniteClosedCover_iff] at hordered ⊢
+  intro y hy
+  obtain ⟨center, hcenter, hdist⟩ := hordered y hy
+  rw [orderedAverageSet] at hcenter
+  obtain ⟨tuple, _htuple, rfl⟩ := Finset.mem_image.mp hcenter
+  let selection : UnorderedSelections ↥vertices k :=
+    ⟨(Finset.univ : Finset (Fin k)).val.map tuple, by simp⟩
+  refine ⟨(k : ℝ)⁻¹ • ∑ j, vertex (tuple j), ?_, hdist⟩
+  rw [unorderedAverageSet]
+  apply Finset.mem_image.mpr
+  refine ⟨selection, by simp, ?_⟩
+  simp only [unorderedAverage, selection, Sym.toMultiset, Multiset.map_map,
+    Function.comp_apply, Finset.sum, vertex]
+
+/-- Exercise 0.0.6 with the concrete universal constant `C = 3`.
+The center count is interpreted in `ℝ`, matching the real-valued estimate in
+Exercise 0.0.5.
+
+Source: Vershynin, Exercise 0.0.6, printed page 4
+(`HDP-00-EX-0.0.6`). -/
+theorem finitePolytope_unorderedAverage_cover_universalConstant
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] :
+    ∃ C : ℝ, 0 < C ∧
+      ∀ (vertices : Finset E), diameter (vertices : Set E) ≤ 1 →
+        ∀ (ε : NNReal), 0 < ε →
+          let k := Nat.ceil (1 / (ε : ℝ) ^ 2)
+          IsFiniteClosedCover (finitePolytope vertices)
+              (unorderedAverageSet (fun v : ↥vertices ↦ (v : E)) k) ε ∧
+            ((unorderedAverageSet
+                (fun v : ↥vertices ↦ (v : E)) k).card : ℝ) ≤
+              (C + C * (ε : ℝ) ^ 2 * vertices.card) ^ k := by
+  classical
+  refine ⟨3, by norm_num, ?_⟩
+  intro vertices hdiam ε hε
+  let k : ℕ := Nat.ceil (1 / (ε : ℝ) ^ 2)
+  let vertex : ↥vertices → E := fun v ↦ (v : E)
+  change IsFiniteClosedCover (finitePolytope vertices)
+      (unorderedAverageSet vertex k) ε ∧
+    ((unorderedAverageSet vertex k).card : ℝ) ≤
+      (3 + 3 * (ε : ℝ) ^ 2 * vertices.card) ^ k
+  have hk : 0 < k := Nat.ceil_pos.mpr (by positivity)
+  have hkReal : 0 < (k : ℝ) := by exact_mod_cast hk
+  have hεReal : 0 < (ε : ℝ) := by exact_mod_cast hε
+  have hεsq : 0 < (ε : ℝ) ^ 2 := sq_pos_of_pos hεReal
+  have hceil : 1 / (ε : ℝ) ^ 2 ≤ (k : ℝ) := Nat.le_ceil _
+  have hinv : (k : ℝ)⁻¹ ≤ (ε : ℝ) ^ 2 := by
+    simpa only [one_div] using (one_div_le hkReal hεsq).2 hceil
+  constructor
+  · exact finitePolytope_unorderedAverage_cover vertices hdiam ε hε
+  · have hcardNat : (unorderedAverageSet vertex k).card ≤
+        (vertices.card + k - 1).choose k := by
+      simpa only [vertex, Fintype.card_coe] using
+        card_unorderedAverageSet_le_choose vertex k
+    by_cases hN : vertices.card = 0
+    · have hchooseZero : (vertices.card + k - 1).choose k = 0 := by
+        apply Nat.choose_eq_zero_of_lt
+        omega
+      have hcardZero : (unorderedAverageSet vertex k).card = 0 :=
+        Nat.eq_zero_of_le_zero (hcardNat.trans_eq hchooseZero)
+      rw [hcardZero]
+      simpa only [Nat.cast_zero] using pow_nonneg
+        (show (0 : ℝ) ≤ 3 + 3 * (ε : ℝ) ^ 2 * vertices.card by positivity) k
+    · have hNpos : 0 < vertices.card := Nat.pos_of_ne_zero hN
+      let n : ℕ := vertices.card + k - 1
+      have hkn : k ≤ n := by
+        dsimp [n]
+        omega
+      have hchoose : ((n.choose k : ℕ) : ℝ) ≤
+          (Real.exp 1 * (n : ℝ) / k) ^ k := by
+        have hbounds := binomialCoefficientBounds k n hk hkn
+        exact hbounds.2.1.trans hbounds.2.2
+      have hnle : (n : ℝ) ≤ (vertices.card : ℝ) + k := by
+        exact_mod_cast (show n ≤ vertices.card + k by omega)
+      have hratio : (n : ℝ) / k ≤ (vertices.card : ℝ) / k + 1 := by
+        rw [div_le_iff₀ hkReal]
+        calc
+          (n : ℝ) ≤ (vertices.card : ℝ) + k := hnle
+          _ = ((vertices.card : ℝ) / k + 1) * k := by
+            field_simp
+      have hNscale : (vertices.card : ℝ) / k ≤
+          (ε : ℝ) ^ 2 * vertices.card := by
+        change (vertices.card : ℝ) * (k : ℝ)⁻¹ ≤
+          (ε : ℝ) ^ 2 * vertices.card
+        nlinarith [show (0 : ℝ) ≤ vertices.card by positivity]
+      have hbase : Real.exp 1 * (n : ℝ) / k ≤
+          3 + 3 * (ε : ℝ) ^ 2 * vertices.card := by
+        calc
+          Real.exp 1 * (n : ℝ) / k = Real.exp 1 * ((n : ℝ) / k) := by ring
+          _ ≤ 3 * ((n : ℝ) / k) := by
+            exact mul_le_mul_of_nonneg_right Real.exp_one_lt_three.le (by positivity)
+          _ ≤ 3 * ((vertices.card : ℝ) / k + 1) := by gcongr
+          _ ≤ 3 * ((ε : ℝ) ^ 2 * vertices.card + 1) := by gcongr
+          _ = 3 + 3 * (ε : ℝ) ^ 2 * vertices.card := by ring
+      have hcardReal : ((unorderedAverageSet vertex k).card : ℝ) ≤
+          (n.choose k : ℝ) := by
+        exact_mod_cast (show (unorderedAverageSet vertex k).card ≤ n.choose k by
+          simpa only [n] using hcardNat)
+      exact hcardReal.trans <| hchoose.trans <|
+        pow_le_pow_left₀ (by positivity) hbase k
+
 end NumStability.HDP.Geometry.Convexity
 
 namespace NumStability.HDP.Contract
@@ -1297,5 +1450,24 @@ theorem hdp_00_hcor_h0_d0_d4
       (Geometry.Convexity.orderedAverageSet
           (fun v : ↥vertices ↦ (v : E)) k).card ≤ vertices.card ^ k :=
   Geometry.Convexity.finitePolytope_orderedAverage_cover vertices hdiam ε hε
+
+/-- Stable source alias for `HDP-00-EX-0.0.6`. -/
+theorem hdp_00_hex_h0_d0_d6
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] :
+    ∃ C : ℝ, 0 < C ∧
+      ∀ (vertices : Finset E),
+        Geometry.Convexity.diameter (vertices : Set E) ≤ 1 →
+        ∀ (ε : NNReal), 0 < ε →
+          let k := Nat.ceil (1 / (ε : ℝ) ^ 2)
+          Geometry.Convexity.IsFiniteClosedCover
+              (Geometry.Convexity.finitePolytope vertices)
+              (Geometry.Convexity.unorderedAverageSet
+                (fun v : ↥vertices ↦ (v : E)) k) ε ∧
+            ((Geometry.Convexity.unorderedAverageSet
+                (fun v : ↥vertices ↦ (v : E)) k).card : ℝ) ≤
+              (C + C * (ε : ℝ) ^ 2 * vertices.card) ^ k :=
+  Geometry.Convexity.finitePolytope_unorderedAverage_cover_universalConstant
 
 end NumStability.HDP.Contract
