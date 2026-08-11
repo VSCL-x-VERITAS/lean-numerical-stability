@@ -11,6 +11,7 @@ adapts the repository's existing rectangular norm and singular-value APIs.
 namespace NumStability
 namespace HDP
 namespace RandomMatrix
+namespace Basic
 
 open scoped BigOperators
 
@@ -103,6 +104,7 @@ noncomputable def matrixInterface : MatrixInterface where
   frobeniusNorm := frobeniusNorm
   operatorNorm := operatorNorm
 
+end Basic
 end RandomMatrix
 end HDP
 end NumStability
