@@ -571,6 +571,35 @@ theorem pajorDeletionRecurrence {α : Type*} [DecidableEq α]
       rwa [Finset.insert_inter_of_notMem hu.2, hsu, Finset.erase_eq_self]
   · exact Finset.card_le_card_shatterer 𝒜
 
+/-- Set-family representation of a finite Boolean class. -/
+def booleanFinsetSupportFamily {Ω : Type*} [Fintype Ω] [DecidableEq Ω]
+    (𝒽 : Finset (Ω → Bool)) : Finset (Finset Ω) :=
+  𝒽.image trueSupport
+
+theorem trueSupport_injective {Ω : Type*} [Fintype Ω] [DecidableEq Ω] :
+    Function.Injective (trueSupport : (Ω → Bool) → Finset Ω) := by
+  intro f g h
+  calc
+    f = finsetIndicator (trueSupport f) := (finsetIndicator_trueSupport f).symm
+    _ = finsetIndicator (trueSupport g) := congrArg finsetIndicator h
+    _ = g := finsetIndicator_trueSupport g
+
+/-- Pajor's inequality for finite Boolean classes: the number of functions
+is at most the number of coordinate subsets shattered by their support
+family.
+
+Source: Vershynin, *High-Dimensional Probability*, Lemma 8.3.13,
+printed pages 205--207 (`HDP-08-LEM-8.3.13`). -/
+theorem pajorInequality_booleanFinset {Ω : Type*} [Fintype Ω]
+    [DecidableEq Ω] (𝒽 : Finset (Ω → Bool)) :
+    𝒽.card ≤ (booleanFinsetSupportFamily 𝒽).shatterer.card := by
+  calc
+    𝒽.card = (booleanFinsetSupportFamily 𝒽).card := by
+      symm
+      exact Finset.card_image_of_injective 𝒽 trueSupport_injective
+    _ ≤ (booleanFinsetSupportFamily 𝒽).shatterer.card :=
+      Finset.card_le_card_shatterer _
+
 /-- Binary strings in the Hamming ball are in bijection with subsets of
 cardinality at most `d`. -/
 def hammingBallEquivBoundedFinsets (n d : ℕ) :
@@ -682,6 +711,12 @@ theorem hdp_08_haux_h8_d3_hpajor_hsplit {α : Type*} [DecidableEq α]
     (hnon : (𝒜.nonMemberSubfamily a).Shatters s) :
     𝒜.Shatters (insert a s) ∧ 𝒜.card ≤ 𝒜.shatterer.card :=
   Process.VC.pajorDeletionRecurrence 𝒜 a s hmem hnon
+
+/-- Stable source alias for `HDP-08-LEM-8.3.13`. -/
+theorem hdp_08_hlem_h8_d3_d13 {Ω : Type*} [Fintype Ω] [DecidableEq Ω]
+    (𝒽 : Finset (Ω → Bool)) :
+    𝒽.card ≤ (Process.VC.booleanFinsetSupportFamily 𝒽).shatterer.card :=
+  Process.VC.pajorInequality_booleanFinset 𝒽
 
 /-- Stable source alias for `HDP-08-EX-8.3.5`. -/
 theorem hdp_08_hex_h8_d3_d5 :
