@@ -1,5 +1,7 @@
 import NumStability.HDP.Geometry.GaussianWidth
 import NumStability.HDP.Process.GaussianMatrices
+import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.Gaussian
+import Mathlib.Probability.Moments.SubGaussian
 
 /-!
 # Gaussian projection substrate
@@ -13,6 +15,21 @@ open MeasureTheory ProbabilityTheory
 open scoped BigOperators InnerProductSpace Pointwise
 
 namespace NumStability.HDP.Geometry.GaussianProjection
+
+/-- A centered real Gaussian random variable is sub-Gaussian with parameter
+its variance, in Mathlib's MGF formulation. -/
+theorem hasSubgaussianMGF_of_hasGaussianLaw_centered
+    {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
+    (hX : HasGaussianLaw X P) (hmean : P[X] = 0) :
+    HasSubgaussianMGF X (Var[X; P].toNNReal) P := by
+  rw [← HasSubgaussianMGF.id_map_iff hX.aemeasurable]
+  rw [hX.map_eq_gaussianReal, hmean]
+  constructor
+  · intro t
+    exact integrable_exp_mul_gaussianReal t
+  · intro t
+    rw [mgf_id_gaussianReal]
+    simp
 
 /-- A standard Gaussian `m × n` matrix, represented as a flattened Euclidean
 vector with independent scalar `N(0,1)` coordinates. -/
@@ -118,6 +135,32 @@ theorem variance_gaussianMatrixProjection {m n : ℕ}
   exact (variance_congr hcongr).trans
     (Process.GaussianMatrices.variance_inner_stdGaussian
       (gaussianMatrixProjectionDirection z x))
+
+/-- Scalar projections of a standard Gaussian matrix are sub-Gaussian with
+their exact variance parameter. -/
+theorem gaussianMatrixProjection_hasSubgaussianMGF {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    HasSubgaussianMGF
+      (fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ)
+      (Var[fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ;
+        standardGaussianMatrix m n].toNNReal)
+      (standardGaussianMatrix m n) :=
+  hasSubgaussianMGF_of_hasGaussianLaw_centered
+    (gaussianMatrixProjection_hasGaussianLaw z x)
+    (integral_gaussianMatrixProjection z x)
+
+/-- One-sided Chernoff tail bound for a scalar Gaussian matrix projection. -/
+theorem gaussianMatrixProjection_measure_ge_le {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n))
+    {ε : ℝ} (hε : 0 ≤ ε) :
+    (standardGaussianMatrix m n).real
+        {G : GaussianMatrixSample m n | ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ} ≤
+      Real.exp
+        (-ε ^ 2 /
+          (2 *
+            (Var[fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ;
+              standardGaussianMatrix m n].toNNReal))) :=
+  (gaussianMatrixProjection_hasSubgaussianMGF z x).measure_ge_le hε
 
 /-- Image of a set under a flattened Gaussian matrix. -/
 noncomputable def gaussianMatrixImage {m n : ℕ}
