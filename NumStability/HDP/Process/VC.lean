@@ -74,6 +74,29 @@ def setFamilyBooleanClass {Ω : Type*} (𝓒 : Set (Set Ω)) : Set (Ω → Bool)
 noncomputable def setFamilyVCDimension {Ω : Type*} (𝓒 : Set (Set Ω)) : WithTop ℕ :=
   vcDimension (setFamilyBooleanClass 𝓒)
 
+/-- Trace on `A` of one set from a family. -/
+def restrictedSetTrace {Ω : Type*} (S : Set Ω) (A : Finset Ω) : Set A :=
+  {x | x.1 ∈ S}
+
+/-- All traces on `A` realized by members of a set family. -/
+def setFamilyTrace {Ω : Type*} (𝓒 : Set (Set Ω)) (A : Finset Ω) : Set (Set A) :=
+  {B | ∃ S ∈ 𝓒, restrictedSetTrace S A = B}
+
+/-- A set family shatters `A` exactly when its trace on `A` is the full
+powerset of `A`, represented as `Set.univ : Set (Set A)`. -/
+def SetFamilyShatters {Ω : Type*} (𝓒 : Set (Set Ω)) (A : Finset Ω) : Prop :=
+  setFamilyTrace 𝓒 A = Set.univ
+
+/-- Executable set-family shattering and VC-dimension interface.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.11,
+printed page 205 (`HDP-08-EX-8.3.11`). -/
+theorem setFamilyShatteringVCDimension_interface {Ω : Type*}
+    (𝓒 : Set (Set Ω)) (A : Finset Ω) :
+    (SetFamilyShatters 𝓒 A ↔ setFamilyTrace 𝓒 A = Set.univ) ∧
+      setFamilyVCDimension 𝓒 = vcDimension (setFamilyBooleanClass 𝓒) :=
+  ⟨Iff.rfl, rfl⟩
+
 /-- Passing from a Boolean class to its family of true sets and back recovers
 the class exactly. -/
 theorem setFamilyBooleanClass_image_booleanFunctionSet {Ω : Type*}
@@ -559,6 +582,15 @@ theorem hdp_08_hrem_h8_d3_d10 {Ω : Type*} (𝓕 : Set (Ω → Bool)) :
     Process.VC.setFamilyVCDimension (Process.VC.booleanFunctionSet '' 𝓕) =
       Process.VC.vcDimension 𝓕 :=
   Process.VC.booleanSetFamilyVCDimensionEquivalence 𝓕
+
+/-- Stable source alias for `HDP-08-EX-8.3.11`. -/
+theorem hdp_08_hex_h8_d3_d11 {Ω : Type*}
+    (𝓒 : Set (Set Ω)) (A : Finset Ω) :
+    (Process.VC.SetFamilyShatters 𝓒 A ↔
+      Process.VC.setFamilyTrace 𝓒 A = Set.univ) ∧
+      Process.VC.setFamilyVCDimension 𝓒 =
+        Process.VC.vcDimension (Process.VC.setFamilyBooleanClass 𝓒) :=
+  Process.VC.setFamilyShatteringVCDimension_interface 𝓒 A
 
 /-- Stable source alias for `HDP-08-EG-8.3.2`. -/
 theorem hdp_08_heg_h8_d3_d2 :
