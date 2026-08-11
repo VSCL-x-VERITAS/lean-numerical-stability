@@ -62,6 +62,51 @@ def ConvexCombination.ofFintype {ι E : Type*} [Fintype ι]
     (weight_sum_eq_one : ∑ i, weight i = 1) : ConvexCombination ι E :=
   .ofFinset Finset.univ point weight (fun i _ => weight_nonnegative i) weight_sum_eq_one
 
+/-- The source-facing finite-combination description of the convex hull.
+
+Membership records an explicitly finite index type, nonnegative weights
+summing to one, points of `T`, and their weighted sum.  Using an indexed
+family rather than a set of points preserves repetitions in the finite
+collection from the book's definition.
+
+Source: Vershynin, Appetizer, printed page 1
+(`HDP-00-DEF-CONVEX-HULL`). -/
+def finiteConvexCombinationHull {E : Type*} [AddCommGroup E] [Module ℝ E]
+    (T : Set E) : Set E :=
+  {x | ∃ (ι : Type) (_ : Fintype ι) (weight : ι → ℝ) (point : ι → E),
+    (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
+      (∀ i, point i ∈ T) ∧ ∑ i, weight i • point i = x}
+
+/-- An explicit finite convex combination belongs to the Mathlib convex
+hull.  This direction is universe-polymorphic, so it can be used directly
+with any finite indexing type. -/
+theorem weightedSum_mem_convexHull {ι E : Type*} [Fintype ι]
+    [AddCommGroup E] [Module ℝ E] {T : Set E}
+    (weight : ι → ℝ) (point : ι → E)
+    (hweight : ∀ i, 0 ≤ weight i) (hsum : ∑ i, weight i = 1)
+    (hpoint : ∀ i, point i ∈ T) :
+    (∑ i, weight i • point i) ∈ convexHull ℝ T :=
+  mem_convexHull_of_exists_fintype (R := ℝ) (s := T)
+    weight point hweight hsum hpoint rfl
+
+/-- The finite-combination definition in the book is exactly Mathlib's
+`convexHull ℝ`. -/
+theorem finiteConvexCombinationHull_eq_convexHull
+    {E : Type*} [AddCommGroup E] [Module ℝ E] (T : Set E) :
+    finiteConvexCombinationHull T = convexHull ℝ T := by
+  ext x
+  exact (mem_convexHull_iff_exists_fintype (R := ℝ) (s := T) (x := x)).symm
+
+/-- Eliminate membership in a convex hull into the explicit finite
+coefficients used by the source. -/
+theorem mem_convexHull_iff_finiteCoefficients
+    {E : Type*} [AddCommGroup E] [Module ℝ E] {T : Set E} {x : E} :
+    x ∈ convexHull ℝ T ↔
+      ∃ (ι : Type) (_ : Fintype ι) (weight : ι → ℝ) (point : ι → E),
+        (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
+          (∀ i, point i ∈ T) ∧ ∑ i, weight i • point i = x :=
+  mem_convexHull_iff_exists_fintype (R := ℝ) (s := T) (x := x)
+
 /-- The book's diameter notation, bound directly to Mathlib's metric
 diameter.  For unbounded sets, statements using this real-valued diameter
 should also carry `Bornology.IsBounded` so that `ENNReal.toReal` does not hide
@@ -529,6 +574,12 @@ namespace NumStability.HDP.Contract
 def hdp_00_hdef_hconvex_hcombination (ι E : Type*)
     [AddCommMonoid E] [Module ℝ E] : Type _ :=
   Geometry.Convexity.ConvexCombination ι E
+
+/-- Stable source alias for `HDP-00-DEF-CONVEX-HULL`. -/
+theorem hdp_00_hdef_hconvex_hhull
+    {E : Type*} [AddCommGroup E] [Module ℝ E] (T : Set E) :
+    Geometry.Convexity.finiteConvexCombinationHull T = convexHull ℝ T :=
+  Geometry.Convexity.finiteConvexCombinationHull_eq_convexHull T
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
