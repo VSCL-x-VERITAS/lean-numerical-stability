@@ -13,6 +13,7 @@ import Mathlib.Probability.Independence.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
+import NumStability.HDP.Process.BrownianFoundation.Gaussian.BrownianMotion
 
 /-!
 # Deterministic interfaces for Gaussian comparison
@@ -1645,8 +1646,7 @@ def HasBrownianIncrementLaws {Ω : Type*} [MeasurableSpace Ω]
     (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
   ∀ s t, ∀ hst : s ≤ t,
     ProbabilityTheory.HasLaw (fun ω ↦ X t ω - X s ω)
-      (ProbabilityTheory.gaussianReal 0
-        ⟨(t : ℝ) - (s : ℝ), sub_nonneg.mpr (by exact_mod_cast hst)⟩) P
+      (ProbabilityTheory.gaussianReal 0 (t - s)) P
 
 /-- Successive increments along every finite increasing time grid are
 mutually independent. -/
@@ -1735,6 +1735,57 @@ structure StandardBrownianModel where
   X : NNReal → Ω → ℝ
   isBrownian : @IsStandardBrownianMotion Ω mΩ X P
 
+/-- Existence of a standard Brownian model, obtained from the projective-limit
+Gaussian process and its continuous modification. -/
+theorem standardBrownianModel_nonempty : Nonempty StandardBrownianModel.{0} := by
+  refine ⟨{
+    Ω := NNReal → ℝ
+    mΩ := inferInstance
+    P := ProbabilityTheory.gaussianLimit
+    probability := inferInstance
+    X := ProbabilityTheory.brownian
+    isBrownian := ?_ }⟩
+  refine ⟨MeasureTheory.ae_of_all _ ProbabilityTheory.continuous_brownian, ⟨?_, ?_⟩, ?_⟩
+  · intro n t ht
+    exact ProbabilityTheory.hasIndepIncrements_brownian n t
+      (Fin.monotone_iff_le_succ.mpr ht)
+  · intro s t hst
+    have hlaw := ProbabilityTheory.hasLaw_brownian_sub (s := t) (t := s)
+    rw [tsub_eq_zero_of_le hst] at hlaw
+    have hmax : max (t - s) 0 = t - s := max_eq_left (zero_le _)
+    simpa only [hmax, Pi.sub_apply] using hlaw
+  · exact ProbabilityTheory.hasLaw_brownian_eval.ae_eq_const_of_gaussianReal
+
+/-- Complete correction of the characterization in Example 7.1.4: a
+standard model exists, the missing zero anchor gives the correct statement,
+and a nonzero random offset witnesses the failure of the printed statement.
+The final field records the bridge to Mathlib's continuous-map path space. -/
+structure BrownianCharacterizationCorrection : Prop where
+  standardModel : Nonempty StandardBrownianModel.{0}
+  correctedCharacterization :
+    ∀ {Ω : Type*} [MeasurableSpace Ω] (X : NNReal → Ω → ℝ)
+      (P : MeasureTheory.Measure Ω),
+      IsStandardBrownianMotion X P ↔
+        HasContinuousSamplePaths X P ∧ HasBrownianIncrements X P ∧ IsAnchoredAtZero X P
+  randomOffsetCounterexample :
+    ∀ {Ω : Type*} [MeasurableSpace Ω] {X : NNReal → Ω → ℝ}
+      {P : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure P] {Z : Ω → ℝ},
+      IsStandardBrownianMotion X P → (∀ᵐ ω ∂P, Z ω ≠ 0) →
+        HasContinuousSamplePaths (fun t ω ↦ X t ω + Z ω) P ∧
+          HasBrownianIncrements (fun t ω ↦ X t ω + Z ω) P ∧
+          ¬ IsAnchoredAtZero (fun t ω ↦ X t ω + Z ω) P
+  pathSpaceBridge :
+    ∀ {Ω : Type*} (X : NNReal → Ω → ℝ) (ω : Ω)
+      (hω : Continuous fun t ↦ X t ω),
+      Continuous ⇑(samplePathToContinuousMap X ω hω)
+
+/-- The proved source correction and existence package for Example 7.1.4. -/
+theorem brownianCharacterizationCorrection : BrownianCharacterizationCorrection where
+  standardModel := standardBrownianModel_nonempty
+  correctedCharacterization := standardBrownian_iff
+  randomOffsetCounterexample := fun hX hZ ↦ randomOffsetObstruction hX hZ
+  pathSpaceBridge := continuous_samplePathToContinuousMap
+
 end BrownianCharacterization
 
 end NumStability.HDP.Process.GaussianComparison
@@ -1762,5 +1813,10 @@ theorem hdp_07_hthm_hgordon_hexpectation_hnoeqvar
       Process.GaussianComparison.rightGaussianMinMaxExpectation (K := K) b :=
   Process.GaussianComparison.gordonExpectationComparisonNoEqualVariances
     a b hI hwithin hcross
+
+/-- Stable source alias for `HDP-07-EXAMPLE-7.1.4`. -/
+theorem hdp_07_hexample_h7_d1_d4 :
+    Process.GaussianComparison.BrownianCharacterizationCorrection :=
+  Process.GaussianComparison.brownianCharacterizationCorrection
 
 end NumStability.HDP.Contract
