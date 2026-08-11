@@ -899,6 +899,25 @@ theorem approximateCaratheodory_unitDiameter
   refine ⟨point, hpoint, herror.trans ?_⟩
   exact div_le_div_of_nonneg_right hdiam (Real.sqrt_nonneg k)
 
+/-- The diameter-scaling exercise follows directly from the scale-covariant
+form of Theorem 0.0.2.  The proof does not divide by the diameter, so the
+zero-diameter case is included without a separate degeneracy argument.
+
+Source: Vershynin, footnote 1, printed page 2
+(`HDP-00-EX-DIAMETER-SCALING`). -/
+theorem approximateCaratheodory_diameterScaling
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    {T : Set E} {x : E} (hT : Bornology.IsBounded T)
+    (hx : x ∈ convexHull ℝ T) (k : ℕ) (hk : 0 < k) :
+    ∃ point : Fin k → E, (∀ j, point j ∈ T) ∧
+      ‖x - (k : ℝ)⁻¹ • ∑ j, point j‖ ≤ diameter T / Real.sqrt k := by
+  have hdiam : 0 ≤ diameter T := Metric.diam_nonneg
+  rw [← abs_of_nonneg hdiam]
+  simpa only [abs_of_nonneg hdiam] using
+    approximateCaratheodory_diameter hT hx k hk
+
 /-- The product-form lower bound for a binomial coefficient. -/
 theorem chooseLowerBoundReal : ∀ (m n : ℕ), 1 ≤ m → m ≤ n →
     ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) := by
@@ -1155,6 +1174,18 @@ theorem hdp_00_hthm_h0_d0_d2
       ‖x - (k : ℝ)⁻¹ • ∑ j, point j‖ ≤
         Geometry.Convexity.diameter T / Real.sqrt k :=
   Geometry.Convexity.approximateCaratheodory_diameter hT hx k hk
+
+/-- Stable source alias for `HDP-00-EX-DIAMETER-SCALING`. -/
+theorem hdp_00_hex_hdiameter_hscaling
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    {T : Set E} {x : E} (hT : Bornology.IsBounded T)
+    (hx : x ∈ convexHull ℝ T) (k : ℕ) (hk : 0 < k) :
+    ∃ point : Fin k → E, (∀ j, point j ∈ T) ∧
+      ‖x - (k : ℝ)⁻¹ • ∑ j, point j‖ ≤
+        Geometry.Convexity.diameter T / Real.sqrt k :=
+  Geometry.Convexity.approximateCaratheodory_diameterScaling hT hx k hk
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
