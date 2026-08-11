@@ -237,6 +237,15 @@ theorem gaussianTailIntegral_mills_bounds {t : ℝ} (ht : 0 < t) :
       _ ≤ gaussianTailIntegral t := by linarith
   · exact gaussianTailIntegral_le ht
 
+/-- The two reusable calculus conclusions in the proof of the standard-normal
+tail estimate: the shifted upper integral and the equivalent
+integration-by-parts Mills bounds. -/
+theorem normalTailCalculus {t : ℝ} (ht : 0 < t) :
+    (∫ y in Set.Ioi 0, shiftedGaussianKernel t y) ≤ 1 / t ∧
+      ((1 / t - 1 / t ^ 3) * gaussianKernel t ≤ gaussianTailIntegral t ∧
+        gaussianTailIntegral t ≤ (1 / t) * gaussianKernel t) :=
+  ⟨integral_shiftedGaussianKernel_le_inv ht, gaussianTailIntegral_mills_bounds ht⟩
+
 /-- Canonical Mathlib interpretation of equivalence up to constant factors
 along a specified filter. -/
 def comparisonTheta {α : Type*} (l : Filter α) (f g : α → ℝ) : Prop :=
@@ -314,11 +323,12 @@ namespace NumStability.HDP.Contract
 
 /-- Stable source alias for `HDP-02-LEM-NORMAL-TAIL-CALCULUS`. -/
 theorem hdp_02_hlem_hnormal_htail_hcalculus {t : ℝ} (ht : 0 < t) :
-    (1 / t - 1 / t ^ 3) * Scalar.NormalTail.gaussianKernel t ≤
-        Scalar.NormalTail.gaussianTailIntegral t ∧
-      Scalar.NormalTail.gaussianTailIntegral t ≤
-        (1 / t) * Scalar.NormalTail.gaussianKernel t :=
-  Scalar.NormalTail.gaussianTailIntegral_mills_bounds ht
+    (∫ y in Set.Ioi 0, Scalar.NormalTail.shiftedGaussianKernel t y) ≤ 1 / t ∧
+      ((1 / t - 1 / t ^ 3) * Scalar.NormalTail.gaussianKernel t ≤
+          Scalar.NormalTail.gaussianTailIntegral t ∧
+        Scalar.NormalTail.gaussianTailIntegral t ≤
+          (1 / t) * Scalar.NormalTail.gaussianKernel t) :=
+  Scalar.NormalTail.normalTailCalculus ht
 
 /-- Stable source alias for `HDP-02-DEF-COMPARISON-NOTATION`. -/
 def hdp_02_hdef_hcomparison_hnotation {α : Type*} :
