@@ -78,6 +78,31 @@ theorem gaussianMatrixProjection_isGaussianProcess {m n : ℕ} :
   filter_upwards with G
   exact (inner_gaussianMatrixMul_eq_inner_projectionDirection G zx.1 zx.2).symm
 
+/-- Each scalar projection of a standard Gaussian matrix has a Gaussian law. -/
+theorem gaussianMatrixProjection_hasGaussianLaw {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    HasGaussianLaw (fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ)
+      (standardGaussianMatrix m n) :=
+  gaussianMatrixProjection_isGaussianProcess.hasGaussianLaw_eval (z, x)
+
+/-- Variance of a scalar Gaussian matrix projection, expressed by its
+flattened rank-one direction. -/
+theorem variance_gaussianMatrixProjection {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    Var[fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ;
+      standardGaussianMatrix m n] =
+      ‖gaussianMatrixProjectionDirection z x‖ ^ 2 := by
+  rw [standardGaussianMatrix]
+  have hcongr :
+      (fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ) =ᵐ[
+        stdGaussian (GaussianMatrixSample m n)]
+        (fun G : GaussianMatrixSample m n ↦
+          ⟪gaussianMatrixProjectionDirection z x, G⟫_ℝ) := by
+    exact ae_of_all _ fun G ↦ inner_gaussianMatrixMul_eq_inner_projectionDirection G z x
+  exact (variance_congr hcongr).trans
+    (Process.GaussianMatrices.variance_inner_stdGaussian
+      (gaussianMatrixProjectionDirection z x))
+
 /-- Image of a set under a flattened Gaussian matrix. -/
 noncomputable def gaussianMatrixImage {m n : ℕ}
     (G : GaussianMatrixSample m n) (T : Set (EuclideanSpace ℝ (Fin n))) :
