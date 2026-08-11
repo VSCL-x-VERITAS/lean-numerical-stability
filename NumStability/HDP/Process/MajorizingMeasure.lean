@@ -95,7 +95,7 @@ private theorem gamma2Weight_succ_le_two_mul (k : ℕ) :
       rw [Real.rpow_add (by norm_num)]
     _ = 2 * 2 ^ ((k : ℝ) / 2) := by norm_num [mul_comm]
 
-private theorem weighted_adjacentProjection_path_tsum_le
+theorem weighted_adjacentProjection_path_tsum_le
     {α : Type*} [PseudoEMetricSpace α] (t : α) (projection : ℕ → α) :
     (∑' k, gamma2Weight (k + 1) *
         edist (projection (k + 1)) (projection k)) ≤
