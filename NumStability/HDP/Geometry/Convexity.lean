@@ -333,7 +333,7 @@ theorem centered_secondMoment
   let m : E := ∫ ω, Z ω ∂μ
   have hZi : MeasureTheory.Integrable Z μ := hZ.integrable (by norm_num)
   have hsq : MeasureTheory.Integrable (fun ω ↦ ‖Z ω‖ ^ 2) μ :=
-    hZ.integrable_norm_pow'
+    hZ.integrable_norm_pow (by norm_num)
   have hinner : MeasureTheory.Integrable (fun ω ↦ ⟪Z ω, m⟫_ℝ) μ :=
     hZi.inner_const m
   have htwice : MeasureTheory.Integrable (fun ω ↦ 2 * ⟪Z ω, m⟫_ℝ) μ :=
