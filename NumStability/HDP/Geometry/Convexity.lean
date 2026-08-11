@@ -11,6 +11,7 @@ import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.Probability.Independence.Basic
 import Mathlib.Probability.HasLawExists
+import Mathlib.Probability.IdentDistrib
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 import Mathlib.Topology.MetricSpace.CoveringNumbers
@@ -757,6 +758,147 @@ theorem meanSquare_empiricalAverage_le_of_ae_norm_le
   exact centered_secondMoment_le_sq_of_ae_norm_le
     (Z ⟨0, hk⟩) (hZ ⟨0, hk⟩) R hR hbound
 
+/-- A nonpositive integer cannot be the positive cardinality of the empirical
+average used in Theorem 0.0.2.  This records the source-domain defect in the
+printed phrase “every integer `k`”: at `k = 0` the reciprocal and square-root
+scale are undefined, while negative integers cannot index a finite sample. -/
+theorem nonpositiveInteger_not_validEmpiricalSampleCount
+    (k : ℤ) (hk : k ≤ 0) :
+    ¬ ∃ n : ℕ, 0 < n ∧ (n : ℤ) = k := by
+  rintro ⟨n, hn, rfl⟩
+  exact (not_lt_of_ge hk) (by exact_mod_cast hn)
+
+/-- Scale-covariant approximate Carathéodory theorem obtained by the
+empirical method.  Repetitions in the returned `Fin k` family are allowed.
+
+Source: Vershynin, Theorem 0.0.2 and footnote 1, printed pages 2--3
+(`HDP-00-THM-0.0.2`, corrected to `0 < k`). -/
+theorem approximateCaratheodory_diameter
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    {T : Set E} {x : E} (hT : Bornology.IsBounded T)
+    (hx : x ∈ convexHull ℝ T) (k : ℕ) (hk : 0 < k) :
+    ∃ point : Fin k → E, (∀ j, point j ∈ T) ∧
+      ‖x - (k : ℝ)⁻¹ • ∑ j, point j‖ ≤ diameter T / Real.sqrt k := by
+  classical
+  obtain ⟨ι, instι, weight, point, hweight, hweightSum, hpoint, hvalue⟩ :=
+    mem_convexHull_iff_finiteCoefficients.mp hx
+  letI : Fintype ι := instι
+  letI : MeasurableSpace ι := ⊤
+  obtain ⟨t₀, ht₀⟩ : T.Nonempty := convexHull_nonempty_iff.mp ⟨x, hx⟩
+  let q : ι → E := fun i ↦ point i - t₀
+  have hqBound (i : ι) : ‖q i‖ ≤ diameter T := by
+    rw [show q i = point i - t₀ from rfl, norm_sub_eq_dist]
+    exact Metric.dist_le_diam_of_mem hT (hpoint i) ht₀
+  have hqMean : ∑ i, weight i • q i = x - t₀ := by
+    simp only [q, smul_sub, Finset.sum_sub_distrib, ← Finset.sum_smul,
+      hweightSum, one_smul, hvalue]
+  obtain ⟨p₀, _hp₀, _hpush₀, hp₀Mean⟩ :=
+    finiteWeightPMF_exists q weight hweight hweightSum
+  have hqExpectation : (∫ i, q i ∂p₀.toMeasure) = x - t₀ :=
+    hp₀Mean.trans hqMean
+  obtain ⟨p, Ω, mΩ, P, Z, _hp, hZlaw, hZindep, hP, _hZintegrable, hZmean⟩ :=
+    finiteWeight_iidCopies q weight hweight hweightSum k
+  letI : MeasurableSpace Ω := mΩ
+  letI : MeasureTheory.IsProbabilityMeasure P := hP
+  have hqMeasurable : Measurable q := measurable_of_finite q
+  have hqLaw : ProbabilityTheory.HasLaw q
+      (MeasureTheory.Measure.map q p.toMeasure) p.toMeasure := {
+    aemeasurable := hqMeasurable.aemeasurable
+    map_eq := rfl }
+  have hident (j : Fin k) :
+      ProbabilityTheory.IdentDistrib q (Z j) p.toMeasure P :=
+    hqLaw.identDistrib (hZlaw j)
+  have hqLp : MeasureTheory.MemLp q 2 p.toMeasure :=
+    MeasureTheory.MemLp.of_bound hqMeasurable.aestronglyMeasurable
+      (diameter T) (Filter.Eventually.of_forall hqBound)
+  have hZLp : ∀ j, MeasureTheory.MemLp (Z j) 2 P := fun j ↦
+    (hident j).memLp_snd hqLp
+  have hmean : ∀ j, (∫ ω, Z j ω ∂P) = x - t₀ := fun j ↦
+    (hZmean j).trans (hp₀Mean.symm.trans hqExpectation)
+  let σ2 : ℝ := ∫ i, ‖q i - (x - t₀)‖ ^ 2 ∂p.toMeasure
+  have hmoment : ∀ j, (∫ ω, ‖Z j ω - (x - t₀)‖ ^ 2 ∂P) = σ2 := by
+    intro j
+    have hsqIdent := (hident j).comp
+      (show Measurable (fun z : E ↦ ‖z - (x - t₀)‖ ^ 2) by fun_prop)
+    exact hsqIdent.integral_eq.symm
+  have hfirstBound : ∀ᵐ ω ∂P, ‖Z ⟨0, hk⟩ ω‖ ≤ diameter T :=
+    (hident ⟨0, hk⟩).ae_snd (measurableSet_le measurable_norm measurable_const)
+      (Filter.Eventually.of_forall hqBound)
+  have hmeanSquare :
+      (∫ ω, ‖(k : ℝ)⁻¹ • (∑ j, Z j ω) - (x - t₀)‖ ^ 2 ∂P) ≤
+        (k : ℝ)⁻¹ * diameter T ^ 2 := by
+    exact meanSquare_empiricalAverage_le_of_ae_norm_le
+      k hk Z (x - t₀) σ2 (diameter T) hZLp hmean hmoment hZindep
+        Metric.diam_nonneg hfirstBound
+  let A : Ω → E := fun ω ↦ (k : ℝ)⁻¹ • ∑ j, Z j ω
+  have hALp : MeasureTheory.MemLp A 2 P := by
+    have hsum : MeasureTheory.MemLp (fun ω ↦ ∑ j, Z j ω) 2 P :=
+      MeasureTheory.memLp_finset_sum Finset.univ fun j _ ↦ hZLp j
+    simpa only [A, Pi.smul_apply] using hsum.const_smul (k : ℝ)⁻¹
+  have herrorIntegrable :
+      MeasureTheory.Integrable (fun ω ↦ ‖A ω - (x - t₀)‖ ^ 2) P :=
+    (hALp.sub (MeasureTheory.memLp_const (x - t₀))).integrable_norm_pow
+      (by norm_num)
+  have hsupport (j : Fin k) : ∀ᵐ ω ∂P, Z j ω ∈ Set.range q :=
+    (hident j).ae_mem_snd (Set.finite_range q).measurableSet
+      (Filter.Eventually.of_forall Set.mem_range_self)
+  have hsupportAll : ∀ᵐ ω ∂P, ∀ j, Z j ω ∈ Set.range q :=
+    Filter.eventually_all.mpr hsupport
+  let bad : Set Ω := {ω | ¬ ∀ j, Z j ω ∈ Set.range q}
+  have hbad : P bad = 0 := by
+    exact MeasureTheory.ae_iff.mp hsupportAll
+  have hmeanSquareA : (∫ ω, ‖A ω - (x - t₀)‖ ^ 2 ∂P) ≤
+      (k : ℝ)⁻¹ * diameter T ^ 2 := by
+    simpa only [A] using hmeanSquare
+  obtain ⟨ω, hωbad, hωerror⟩ :=
+    exists_notMem_null_le_of_integral_le herrorIntegrable hmeanSquareA hbad
+  let sample : Fin k → E := fun j ↦ Z j ω + t₀
+  have hωsupport : ∀ j, Z j ω ∈ Set.range q := by
+    simpa only [bad, Set.mem_setOf_eq, not_not] using hωbad
+  have hsample (j : Fin k) : sample j ∈ T := by
+    obtain ⟨i, hi⟩ := hωsupport j
+    rw [show sample j = Z j ω + t₀ from rfl, ← hi]
+    simpa only [q, sub_add_cancel] using hpoint i
+  refine ⟨sample, hsample, ?_⟩
+  have hkReal : (k : ℝ) ≠ 0 := by exact_mod_cast hk.ne'
+  have hcancel : (k : ℝ)⁻¹ • (k • t₀) = t₀ := by
+    rw [← Nat.cast_smul_eq_nsmul ℝ, ← mul_smul, inv_mul_cancel₀ hkReal, one_smul]
+  have herrorEq :
+      ‖x - (k : ℝ)⁻¹ • ∑ j, sample j‖ =
+        ‖A ω - (x - t₀)‖ := by
+    have hvector :
+        x - (k : ℝ)⁻¹ • ∑ j, sample j = -(A ω - (x - t₀)) := by
+      simp only [sample, A, Finset.sum_add_distrib, Finset.sum_const,
+        Finset.card_univ, Fintype.card_fin, smul_add, hcancel]
+      abel
+    rw [hvector, norm_neg]
+  rw [herrorEq]
+  have hsqrtPos : 0 < Real.sqrt (k : ℝ) :=
+    Real.sqrt_pos.2 (by exact_mod_cast hk)
+  have hright : 0 ≤ diameter T / Real.sqrt k :=
+    div_nonneg Metric.diam_nonneg hsqrtPos.le
+  rw [← sq_le_sq₀ (norm_nonneg _) hright]
+  rw [div_pow, Real.sq_sqrt (by positivity : (0 : ℝ) ≤ k)]
+  simpa only [div_eq_inv_mul, mul_comm] using hωerror
+
+/-- Unit-diameter form of the approximate Carathéodory theorem stated in the
+main text. -/
+theorem approximateCaratheodory_unitDiameter
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    {T : Set E} {x : E} (hT : Bornology.IsBounded T)
+    (hdiam : diameter T ≤ 1) (hx : x ∈ convexHull ℝ T)
+    (k : ℕ) (hk : 0 < k) :
+    ∃ point : Fin k → E, (∀ j, point j ∈ T) ∧
+      ‖x - (k : ℝ)⁻¹ • ∑ j, point j‖ ≤ 1 / Real.sqrt k := by
+  obtain ⟨point, hpoint, herror⟩ :=
+    approximateCaratheodory_diameter hT hx k hk
+  refine ⟨point, hpoint, herror.trans ?_⟩
+  exact div_le_div_of_nonneg_right hdiam (Real.sqrt_nonneg k)
+
 /-- The product-form lower bound for a binomial coefficient. -/
 theorem chooseLowerBoundReal : ∀ (m n : ℕ), 1 ≤ m → m ≤ n →
     ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) := by
@@ -1001,6 +1143,18 @@ theorem hdp_00_hlem_hmean_hsquare_hempirical
       (k : ℝ)⁻¹ * σ2 :=
   Geometry.Convexity.meanSquare_empiricalAverage
     k hk Z m σ2 hZ hmean hmoment hindep
+
+/-- Stable source alias for `HDP-00-THM-0.0.2`. -/
+theorem hdp_00_hthm_h0_d0_d2
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    {T : Set E} {x : E} (hT : Bornology.IsBounded T)
+    (hx : x ∈ convexHull ℝ T) (k : ℕ) (hk : 0 < k) :
+    ∃ point : Fin k → E, (∀ j, point j ∈ T) ∧
+      ‖x - (k : ℝ)⁻¹ • ∑ j, point j‖ ≤
+        Geometry.Convexity.diameter T / Real.sqrt k :=
+  Geometry.Convexity.approximateCaratheodory_diameter hT hx k hk
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
