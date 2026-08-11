@@ -1,3 +1,4 @@
+import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.Order.Filter.Extr
 import NumStability.HDP.Process.Empirical
 
@@ -24,6 +25,14 @@ abbrev IIDTrainingSample (ι Ω S : Type*) [MeasurableSpace Ω]
 /-- Pointwise squared loss against a target function. -/
 def squaredLoss {S : Type*} (target hypothesis : S → ℝ) (x : S) : ℝ :=
   (hypothesis x - target x) ^ 2
+
+/-- Real encoding of a Boolean label. -/
+def booleanLabel (b : Bool) : ℝ :=
+  if b then 1 else 0
+
+/-- Event on which a Boolean hypothesis misclassifies the target. -/
+def misclassificationSet {S : Type*} (target hypothesis : S → Bool) : Set S :=
+  {x | hypothesis x ≠ target x}
 
 /-- Population squared risk. -/
 noncomputable def populationSquaredRisk {S : Type*} [MeasurableSpace S]
@@ -85,6 +94,25 @@ theorem statisticalLearningInterface
   · simp only [IsPopulationRiskMinimizer, isMinOn_iff]
   · simp only [IsEmpiricalRiskMinimizer, isMinOn_iff]
 
+/-- For Boolean labels, squared-loss risk is exactly misclassification
+probability.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.4.2,
+printed page 216 (`HDP-08-EG-8.4.2`). -/
+theorem booleanSquaredRisk_eq_misclassification
+    {S : Type*} [MeasurableSpace S] (ν : Measure S)
+    (target hypothesis : S → Bool)
+    (hmis : MeasurableSet (misclassificationSet target hypothesis)) :
+    populationSquaredRisk ν (booleanLabel ∘ target) (booleanLabel ∘ hypothesis) =
+      ν.real (misclassificationSet target hypothesis) := by
+  have hpoint : squaredLoss (booleanLabel ∘ target) (booleanLabel ∘ hypothesis) =
+      (misclassificationSet target hypothesis).indicator (fun _ ↦ (1 : ℝ)) := by
+    funext x
+    cases ht : target x <;> cases hh : hypothesis x <;>
+      simp [squaredLoss, booleanLabel, misclassificationSet, ht, hh]
+  rw [populationSquaredRisk, hpoint]
+  exact MeasureTheory.integral_indicator_one hmis
+
 end NumStability.HDP.Applications.StatisticalLearning
 
 namespace NumStability.HDP.Contract
@@ -117,5 +145,18 @@ theorem hdp_08_hiface_hlearning
             Applications.StatisticalLearning.empiricalSquaredRisk X.eval target f ω) :=
   Applications.StatisticalLearning.statisticalLearningInterface
     P ν X target H ε fStar fApprox fHat ω
+
+/-- Stable source alias for `HDP-08-EG-8.4.2`. -/
+theorem hdp_08_heg_h8_d4_d2
+    {S : Type*} [MeasurableSpace S] (ν : Measure S)
+    (target hypothesis : S → Bool)
+    (hmis : MeasurableSet
+      (Applications.StatisticalLearning.misclassificationSet target hypothesis)) :
+    Applications.StatisticalLearning.populationSquaredRisk ν
+        (Applications.StatisticalLearning.booleanLabel ∘ target)
+        (Applications.StatisticalLearning.booleanLabel ∘ hypothesis) =
+      ν.real (Applications.StatisticalLearning.misclassificationSet target hypothesis) :=
+  Applications.StatisticalLearning.booleanSquaredRisk_eq_misclassification
+    ν target hypothesis hmis
 
 end NumStability.HDP.Contract
