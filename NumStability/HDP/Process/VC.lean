@@ -8,6 +8,7 @@ import Mathlib.Combinatorics.SetFamily.Shatter
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Tactic.NormNum
+import NumStability.HDP.Contracts.C_00_hex_h0_d0_d5
 
 /-!
 # Vapnik--Chervonenkis dimension
@@ -635,6 +636,36 @@ theorem fourStringPajorDeletionEnumeration :
       Finset.shatterer Finset.Shatters
     native_decide
 
+/-- Corrected Sauer--Shelah interface.  The combinatorial estimate is valid
+for every VC dimension.  The real exponential estimate is stated only for
+`1 ≤ d ≤ n`, while the formerly singular `d = 0` endpoint is the
+separate bound `card 𝒽 ≤ 1`.
+
+Source: Vershynin, *High-Dimensional Probability*, Theorem 8.3.16,
+printed page 207 (`HDP-08-THM-8.3.16`). -/
+theorem sauerShelahCorrected (n : ℕ) (𝒽 : Finset (Fin n → Bool)) :
+    let d := (booleanFinsetSupportFamily 𝒽).vcDim
+    𝒽.card ≤ ∑ k ∈ Finset.range (d + 1), n.choose k ∧
+      (1 ≤ d → d ≤ n →
+        (∑ k ∈ Finset.range (d + 1), (n.choose k : ℝ)) ≤
+          (Real.exp 1 * (n : ℝ) / d) ^ d) ∧
+      (d = 0 → 𝒽.card ≤ 1) := by
+  dsimp only
+  let 𝒜 := booleanFinsetSupportFamily 𝒽
+  have hmain : 𝒽.card ≤ ∑ k ∈ Finset.range (𝒜.vcDim + 1), n.choose k := by
+    calc
+      𝒽.card ≤ 𝒜.shatterer.card := pajorInequality_booleanFinset 𝒽
+      _ ≤ ∑ k ∈ Finset.Iic 𝒜.vcDim, n.choose k := by
+        simpa [𝒜] using
+          (Finset.card_shatterer_le_sum_vcDim (𝒜 := 𝒜))
+      _ = ∑ k ∈ Finset.range (𝒜.vcDim + 1), n.choose k := by
+        rw [Nat.range_succ_eq_Iic]
+  refine ⟨hmain, ?_, ?_⟩
+  · intro hd hdn
+    exact (NumStability.HDP.Contract.hdp_00_hex_h0_d0_d5 𝒜.vcDim n hd hdn).2.2
+  · intro hd
+    simpa [𝒜, hd] using hmain
+
 /-- Binary strings in the Hamming ball are in bijection with subsets of
 cardinality at most `d`. -/
 def hammingBallEquivBoundedFinsets (n d : ℕ) :
@@ -772,6 +803,16 @@ theorem hdp_08_heg_h8_d3_d14 :
           (Process.VC.fourStringThirdMemberBranch ∩
             Process.VC.fourStringThirdNonMemberBranch).card :=
   Process.VC.fourStringPajorDeletionEnumeration
+
+/-- Stable source alias for `HDP-08-THM-8.3.16`. -/
+theorem hdp_08_hthm_h8_d3_d16 (n : ℕ) (𝒽 : Finset (Fin n → Bool)) :
+    let d := (Process.VC.booleanFinsetSupportFamily 𝒽).vcDim
+    𝒽.card ≤ ∑ k ∈ Finset.range (d + 1), n.choose k ∧
+      (1 ≤ d → d ≤ n →
+        (∑ k ∈ Finset.range (d + 1), (n.choose k : ℝ)) ≤
+          (Real.exp 1 * (n : ℝ) / d) ^ d) ∧
+      (d = 0 → 𝒽.card ≤ 1) :=
+  Process.VC.sauerShelahCorrected n 𝒽
 
 /-- Stable source alias for `HDP-08-EX-8.3.5`. -/
 theorem hdp_08_hex_h8_d3_d5 :
