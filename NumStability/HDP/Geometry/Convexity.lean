@@ -112,6 +112,41 @@ theorem mem_convexHull_iff_finiteCoefficients
           (∀ i, point i ∈ T) ∧ ∑ i, weight i • point i = x :=
   mem_convexHull_iff_exists_fintype (R := ℝ) (s := T) (x := x)
 
+/-- A polytope presentation by a finite generating set.  This deliberately
+records generators rather than irredundant extreme points: the covering
+argument in Corollary 0.0.4 only uses the former.
+
+Source: Vershynin, proof of Corollary 0.0.4, printed page 4
+(`HDP-00-DEF-POLYTOPE-VERTICES`). -/
+def finitePolytope {E : Type*} [AddCommGroup E] [Module ℝ E]
+    (vertices : Finset E) : Set E :=
+  convexHull ℝ (vertices : Set E)
+
+/-- Membership in a finitely generated polytope is exactly an explicit
+finite convex combination of its generators. -/
+theorem mem_finitePolytope_iff_finiteCoefficients
+    {E : Type*} [AddCommGroup E] [Module ℝ E]
+    {vertices : Finset E} {x : E} :
+    x ∈ finitePolytope vertices ↔
+      ∃ (ι : Type) (_ : Fintype ι) (weight : ι → ℝ) (point : ι → E),
+        (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
+          (∀ i, point i ∈ vertices) ∧ ∑ i, weight i • point i = x := by
+  unfold finitePolytope
+  simpa only [Finset.mem_coe] using
+    (mem_convexHull_iff_finiteCoefficients (T := (vertices : Set E)) (x := x))
+
+/-- Book-wording specialization when the chosen generating set has cardinality
+`N`.  The cardinality hypothesis is metadata for later counting arguments;
+the convex-combination characterization itself needs only finiteness. -/
+theorem mem_finitePolytope_iff_of_card
+    {E : Type*} [AddCommGroup E] [Module ℝ E]
+    (vertices : Finset E) (N : ℕ) (_hcard : vertices.card = N) (x : E) :
+    x ∈ finitePolytope vertices ↔
+      ∃ (ι : Type) (_ : Fintype ι) (weight : ι → ℝ) (point : ι → E),
+        (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
+          (∀ i, point i ∈ vertices) ∧ ∑ i, weight i • point i = x :=
+  mem_finitePolytope_iff_finiteCoefficients
+
 /-- The book's diameter notation, bound directly to Mathlib's metric
 diameter.  For unbounded sets, statements using this real-valued diameter
 should also carry `Bornology.IsBounded` so that `ENNReal.toReal` does not hide
@@ -585,6 +620,16 @@ theorem hdp_00_hdef_hconvex_hhull
     {E : Type*} [AddCommGroup E] [Module ℝ E] (T : Set E) :
     Geometry.Convexity.finiteConvexCombinationHull T = convexHull ℝ T :=
   Geometry.Convexity.finiteConvexCombinationHull_eq_convexHull T
+
+/-- Stable source alias for `HDP-00-DEF-POLYTOPE-VERTICES`. -/
+theorem hdp_00_hdef_hpolytope_hvertices
+    {E : Type*} [AddCommGroup E] [Module ℝ E]
+    {vertices : Finset E} {x : E} :
+    x ∈ Geometry.Convexity.finitePolytope vertices ↔
+      ∃ (ι : Type) (_ : Fintype ι) (weight : ι → ℝ) (point : ι → E),
+        (∀ i, 0 ≤ weight i) ∧ (∑ i, weight i = 1) ∧
+          (∀ i, point i ∈ vertices) ∧ ∑ i, weight i • point i = x :=
+  Geometry.Convexity.mem_finitePolytope_iff_finiteCoefficients
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
