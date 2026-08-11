@@ -47,6 +47,54 @@ printed pages 202--203 (`HDP-08-DEF-8.3.1`). -/
 noncomputable def vcDimension {Ω : Type*} (𝓕 : Set (Ω → Bool)) : WithTop ℕ :=
   sSup {d : WithTop ℕ | ∃ A : Finset Ω, Shatters 𝓕 A ∧ d = A.card}
 
+/-- The subset represented by a Boolean function. -/
+def booleanFunctionSet {Ω : Type*} (f : Ω → Bool) : Set Ω :=
+  {x | f x = true}
+
+/-- Boolean indicator of a set, using Mathlib's set piecewise operation. -/
+noncomputable def setBoolIndicator {Ω : Type*} (s : Set Ω) : Ω → Bool := by
+  classical
+  exact s.piecewise (fun _ ↦ true) (fun _ ↦ false)
+
+@[simp] theorem booleanFunctionSet_setBoolIndicator {Ω : Type*} (s : Set Ω) :
+    booleanFunctionSet (setBoolIndicator s) = s := by
+  ext x
+  by_cases hx : x ∈ s <;> simp [booleanFunctionSet, setBoolIndicator, hx]
+
+@[simp] theorem setBoolIndicator_booleanFunctionSet {Ω : Type*} (f : Ω → Bool) :
+    setBoolIndicator (booleanFunctionSet f) = f := by
+  funext x
+  cases h : f x <;> simp [booleanFunctionSet, setBoolIndicator, h]
+
+/-- Boolean function class corresponding to a family of sets. -/
+def setFamilyBooleanClass {Ω : Type*} (𝓒 : Set (Set Ω)) : Set (Ω → Bool) :=
+  setBoolIndicator '' 𝓒
+
+/-- VC dimension of a set family through its Boolean indicators. -/
+noncomputable def setFamilyVCDimension {Ω : Type*} (𝓒 : Set (Set Ω)) : WithTop ℕ :=
+  vcDimension (setFamilyBooleanClass 𝓒)
+
+/-- Passing from a Boolean class to its family of true sets and back recovers
+the class exactly. -/
+theorem setFamilyBooleanClass_image_booleanFunctionSet {Ω : Type*}
+    (𝓕 : Set (Ω → Bool)) :
+    setFamilyBooleanClass (booleanFunctionSet '' 𝓕) = 𝓕 := by
+  ext f
+  constructor
+  · rintro ⟨s, ⟨g, hg, rfl⟩, rfl⟩
+    simpa using hg
+  · intro hf
+    exact ⟨booleanFunctionSet f, ⟨f, hf, rfl⟩, by simp⟩
+
+/-- Boolean-function and corresponding set-family VC dimensions agree.
+
+Source: Vershynin, *High-Dimensional Probability*, Remark 8.3.10,
+printed page 205 (`HDP-08-REM-8.3.10`). -/
+theorem booleanSetFamilyVCDimensionEquivalence {Ω : Type*}
+    (𝓕 : Set (Ω → Bool)) :
+    setFamilyVCDimension (booleanFunctionSet '' 𝓕) = vcDimension 𝓕 := by
+  rw [setFamilyVCDimension, setFamilyBooleanClass_image_booleanFunctionSet]
+
 /-- The complete Boolean trace class on `d` labeled points.  It is the
 canonical finite carrier for an exact VC-dimension contract. -/
 def completeTraceClass (d : ℕ) : Set (Fin d → Bool) :=
@@ -505,6 +553,12 @@ namespace NumStability.HDP.Contract
 noncomputable def hdp_08_hdef_h8_d3_d1 {Ω : Type*} :
     Set (Ω → Bool) → WithTop ℕ :=
   Process.VC.vcDimension
+
+/-- Stable source alias for `HDP-08-REM-8.3.10`. -/
+theorem hdp_08_hrem_h8_d3_d10 {Ω : Type*} (𝓕 : Set (Ω → Bool)) :
+    Process.VC.setFamilyVCDimension (Process.VC.booleanFunctionSet '' 𝓕) =
+      Process.VC.vcDimension 𝓕 :=
+  Process.VC.booleanSetFamilyVCDimensionEquivalence 𝓕
 
 /-- Stable source alias for `HDP-08-EG-8.3.2`. -/
 theorem hdp_08_heg_h8_d3_d2 :
