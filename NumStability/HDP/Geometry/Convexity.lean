@@ -4,7 +4,10 @@ import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Nat.Choose.Sum
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Sym.Card
+import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Integral.Average
+import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.Probability.Independence.Basic
 import Mathlib.Topology.MetricSpace.CoveringNumbers
 import Mathlib.Topology.MetricSpace.Isometry
 
@@ -16,7 +19,7 @@ therefore index points before mapping them into the ambient module, rather
 than representing a combination only by a set of distinct points.
 -/
 
-open scoped BigOperators
+open scoped BigOperators InnerProductSpace
 
 namespace NumStability.HDP.Geometry.Convexity
 
@@ -204,6 +207,117 @@ theorem sqNormErrorWitness
     ∃ ω, ω ∉ N ∧ ‖x - Z ω‖ ^ 2 ≤ a :=
   exists_notMem_null_le_of_integral_le hY hEa hN
 
+/-- For independent Hilbert-space-valued random variables, the expected
+inner product factors as the inner product of their expectations.
+
+This is the off-diagonal cancellation mechanism in Exercise 0.0.3(a). -/
+theorem integral_inner_eq_inner_integral_of_indepFun
+    {Ω E : Type*} [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    {X Y : Ω → E} (hX : MeasureTheory.MemLp X 2 μ)
+    (hY : MeasureTheory.MemLp Y 2 μ)
+    (hXY : ProbabilityTheory.IndepFun X Y μ) :
+    (∫ ω, ⟪X ω, Y ω⟫_ℝ ∂μ) =
+      ⟪∫ ω, X ω ∂μ, ∫ ω, Y ω ∂μ⟫_ℝ := by
+  have hXi : MeasureTheory.Integrable X μ := hX.integrable (by norm_num)
+  have hYi : MeasureTheory.Integrable Y μ := hY.integrable (by norm_num)
+  have hXm : MeasureTheory.Integrable (fun x : E ↦ x) (μ.map X) := by
+    rw [MeasureTheory.integrable_map_measure (by fun_prop) hX.aemeasurable]
+    simpa only [Function.comp_id] using hXi
+  have hYm : MeasureTheory.Integrable (fun y : E ↦ y) (μ.map Y) := by
+    rw [MeasureTheory.integrable_map_measure (by fun_prop) hY.aemeasurable]
+    simpa only [Function.comp_id] using hYi
+  have hprod : MeasureTheory.Integrable (fun z : E × E ↦ ⟪z.1, z.2⟫_ℝ)
+      ((μ.map X).prod (μ.map Y)) := by
+    exact MeasureTheory.Integrable.op_fst_snd continuous_inner
+      ⟨1, fun x y ↦ by simpa only [one_mul, Real.norm_eq_abs] using
+        (norm_inner_le_norm (𝕜 := ℝ) x y)⟩ hXm hYm
+  calc
+    (∫ ω, ⟪X ω, Y ω⟫_ℝ ∂μ) =
+        ∫ z : E × E, ⟪z.1, z.2⟫_ℝ ∂μ.map (fun ω ↦ (X ω, Y ω)) := by
+          rw [MeasureTheory.integral_map (hX.aemeasurable.prodMk hY.aemeasurable)]
+          exact continuous_inner.aestronglyMeasurable
+    _ = ∫ z : E × E, ⟪z.1, z.2⟫_ℝ ∂((μ.map X).prod (μ.map Y)) := by
+          rw [(ProbabilityTheory.indepFun_iff_map_prod_eq_prod_map_map
+            hX.aemeasurable hY.aemeasurable).1 hXY]
+    _ = ∫ x : E, ∫ y : E, ⟪x, y⟫_ℝ ∂μ.map Y ∂μ.map X :=
+          MeasureTheory.integral_prod _ hprod
+    _ = ∫ x : E, ⟪x, ∫ y : E, y ∂μ.map Y⟫_ℝ ∂μ.map X := by
+          congr 1
+          funext x
+          exact integral_inner hYm x
+    _ = ⟪∫ x : E, x ∂μ.map X, ∫ y : E, y ∂μ.map Y⟫_ℝ := by
+          simpa only [real_inner_comm] using
+            (integral_inner (𝕜 := ℝ) hXm (∫ y : E, y ∂μ.map Y))
+    _ = ⟪∫ ω, X ω ∂μ, ∫ ω, Y ω ∂μ⟫_ℝ := by
+          rw [MeasureTheory.integral_map hX.aemeasurable,
+            MeasureTheory.integral_map hY.aemeasurable]
+          all_goals fun_prop
+
+/-- The second moment of a finite sum of independent, mean-zero random
+variables in a real Hilbert space is the sum of their second moments.
+
+The second-countability assumption supplies the standard Borel interface for
+the joint-law argument; it holds in particular for every Euclidean space.
+
+Source: Vershynin, Exercise 0.0.3(a), printed page 3
+(`HDP-00-EX-0.0.3A`). -/
+theorem independentMeanZero_secondMoment_sum
+    {ι Ω E : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (Z : ι → Ω → E) (hZ : ∀ i, MeasureTheory.MemLp (Z i) 2 μ)
+    (hmean : ∀ i, ∫ ω, Z i ω ∂μ = 0)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) :
+    (∫ ω, ‖∑ i, Z i ω‖ ^ 2 ∂μ) =
+      ∑ i, ∫ ω, ‖Z i ω‖ ^ 2 ∂μ := by
+  classical
+  have hinner (i j : ι) :
+      MeasureTheory.Integrable (fun ω ↦ ⟪Z i ω, Z j ω⟫_ℝ) μ := by
+    have hnormprod :
+        MeasureTheory.Integrable (fun ω ↦ ‖Z i ω‖ * ‖Z j ω‖) μ := by
+      simpa only [Pi.mul_apply] using (hZ i).norm.integrable_mul (hZ j).norm
+    exact hnormprod.mono
+      ((hZ i).aestronglyMeasurable.inner (hZ j).aestronglyMeasurable)
+      (MeasureTheory.ae_of_all _ fun ω ↦ by
+        simp only [Real.norm_eq_abs]
+        calc
+          |⟪Z i ω, Z j ω⟫_ℝ| ≤ ‖Z i ω‖ * ‖Z j ω‖ :=
+            norm_inner_le_norm (𝕜 := ℝ) (Z i ω) (Z j ω)
+          _ = |‖Z i ω‖ * ‖Z j ω‖| :=
+            (abs_of_nonneg (mul_nonneg (norm_nonneg _) (norm_nonneg _))).symm)
+  simp_rw [← real_inner_self_eq_norm_sq, sum_inner, inner_sum]
+  rw [MeasureTheory.integral_finset_sum Finset.univ]
+  · apply Finset.sum_congr rfl
+    intro i hi
+    rw [MeasureTheory.integral_finset_sum Finset.univ]
+    · rw [Finset.sum_eq_single i]
+      · intro j _hj hji
+        rw [integral_inner_eq_inner_integral_of_indepFun (hZ i) (hZ j)
+          (hindep.indepFun hji.symm), hmean i, hmean j]
+        simp
+      · simp
+    · exact fun j _hj ↦ hinner i j
+  · exact fun i _hi ↦
+      MeasureTheory.integrable_finset_sum Finset.univ fun j _hj ↦ hinner i j
+
+/-- Euclidean specialization of `independentMeanZero_secondMoment_sum`. -/
+theorem independentMeanZero_euclidean_secondMoment_sum
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ] (n : ℕ)
+    [MeasurableSpace (EuclideanSpace ℝ (Fin n))]
+    [BorelSpace (EuclideanSpace ℝ (Fin n))]
+    (Z : ι → Ω → EuclideanSpace ℝ (Fin n))
+    (hZ : ∀ i, MeasureTheory.MemLp (Z i) 2 μ)
+    (hmean : ∀ i, ∫ ω, Z i ω ∂μ = 0)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) :
+    (∫ ω, ‖∑ i, Z i ω‖ ^ 2 ∂μ) =
+      ∑ i, ∫ ω, ‖Z i ω‖ ^ 2 ∂μ :=
+  independentMeanZero_secondMoment_sum Z hZ hmean hindep
+
 /-- The product-form lower bound for a binomial coefficient. -/
 theorem chooseLowerBoundReal : ∀ (m n : ℕ), 1 ≤ m → m ≤ n →
     ((n : ℝ) / m) ^ m ≤ (n.choose m : ℝ) := by
@@ -388,6 +502,19 @@ theorem hdp_00_hlem_hexpectation_hwitness
     (hEa : (∫ ω, Y ω ∂μ) ≤ a) (hN : μ N = 0) :
     ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
   Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
+
+/-- Stable source alias for `HDP-00-EX-0.0.3A`. -/
+theorem hdp_00_hex_h0_d0_d3a
+    {ι Ω E : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (Z : ι → Ω → E) (hZ : ∀ i, MeasureTheory.MemLp (Z i) 2 μ)
+    (hmean : ∀ i, ∫ ω, Z i ω ∂μ = 0)
+    (hindep : ProbabilityTheory.iIndepFun Z μ) :
+    (∫ ω, ‖∑ i, Z i ω‖ ^ 2 ∂μ) =
+      ∑ i, ∫ ω, ‖Z i ω‖ ^ 2 ∂μ :=
+  Geometry.Convexity.independentMeanZero_secondMoment_sum Z hZ hmean hindep
 
 /-- Stable source alias for `HDP-00-LEM-ORDERED-AVERAGE-CARD`. -/
 theorem hdp_00_hlem_hordered_haverage_hcard
