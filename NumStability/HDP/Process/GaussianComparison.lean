@@ -9,6 +9,7 @@ import Mathlib.Data.Finset.Max
 import Mathlib.MeasureTheory.Integral.Pi
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.Probability.Independence.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
@@ -1613,6 +1614,123 @@ theorem gordonExpectationComparisonNoEqualVariances
   linearGaussianGordonMinMaxExpectation a b hI hwithin hcross
 
 end GordonSmoothing
+
+section BrownianCharacterization
+
+/-- Almost-sure continuity of the sample paths of a real process indexed by
+nonnegative time. -/
+def HasContinuousSamplePaths {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
+  ∀ᵐ ω ∂P, Continuous fun t ↦ X t ω
+
+/-- Package a verified sample path in Mathlib's continuous-map path space. -/
+def samplePathToContinuousMap {Ω : Type*} (X : NNReal → Ω → ℝ) (ω : Ω)
+    (hω : Continuous fun t ↦ X t ω) : C(NNReal, ℝ) :=
+  ContinuousMap.mk (fun t ↦ X t ω) hω
+
+/-- The process starts at zero almost surely.  This is the condition omitted
+from the printed characterization in Example 7.1.4. -/
+def IsAnchoredAtZero {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
+  X 0 =ᵐ[P] 0
+
+/-- Every increment has the centered normal law with variance equal to the
+elapsed time. -/
+def HasBrownianIncrementLaws {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
+  ∀ s t, ∀ hst : s ≤ t,
+    ProbabilityTheory.HasLaw (fun ω ↦ X t ω - X s ω)
+      (ProbabilityTheory.gaussianReal 0
+        ⟨(t : ℝ) - (s : ℝ), sub_nonneg.mpr (by exact_mod_cast hst)⟩) P
+
+/-- Successive increments along every finite increasing time grid are
+mutually independent. -/
+def HasIndependentIncrements {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
+  ∀ (n : ℕ) (t : Fin (n + 1) → NNReal),
+    (∀ i : Fin n, t i.castSucc ≤ t i.succ) →
+      ProbabilityTheory.iIndepFun
+        (fun i : Fin n ↦ fun ω ↦ X (t i.succ) ω - X (t i.castSucc) ω) P
+
+/-- The two increment clauses from the printed characterization. -/
+def HasBrownianIncrements {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
+  HasIndependentIncrements X P ∧ HasBrownianIncrementLaws X P
+
+/-- Correct source-facing characterization of standard Brownian motion: the
+two printed clauses together with the missing zero-time anchor. -/
+def IsStandardBrownianMotion {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) : Prop :=
+  HasContinuousSamplePaths X P ∧ HasBrownianIncrements X P ∧ IsAnchoredAtZero X P
+
+/-- The corrected characterization, making the omitted anchor explicit. -/
+theorem standardBrownian_iff {Ω : Type*} [MeasurableSpace Ω]
+    (X : NNReal → Ω → ℝ) (P : MeasureTheory.Measure Ω) :
+    IsStandardBrownianMotion X P ↔
+      HasContinuousSamplePaths X P ∧ HasBrownianIncrements X P ∧
+        IsAnchoredAtZero X P :=
+  Iff.rfl
+
+/-- Adding a time-independent random offset preserves path continuity. -/
+theorem HasContinuousSamplePaths.add_randomOffset
+    {Ω : Type*} [MeasurableSpace Ω] {X : NNReal → Ω → ℝ}
+    {P : MeasureTheory.Measure Ω} (hX : HasContinuousSamplePaths X P)
+    (Z : Ω → ℝ) :
+    HasContinuousSamplePaths (fun t ω ↦ X t ω + Z ω) P := by
+  filter_upwards [hX] with ω hω
+  exact hω.add continuous_const
+
+/-- A time-independent offset cancels from every increment. -/
+theorem HasBrownianIncrements.add_randomOffset
+    {Ω : Type*} [MeasurableSpace Ω] {X : NNReal → Ω → ℝ}
+    {P : MeasureTheory.Measure Ω} (hX : HasBrownianIncrements X P)
+    (Z : Ω → ℝ) :
+    HasBrownianIncrements (fun t ω ↦ X t ω + Z ω) P := by
+  refine ⟨?_, ?_⟩
+  · intro n t ht
+    simpa only [add_sub_add_right_eq_sub] using hX.1 n t ht
+  · intro s t hst
+    simpa only [add_sub_add_right_eq_sub] using hX.2 s t hst
+
+/-- A nonzero random offset destroys the zero-time anchor of an anchored
+process. -/
+theorem not_isAnchoredAtZero_add_randomOffset
+    {Ω : Type*} [MeasurableSpace Ω] {X : NNReal → Ω → ℝ}
+    {P : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure P] {Z : Ω → ℝ}
+    (hX : IsAnchoredAtZero X P) (hZ : ∀ᵐ ω ∂P, Z ω ≠ 0) :
+    ¬ IsAnchoredAtZero (fun t ω ↦ X t ω + Z ω) P := by
+  intro hXZ
+  have hfalse : ∀ᵐ _ω ∂P, False := by
+    filter_upwards [hX, hZ, hXZ] with ω hXω hZω hXZω
+    simp only [Pi.zero_apply] at hXω hXZω
+    rw [hXω, zero_add] at hXZω
+    exact hZω hXZω
+  exact (Filter.Eventually.exists hfalse).elim fun _ω hω ↦ hω
+
+/-- The random-offset obstruction to the printed two-clause
+characterization.  Independence of the offset from the process is more than
+is needed: every nonzero time-independent offset cancels from increments. -/
+theorem randomOffsetObstruction
+    {Ω : Type*} [MeasurableSpace Ω] {X : NNReal → Ω → ℝ}
+    {P : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure P] {Z : Ω → ℝ}
+    (hX : IsStandardBrownianMotion X P) (hZ : ∀ᵐ ω ∂P, Z ω ≠ 0) :
+    HasContinuousSamplePaths (fun t ω ↦ X t ω + Z ω) P ∧
+      HasBrownianIncrements (fun t ω ↦ X t ω + Z ω) P ∧
+      ¬ IsAnchoredAtZero (fun t ω ↦ X t ω + Z ω) P :=
+  ⟨hX.1.add_randomOffset Z, hX.2.1.add_randomOffset Z,
+    not_isAnchoredAtZero_add_randomOffset hX.2.2 hZ⟩
+
+/-- A complete probability-space witness for the corrected Brownian
+characterization. -/
+structure StandardBrownianModel where
+  Ω : Type*
+  mΩ : MeasurableSpace Ω
+  P : @MeasureTheory.Measure Ω mΩ
+  probability : @MeasureTheory.IsProbabilityMeasure Ω mΩ P
+  X : NNReal → Ω → ℝ
+  isBrownian : @IsStandardBrownianMotion Ω mΩ X P
+
+end BrownianCharacterization
 
 end NumStability.HDP.Process.GaussianComparison
 
