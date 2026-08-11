@@ -202,6 +202,31 @@ theorem sqNormErrorWitness
     ∃ ω, ω ∉ N ∧ ‖x - Z ω‖ ^ 2 ≤ a :=
   exists_notMem_null_le_of_integral_le hY hEa hN
 
+/-- The averages obtained from ordered `k`-tuples of a finite generating
+set.  Distinct tuples are intentionally allowed to determine the same
+average. -/
+noncomputable def orderedAverageSet {α E : Type*} [Fintype α]
+    [AddCommMonoid E] [Module ℝ E] (point : α → E) (k : ℕ) : Finset E := by
+  classical
+  exact (Finset.univ : Finset (Fin k → α)).image fun tuple ↦
+    (k : ℝ)⁻¹ • ∑ j, point (tuple j)
+
+/-- The set of averages of ordered `k`-tuples from an `N`-element
+generating set has cardinality at most `N ^ k`.
+
+Source: Vershynin, proof of Corollary 0.0.4, printed page 4
+(`HDP-00-LEM-ORDERED-AVERAGE-CARD`). -/
+theorem card_orderedAverageSet_le {α E : Type*} [Fintype α]
+    [AddCommMonoid E] [Module ℝ E] (point : α → E) (k : ℕ) :
+    (orderedAverageSet point k).card ≤ Fintype.card α ^ k := by
+  classical
+  rw [orderedAverageSet]
+  calc
+    ((Finset.univ : Finset (Fin k → α)).image fun tuple ↦
+        (k : ℝ)⁻¹ • ∑ j, point (tuple j)).card ≤
+        (Finset.univ : Finset (Fin k → α)).card := Finset.card_image_le
+    _ = Fintype.card α ^ k := by simp
+
 end NumStability.HDP.Geometry.Convexity
 
 namespace NumStability.HDP.Contract
@@ -235,5 +260,13 @@ theorem hdp_00_hlem_hexpectation_hwitness
     (hEa : (∫ ω, Y ω ∂μ) ≤ a) (hN : μ N = 0) :
     ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
   Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
+
+/-- Stable source alias for `HDP-00-LEM-ORDERED-AVERAGE-CARD`. -/
+theorem hdp_00_hlem_hordered_haverage_hcard
+    {α E : Type*} [Fintype α] [AddCommMonoid E] [Module ℝ E]
+    (point : α → E) (k : ℕ) :
+    (Geometry.Convexity.orderedAverageSet point k).card ≤
+      Fintype.card α ^ k :=
+  Geometry.Convexity.card_orderedAverageSet_le point k
 
 end NumStability.HDP.Contract
