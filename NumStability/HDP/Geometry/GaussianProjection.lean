@@ -85,6 +85,22 @@ theorem gaussianMatrixProjection_hasGaussianLaw {m n : ℕ}
       (standardGaussianMatrix m n) :=
   gaussianMatrixProjection_isGaussianProcess.hasGaussianLaw_eval (z, x)
 
+/-- Scalar Gaussian matrix projections are centered. -/
+theorem integral_gaussianMatrixProjection {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    (∫ G : GaussianMatrixSample m n, ⟪z, gaussianMatrixMul G x⟫_ℝ
+      ∂standardGaussianMatrix m n) = 0 := by
+  rw [standardGaussianMatrix]
+  have hcongr :
+      (fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ) =ᵐ[
+        stdGaussian (GaussianMatrixSample m n)]
+        (fun G : GaussianMatrixSample m n ↦
+          ⟪gaussianMatrixProjectionDirection z x, G⟫_ℝ) := by
+    exact ae_of_all _ fun G ↦ inner_gaussianMatrixMul_eq_inner_projectionDirection G z x
+  rw [integral_congr_ae hcongr]
+  exact Process.GaussianMatrices.integral_inner_stdGaussian
+    (gaussianMatrixProjectionDirection z x)
+
 /-- Variance of a scalar Gaussian matrix projection, expressed by its
 flattened rank-one direction. -/
 theorem variance_gaussianMatrixProjection {m n : ℕ}
