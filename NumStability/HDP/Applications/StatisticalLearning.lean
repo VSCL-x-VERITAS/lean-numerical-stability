@@ -113,6 +113,22 @@ theorem booleanSquaredRisk_eq_misclassification
   rw [populationSquaredRisk, hpoint]
   exact MeasureTheory.integral_indicator_one hmis
 
+/-- Empirical risk and empirical-risk minimization, with attainment carried
+as an explicit certificate.
+
+Source: Vershynin, *High-Dimensional Probability*, Definition 8.4.3,
+printed page 217 (`HDP-08-DEF-8.4.3`). -/
+theorem empiricalRiskMinimizer_definition
+    {n : ℕ} {Ω S : Type*} (X : Fin n → Ω → S)
+    (target : S → ℝ) (H : Set (S → ℝ)) (fHat : S → ℝ) (ω : Ω) :
+    empiricalSquaredRisk X target fHat ω =
+        (n : ℝ)⁻¹ * ∑ i, (fHat (X i ω) - target (X i ω)) ^ 2 ∧
+      (IsEmpiricalRiskMinimizer X target H fHat ω ↔
+        fHat ∈ H ∧ ∀ f ∈ H,
+          empiricalSquaredRisk X target fHat ω ≤ empiricalSquaredRisk X target f ω) := by
+  refine ⟨rfl, ?_⟩
+  simp only [IsEmpiricalRiskMinimizer, isMinOn_iff]
+
 end NumStability.HDP.Applications.StatisticalLearning
 
 namespace NumStability.HDP.Contract
@@ -158,5 +174,18 @@ theorem hdp_08_heg_h8_d4_d2
       ν.real (Applications.StatisticalLearning.misclassificationSet target hypothesis) :=
   Applications.StatisticalLearning.booleanSquaredRisk_eq_misclassification
     ν target hypothesis hmis
+
+/-- Stable source alias for `HDP-08-DEF-8.4.3`. -/
+theorem hdp_08_hdef_h8_d4_d3
+    {n : ℕ} {Ω S : Type*} (X : Fin n → Ω → S)
+    (target : S → ℝ) (H : Set (S → ℝ)) (fHat : S → ℝ) (ω : Ω) :
+    Applications.StatisticalLearning.empiricalSquaredRisk X target fHat ω =
+        (n : ℝ)⁻¹ * ∑ i, (fHat (X i ω) - target (X i ω)) ^ 2 ∧
+      (Applications.StatisticalLearning.IsEmpiricalRiskMinimizer X target H fHat ω ↔
+        fHat ∈ H ∧ ∀ f ∈ H,
+          Applications.StatisticalLearning.empiricalSquaredRisk X target fHat ω ≤
+            Applications.StatisticalLearning.empiricalSquaredRisk X target f ω) :=
+  Applications.StatisticalLearning.empiricalRiskMinimizer_definition
+    X target H fHat ω
 
 end NumStability.HDP.Contract
