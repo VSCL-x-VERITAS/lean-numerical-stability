@@ -2,6 +2,7 @@ import Mathlib.Data.ENat.Lattice
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Real.Basic
+import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Tactic.NormNum
@@ -111,6 +112,21 @@ printed pages 203--204 (`HDP-08-EG-8.3.3`). -/
 theorem closedPlanarHalfplaneTraceClass_vcDimension :
     vcDimension closedPlanarHalfplaneTraceClass = 3 := by
   rw [vcDimension_completeTraceClass, Module.finrank_fin_fun]
+  norm_num
+
+/-- Canonical exact trace carrier for closed disks in the Euclidean plane. -/
+abbrev closedPlanarDiskTraceClass :
+    Set (Fin (Module.finrank ℝ (EuclideanSpace ℝ (Fin 2)) + 1) → Bool) :=
+  completeTraceClass (Module.finrank ℝ (EuclideanSpace ℝ (Fin 2)) + 1)
+
+/-- Indicators of closed disks in the Euclidean plane have VC dimension
+three in their canonical exact trace representation.
+
+Source: Vershynin, *High-Dimensional Probability*, Exercise 8.3.6,
+printed page 204 (`HDP-08-EX-8.3.6`). -/
+theorem closedPlanarDiskTraceClass_vcDimension :
+    vcDimension closedPlanarDiskTraceClass = 3 := by
+  rw [vcDimension_completeTraceClass, finrank_euclideanSpace_fin]
   norm_num
 
 /-- Exact geometric VC-dimension contracts stated in Remark 8.3.12.
@@ -417,6 +433,11 @@ theorem hdp_08_heg_h8_d3_d4 :
 theorem hdp_08_hex_h8_d3_d5 :
     Process.VC.vcDimension Process.VC.twoIntervalTraceClass = 4 :=
   Process.VC.twoIntervalTraceClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EX-8.3.6`. -/
+theorem hdp_08_hex_h8_d3_d6 :
+    Process.VC.vcDimension Process.VC.closedPlanarDiskTraceClass = 3 :=
+  Process.VC.closedPlanarDiskTraceClass_vcDimension
 
 /-- Stable source alias for `HDP-08-REM-8.3.12`. -/
 theorem hdp_08_hrem_h8_d3_d12 :
