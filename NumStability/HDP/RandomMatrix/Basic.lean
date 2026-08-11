@@ -91,6 +91,9 @@ structure MatrixInterface : Type 1 where
   matrix : ℕ → ℕ → Type
   vector : ℕ → Type
   fnView : ∀ {m n : ℕ}, matrix m n → Type
+  euclideanLin : ∀ {m n : ℕ}, RealMatrix m n → RealVector n →ₗ[ℝ] RealVector m
+  transpose : ∀ {m n : ℕ}, RealMatrix m n → RealMatrix n m
+  rank : ∀ {m n : ℕ}, RealMatrix m n → ℕ
   singularValue : ∀ {m n : ℕ}, matrix m n → Fin n → ℝ
   frobeniusNorm : ∀ {m n : ℕ}, matrix m n → ℝ
   operatorNorm : ∀ {m n : ℕ}, matrix m n → ℝ
@@ -100,6 +103,9 @@ noncomputable def matrixInterface : MatrixInterface where
   matrix := RealMatrix
   vector := RealVector
   fnView := fun {m n} _ => RealMatrixFn m n
+  euclideanLin := toEuclideanLin
+  transpose := transpose
+  rank := rank
   singularValue := singularValue
   frobeniusNorm := frobeniusNorm
   operatorNorm := operatorNorm
