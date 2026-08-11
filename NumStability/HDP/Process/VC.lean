@@ -117,6 +117,47 @@ def finsetIndicator {Ω : Type*} [DecidableEq Ω] (A : Finset Ω) : Ω → Bool 
   funext x
   cases h : f x <;> simp [trueSupport, finsetIndicator, h]
 
+/-- The four binary strings `001`, `010`, `100`, and `111`, represented by
+their supports in `Fin 3`. -/
+def fourStringClass : Set (Fin 3 → Bool) :=
+  {f | trueSupport f ∈
+    ({({2} : Finset (Fin 3)), {1}, {0}, Finset.univ} : Finset (Finset (Fin 3)))}
+
+/-- The coordinates corresponding to the first and third bits are shattered
+by the four-string class. -/
+theorem fourStringClass_shatters_pair :
+    Shatters fourStringClass ({0, 2} : Finset (Fin 3)) := by
+  unfold Shatters fourStringClass trueSupport
+  native_decide
+
+/-- The full three-point domain is not shattered by the four-string class. -/
+theorem fourStringClass_not_shatters_univ :
+    ¬Shatters fourStringClass (Finset.univ : Finset (Fin 3)) := by
+  unfold Shatters fourStringClass trueSupport
+  native_decide
+
+/-- The class `{001, 010, 100, 111}` on three points has VC dimension two.
+
+Source: Vershynin, *High-Dimensional Probability*, Example 8.3.4,
+printed page 204 (`HDP-08-EG-8.3.4`). -/
+theorem fourStringClass_vcDimension :
+    vcDimension fourStringClass = 2 := by
+  apply le_antisymm
+  · apply sSup_le
+    rintro _ ⟨A, hA, rfl⟩
+    have hcard : A.card ≤ 2 := by
+      by_contra hnot
+      have hle : A.card ≤ 3 := by
+        simpa using Finset.card_le_card (Finset.subset_univ A)
+      have hcard3 : A.card = 3 := by omega
+      have hAuniv : A = Finset.univ :=
+        Finset.eq_of_subset_of_card_le (Finset.subset_univ A) (by simpa [hcard3])
+      subst A
+      exact fourStringClass_not_shatters_univ hA
+    exact_mod_cast hcard
+  · apply le_sSup
+    exact ⟨{0, 2}, fourStringClass_shatters_pair, by simp⟩
+
 /-- Binary strings in the Hamming ball are in bijection with subsets of
 cardinality at most `d`. -/
 def hammingBallEquivBoundedFinsets (n d : ℕ) :
@@ -177,6 +218,11 @@ namespace NumStability.HDP.Contract
 noncomputable def hdp_08_hdef_h8_d3_d1 {Ω : Type*} :
     Set (Ω → Bool) → WithTop ℕ :=
   Process.VC.vcDimension
+
+/-- Stable source alias for `HDP-08-EG-8.3.4`. -/
+theorem hdp_08_heg_h8_d3_d4 :
+    Process.VC.vcDimension Process.VC.fourStringClass = 2 :=
+  Process.VC.fourStringClass_vcDimension
 
 /-- Stable source alias for `HDP-08-REM-8.3.12`. -/
 theorem hdp_08_hrem_h8_d3_d12 :
