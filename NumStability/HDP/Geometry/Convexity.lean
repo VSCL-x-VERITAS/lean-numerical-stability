@@ -503,19 +503,6 @@ theorem hdp_00_hlem_hexpectation_hwitness
     ∃ ω, ω ∉ N ∧ 0 ≤ Y ω ∧ Y ω ≤ a :=
   Geometry.Convexity.nonnegativeExpectationWitness hY hYnonneg hEa hN
 
-/-- Stable source alias for `HDP-00-EX-0.0.3A`. -/
-theorem hdp_00_hex_h0_d0_d3a
-    {ι Ω E : Type*} [Fintype ι] [MeasurableSpace Ω]
-    {μ : MeasureTheory.Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
-    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
-    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
-    (Z : ι → Ω → E) (hZ : ∀ i, MeasureTheory.MemLp (Z i) 2 μ)
-    (hmean : ∀ i, ∫ ω, Z i ω ∂μ = 0)
-    (hindep : ProbabilityTheory.iIndepFun Z μ) :
-    (∫ ω, ‖∑ i, Z i ω‖ ^ 2 ∂μ) =
-      ∑ i, ∫ ω, ‖Z i ω‖ ^ 2 ∂μ :=
-  Geometry.Convexity.independentMeanZero_secondMoment_sum Z hZ hmean hindep
-
 /-- Stable source alias for `HDP-00-LEM-ORDERED-AVERAGE-CARD`. -/
 theorem hdp_00_hlem_hordered_haverage_hcard
     {α E : Type*} [Fintype α] [AddCommMonoid E] [Module ℝ E]
