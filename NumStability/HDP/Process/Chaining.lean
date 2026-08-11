@@ -30,6 +30,9 @@ structure IndexedRealProcess (T Ω : Type*) [MeasurableSpace Ω] (μ : Measure �
   eval : T → Ω → ℝ
   measurable_eval : ∀ t, Measurable (eval t)
   probability_measure : IsProbabilityMeasure μ
+  finiteSupremumWithBot : Finset T → Ω → WithBot ℝ
+  finiteSupremumWithBot_eq : ∀ (I : Finset T) (ω : Ω),
+    finiteSupremumWithBot I ω = I.sup (fun t => (eval t ω : WithBot ℝ))
   finiteSupremum : ∀ I : Finset T, I.Nonempty → Ω → ℝ
   finiteSupremum_eq : ∀ (I : Finset T) (hI : I.Nonempty) (ω : Ω),
     finiteSupremum I hI ω = I.sup' hI (fun t => eval t ω)
@@ -45,6 +48,8 @@ noncomputable def measurableIndexedRealProcess
   eval := X
   measurable_eval := hX
   probability_measure := inferInstance
+  finiteSupremumWithBot := fun I ω => I.sup (fun t => (X t ω : WithBot ℝ))
+  finiteSupremumWithBot_eq := by intros; rfl
   finiteSupremum := fun I hI ω => I.sup' hI (fun t => X t ω)
   finiteSupremum_eq := by intros; rfl
   measurable_finiteSupremum := by
