@@ -10,6 +10,7 @@ import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.Probability.Independence.Basic
+import Mathlib.Probability.HasLawExists
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 import Mathlib.Topology.MetricSpace.CoveringNumbers
@@ -278,6 +279,58 @@ theorem weight_lt_fiberWeight_of_coincident
   unfold fiberWeight
   change weight i < ∑ k ∈ fiber, weight k
   linarith
+
+/-- Construct finitely many iid copies of the random point encoded by
+nonnegative normalized index weights.  The copies have the corrected
+pushforward law, are mutually independent, are integrable, and retain the
+weighted-sum expectation.
+
+Source: Vershynin, proof of Theorem 0.0.2, printed page 2
+(`HDP-00-LEM-INDEPENDENT-COPIES-FINITE`). -/
+theorem finiteWeight_iidCopies
+    {ι : Type u} {E : Type*} [Fintype ι]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    [MeasurableSpace E]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    (point : ι → E) (weight : ι → ℝ)
+    (hweight : ∀ i, 0 ≤ weight i) (hsum : ∑ i, weight i = 1) (k : ℕ) :
+    ∃ (p : PMF ι) (Ω : Type u) (_ : MeasurableSpace Ω)
+        (P : MeasureTheory.Measure Ω) (Z : Fin k → Ω → E),
+      (∀ i, p i = ENNReal.ofReal (weight i)) ∧
+      (∀ j, ProbabilityTheory.HasLaw (Z j)
+        (MeasureTheory.Measure.map point p.toMeasure) P) ∧
+      ProbabilityTheory.iIndepFun Z P ∧
+      MeasureTheory.IsProbabilityMeasure P ∧
+      (∀ j, MeasureTheory.Integrable (Z j) P) ∧
+      ∀ j, (∫ ω, Z j ω ∂P) = ∑ i, weight i • point i := by
+  obtain ⟨p, hp, _hpushforward, hpmean⟩ :=
+    finiteWeightPMF_exists point weight hweight hsum
+  obtain ⟨Ω, mΩ, P, I, hImeas, hIlaw, hIindependent, hP⟩ :=
+    ProbabilityTheory.exists_iid (Fin k) p.toMeasure
+  let Z : Fin k → Ω → E := fun j ↦ point ∘ I j
+  have hpointMeasurable : Measurable point := measurable_of_finite point
+  have hpointIntegrable : MeasureTheory.Integrable point p.toMeasure :=
+    MeasureTheory.Integrable.of_finite
+  have hpointLaw : ProbabilityTheory.HasLaw point
+      (MeasureTheory.Measure.map point p.toMeasure) p.toMeasure := {
+    aemeasurable := hpointMeasurable.aemeasurable
+    map_eq := rfl }
+  refine ⟨p, Ω, mΩ, P, Z, hp, ?_, ?_, hP, ?_, ?_⟩
+  · intro j
+    exact hpointLaw.comp (hIlaw j)
+  · exact hIindependent.comp (fun _ ↦ point) (fun _ ↦ hpointMeasurable)
+  · intro j
+    have hpull : MeasureTheory.Integrable point
+        (MeasureTheory.Measure.map (I j) P) := by
+      rw [(hIlaw j).map_eq]
+      exact hpointIntegrable
+    simpa [Z] using hpull.comp_aemeasurable (hIlaw j).aemeasurable
+  · intro j
+    calc
+      (∫ ω, Z j ω ∂P) = ∫ i, point i ∂p.toMeasure := by
+        simpa [Z] using
+          (hIlaw j).integral_comp hpointIntegrable.aestronglyMeasurable
+      _ = ∑ i, weight i • point i := hpmean
 
 /-- The book's diameter notation, bound directly to Mathlib's metric
 diameter.  For unbounded sets, statements using this real-valued diameter
@@ -796,6 +849,25 @@ theorem hdp_00_hlem_hfinite_hlaw_hfrom_hweights
         ENNReal.ofReal (Geometry.Convexity.fiberWeight point weight z)) ∧
       (∫ i, point i ∂p.toMeasure) = ∑ i, weight i • point i :=
   Geometry.Convexity.finiteWeightPMF_exists point weight hweight hsum
+
+/-- Stable source alias for `HDP-00-LEM-INDEPENDENT-COPIES-FINITE`. -/
+theorem hdp_00_hlem_hindependent_hcopies_hfinite
+    {ι : Type u} {E : Type*} [Fintype ι]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    [MeasurableSpace E]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    (point : ι → E) (weight : ι → ℝ)
+    (hweight : ∀ i, 0 ≤ weight i) (hsum : ∑ i, weight i = 1) (k : ℕ) :
+    ∃ (p : PMF ι) (Ω : Type u) (_ : MeasurableSpace Ω)
+        (P : MeasureTheory.Measure Ω) (Z : Fin k → Ω → E),
+      (∀ i, p i = ENNReal.ofReal (weight i)) ∧
+      (∀ j, ProbabilityTheory.HasLaw (Z j)
+        (MeasureTheory.Measure.map point p.toMeasure) P) ∧
+      ProbabilityTheory.iIndepFun Z P ∧
+      MeasureTheory.IsProbabilityMeasure P ∧
+      (∀ j, MeasureTheory.Integrable (Z j) P) ∧
+      ∀ j, (∫ ω, Z j ω ∂P) = ∑ i, weight i • point i :=
+  Geometry.Convexity.finiteWeight_iidCopies point weight hweight hsum k
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
