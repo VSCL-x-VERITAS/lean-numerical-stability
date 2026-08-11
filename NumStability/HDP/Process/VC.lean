@@ -1,6 +1,9 @@
 import Mathlib.Data.ENat.Lattice
 import Mathlib.Data.Finset.Card
+import Mathlib.Data.Finset.Sort
+import Mathlib.Data.Real.Basic
 import Mathlib.SetTheory.Cardinal.Finite
+import Mathlib.Tactic.NormNum
 
 /-!
 # Vapnik--Chervonenkis dimension
@@ -18,6 +21,18 @@ Source: Vershynin, *High-Dimensional Probability*, Definition 8.3.1,
 printed pages 202--203 (`HDP-08-DEF-8.3.1`). -/
 def Shatters {Ω : Type*} (𝓕 : Set (Ω → Bool)) (A : Finset Ω) : Prop :=
   ∀ g : A → Bool, ∃ f ∈ 𝓕, ∀ x : A, f x = g x
+
+/-- Shattering is inherited by subsets. -/
+theorem shatters_mono {Ω : Type*} {𝓕 : Set (Ω → Bool)} {A B : Finset Ω}
+    (hA : Shatters 𝓕 A) (hBA : B ⊆ A) : Shatters 𝓕 B := by
+  classical
+  intro g
+  let gA : A → Bool := fun x ↦ if hx : x.1 ∈ B then g ⟨x.1, hx⟩ else false
+  obtain ⟨f, hf, htrace⟩ := hA gA
+  refine ⟨f, hf, ?_⟩
+  intro x
+  have hxA : x.1 ∈ A := hBA x.2
+  simpa [gA, x.2] using htrace ⟨x.1, hxA⟩
 
 /-- The VC dimension of a Boolean function class is the supremum, in
 `WithTop ℕ`, of the cardinalities of finite sets that it shatters.  Thus an
@@ -116,6 +131,112 @@ def finsetIndicator {Ω : Type*} [DecidableEq Ω] (A : Finset Ω) : Ω → Bool 
     (f : Ω → Bool) : finsetIndicator (trueSupport f) = f := by
   funext x
   cases h : f x <;> simp [trueSupport, finsetIndicator, h]
+
+/-- The Boolean indicator of a closed real interval. -/
+noncomputable def closedIntervalIndicator (a b : ℝ) : ℝ → Bool :=
+  fun x ↦ decide (a ≤ x ∧ x ≤ b)
+
+/-- The class of indicators of nonempty closed intervals in `ℝ`. -/
+def closedIntervalClass : Set (ℝ → Bool) :=
+  {f | ∃ a b : ℝ, a ≤ b ∧ f = closedIntervalIndicator a b}
+
+/-- Closed intervals realize every labeling of the two-point set `{0,1}`. -/
+theorem closedIntervalClass_shatters_pair :
+    Shatters closedIntervalClass ({0, 1} : Finset ℝ) := by
+  intro g
+  let x0 : ({0, 1} : Finset ℝ) := ⟨0, by simp⟩
+  let x1 : ({0, 1} : Finset ℝ) := ⟨1, by simp⟩
+  cases h0 : g x0 <;> cases h1 : g x1
+  · refine ⟨closedIntervalIndicator 2 2, ⟨2, 2, le_rfl, rfl⟩, ?_⟩
+    intro x
+    have hx : (x : ℝ) = 0 ∨ (x : ℝ) = 1 := by
+      simpa only [Finset.mem_insert, Finset.mem_singleton] using x.2
+    rcases hx with hx | hx
+    · have hxx : x = x0 := Subtype.ext hx
+      subst x
+      norm_num [x0, closedIntervalIndicator, h0]
+    · have hxx : x = x1 := Subtype.ext hx
+      subst x
+      norm_num [x1, closedIntervalIndicator, h1]
+  · refine ⟨closedIntervalIndicator 1 1, ⟨1, 1, le_rfl, rfl⟩, ?_⟩
+    intro x
+    have hx : (x : ℝ) = 0 ∨ (x : ℝ) = 1 := by
+      simpa only [Finset.mem_insert, Finset.mem_singleton] using x.2
+    rcases hx with hx | hx
+    · have hxx : x = x0 := Subtype.ext hx
+      subst x
+      norm_num [x0, closedIntervalIndicator, h0]
+    · have hxx : x = x1 := Subtype.ext hx
+      subst x
+      norm_num [x1, closedIntervalIndicator, h1]
+  · refine ⟨closedIntervalIndicator 0 0, ⟨0, 0, le_rfl, rfl⟩, ?_⟩
+    intro x
+    have hx : (x : ℝ) = 0 ∨ (x : ℝ) = 1 := by
+      simpa only [Finset.mem_insert, Finset.mem_singleton] using x.2
+    rcases hx with hx | hx
+    · have hxx : x = x0 := Subtype.ext hx
+      subst x
+      norm_num [x0, closedIntervalIndicator, h0]
+    · have hxx : x = x1 := Subtype.ext hx
+      subst x
+      norm_num [x1, closedIntervalIndicator, h1]
+  · refine ⟨closedIntervalIndicator 0 1, ⟨0, 1, zero_le_one, rfl⟩, ?_⟩
+    intro x
+    have hx : (x : ℝ) = 0 ∨ (x : ℝ) = 1 := by
+      simpa only [Finset.mem_insert, Finset.mem_singleton] using x.2
+    rcases hx with hx | hx
+    · have hxx : x = x0 := Subtype.ext hx
+      subst x
+      norm_num [x0, closedIntervalIndicator, h0]
+    · have hxx : x = x1 := Subtype.ext hx
+      subst x
+      norm_num [x1, closedIntervalIndicator, h1]
+
+/-- A three-point subset of a linear order cannot be shattered by interval
+indicators: an interval containing the two extreme points contains the middle
+point as well. -/
+theorem closedIntervalClass_not_shatters_card_three
+    (B : Finset ℝ) (hcard : B.card = 3) :
+    ¬Shatters closedIntervalClass B := by
+  intro hB
+  let e : Fin 3 ↪o ℝ := B.orderEmbOfFin hcard
+  have he_mem (i : Fin 3) : e i ∈ B := Finset.orderEmbOfFin_mem B hcard i
+  let g : B → Bool := fun x ↦ decide (x.1 = e 0 ∨ x.1 = e 2)
+  obtain ⟨_f, ⟨a, b, _hab, rfl⟩, htrace⟩ := hB g
+  have h0 : a ≤ e 0 ∧ e 0 ≤ b := by
+    have ht := htrace ⟨e 0, he_mem 0⟩
+    simpa [g, closedIntervalIndicator] using ht
+  have h2 : a ≤ e 2 ∧ e 2 ≤ b := by
+    have ht := htrace ⟨e 2, he_mem 2⟩
+    simpa [g, closedIntervalIndicator] using ht
+  have h1false : closedIntervalIndicator a b (e 1) = false := by
+    have ht := htrace ⟨e 1, he_mem 1⟩
+    simpa [g] using ht
+  have he01 : e 0 < e 1 := e.strictMono (by decide)
+  have he12 : e 1 < e 2 := e.strictMono (by decide)
+  have h1true : closedIntervalIndicator a b (e 1) = true := by
+    simp [closedIntervalIndicator, h0.1.trans he01.le, he12.le.trans h2.2]
+  exact Bool.false_ne_true (h1false.symm.trans h1true)
+
+/-- Closed-interval indicators on the real line have VC dimension exactly
+two.
+
+Source: Vershynin, *High-Dimensional Probability*, Example 8.3.2,
+printed pages 203--204 (`HDP-08-EG-8.3.2`). -/
+theorem closedIntervalClass_vcDimension :
+    vcDimension closedIntervalClass = 2 := by
+  apply le_antisymm
+  · apply sSup_le
+    rintro _ ⟨A, hA, rfl⟩
+    have hcard : A.card ≤ 2 := by
+      by_contra hnot
+      have hthree : 3 ≤ A.card := by omega
+      obtain ⟨B, hBA, hBcard⟩ := Finset.exists_subset_card_eq hthree
+      exact closedIntervalClass_not_shatters_card_three B hBcard
+        (shatters_mono hA hBA)
+    exact_mod_cast hcard
+  · apply le_sSup
+    exact ⟨{0, 1}, closedIntervalClass_shatters_pair, by simp⟩
 
 /-- The four binary strings `001`, `010`, `100`, and `111`, represented by
 their supports in `Fin 3`. -/
@@ -218,6 +339,11 @@ namespace NumStability.HDP.Contract
 noncomputable def hdp_08_hdef_h8_d3_d1 {Ω : Type*} :
     Set (Ω → Bool) → WithTop ℕ :=
   Process.VC.vcDimension
+
+/-- Stable source alias for `HDP-08-EG-8.3.2`. -/
+theorem hdp_08_heg_h8_d3_d2 :
+    Process.VC.vcDimension Process.VC.closedIntervalClass = 2 :=
+  Process.VC.closedIntervalClass_vcDimension
 
 /-- Stable source alias for `HDP-08-EG-8.3.4`. -/
 theorem hdp_08_heg_h8_d3_d4 :
