@@ -47,12 +47,55 @@ noncomputable def gaussianMatrixMul {m n : ℕ}
     EuclideanSpace ℝ (Fin m) :=
   WithLp.toLp 2 (fun i ↦ ∑ j, G (i, j) * x j)
 
+/-- Transpose multiplication by a flattened Gaussian matrix. -/
+noncomputable def gaussianMatrixTransposeMul {m n : ℕ}
+    (G : GaussianMatrixSample m n) (z : EuclideanSpace ℝ (Fin m)) :
+    EuclideanSpace ℝ (Fin n) :=
+  WithLp.toLp 2 (fun j ↦ ∑ i, G (i, j) * z i)
+
 /-- The flattened rank-one direction for the scalar projection
 `⟪z, Gx⟫`. -/
 def gaussianMatrixProjectionDirection {m n : ℕ}
     (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
     GaussianMatrixSample m n :=
   WithLp.toLp 2 (fun p ↦ z p.1 * x p.2)
+
+theorem gaussianMatrixProjectionDirection_eq_rankOneVector {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    gaussianMatrixProjectionDirection z x =
+      Process.GaussianMatrices.rankOneVector z x := rfl
+
+theorem norm_sq_gaussianMatrixProjectionDirection {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    ‖gaussianMatrixProjectionDirection z x‖ ^ 2 = ‖z‖ ^ 2 * ‖x‖ ^ 2 := by
+  rw [gaussianMatrixProjectionDirection]
+  calc
+    ‖WithLp.toLp 2 (fun p : Fin m × Fin n ↦ z p.1 * x p.2)‖ ^ 2 =
+        ∑ p : Fin m × Fin n, ‖z p.1 * x p.2‖ ^ 2 :=
+      EuclideanSpace.norm_sq_eq _
+    _ = ∑ p : Fin m × Fin n, (z p.1) ^ 2 * (x p.2) ^ 2 := by
+      apply Finset.sum_congr rfl
+      intro p hp
+      rw [Real.norm_eq_abs, abs_mul, mul_pow, sq_abs, sq_abs]
+    _ = (∑ i : Fin m, (z i) ^ 2) * (∑ j : Fin n, (x j) ^ 2) := by
+      rw [Fintype.sum_prod_type]
+      symm
+      rw [Finset.sum_mul]
+      apply Finset.sum_congr rfl
+      intro i hi
+      rw [Finset.mul_sum]
+    _ = ‖z‖ ^ 2 * ‖x‖ ^ 2 := by
+      have hz : (∑ i : Fin m, (z i) ^ 2) = ‖z‖ ^ 2 := by
+        calc
+          ∑ i : Fin m, (z i) ^ 2 = ∑ i : Fin m, ‖z i‖ ^ 2 := by
+            simp [Real.norm_eq_abs, sq_abs]
+          _ = ‖z‖ ^ 2 := (EuclideanSpace.norm_sq_eq z).symm
+      have hx : (∑ j : Fin n, (x j) ^ 2) = ‖x‖ ^ 2 := by
+        calc
+          ∑ j : Fin n, (x j) ^ 2 = ∑ j : Fin n, ‖x j‖ ^ 2 := by
+            simp [Real.norm_eq_abs, sq_abs]
+          _ = ‖x‖ ^ 2 := (EuclideanSpace.norm_sq_eq x).symm
+      rw [hz, hx]
 
 private theorem real_inner_eq_mul (a b : ℝ) : ⟪a, b⟫_ℝ = a * b := by
   rw [show a = a • (1 : ℝ) by simp, show b = b • (1 : ℝ) by simp]
@@ -80,6 +123,47 @@ theorem inner_gaussianMatrixMul_eq_inner_projectionDirection {m n : ℕ}
       apply Finset.sum_congr rfl
       intro j hj
       ring
+
+/-- Scalar projection can equivalently be read as support in the transposed
+Gaussian direction. -/
+theorem inner_gaussianMatrixMul_eq_inner_transposeMul {m n : ℕ}
+    (G : GaussianMatrixSample m n)
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    ⟪z, gaussianMatrixMul G x⟫_ℝ =
+      ⟪gaussianMatrixTransposeMul G z, x⟫_ℝ := by
+  rw [gaussianMatrixMul, gaussianMatrixTransposeMul]
+  simp only [PiLp.inner_apply, real_inner_eq_mul]
+  calc
+    ∑ i, z i * ∑ j, G (i, j) * x j =
+        ∑ i, ∑ j, z i * (G (i, j) * x j) := by
+      apply Finset.sum_congr rfl
+      intro i hi
+      rw [Finset.mul_sum]
+    _ = ∑ j, (∑ i, G (i, j) * z i) * x j := by
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl
+      intro j hj
+      rw [Finset.sum_mul]
+      apply Finset.sum_congr rfl
+      intro i hi
+      ring
+
+/-- The scalar supremum over a difference set is the Gaussian support of
+`T - T` in the transposed matrix direction. -/
+theorem gaussianSupport_transposeMul_difference {m n : ℕ}
+    (G : GaussianMatrixSample m n) (z : EuclideanSpace ℝ (Fin m))
+    (T : Set (EuclideanSpace ℝ (Fin n))) :
+    GaussianWidth.gaussianSupport (T - T) (gaussianMatrixTransposeMul G z) =
+      sSup ((fun x : EuclideanSpace ℝ (Fin n) ↦
+        ⟪z, gaussianMatrixMul G x⟫_ℝ) '' (T - T)) := by
+  unfold GaussianWidth.gaussianSupport
+  congr 1
+  ext r
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨x, hx, inner_gaussianMatrixMul_eq_inner_transposeMul G z x⟩
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨x, hx, (inner_gaussianMatrixMul_eq_inner_transposeMul G z x).symm⟩
 
 /-- The scalar family `(z,x,G) ↦ ⟪z,Gx⟫` is a Gaussian process under the
 standard Gaussian matrix law. -/
@@ -135,6 +219,13 @@ theorem variance_gaussianMatrixProjection {m n : ℕ}
   exact (variance_congr hcongr).trans
     (Process.GaussianMatrices.variance_inner_stdGaussian
       (gaussianMatrixProjectionDirection z x))
+
+/-- Variance of a scalar projection in the explicit product form. -/
+theorem variance_gaussianMatrixProjection_eq_norm_sq_mul {m n : ℕ}
+    (z : EuclideanSpace ℝ (Fin m)) (x : EuclideanSpace ℝ (Fin n)) :
+    Var[fun G : GaussianMatrixSample m n ↦ ⟪z, gaussianMatrixMul G x⟫_ℝ;
+      standardGaussianMatrix m n] = ‖z‖ ^ 2 * ‖x‖ ^ 2 := by
+  rw [variance_gaussianMatrixProjection, norm_sq_gaussianMatrixProjectionDirection]
 
 /-- Scalar projections of a standard Gaussian matrix are sub-Gaussian with
 their exact variance parameter. -/
