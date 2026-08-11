@@ -1069,6 +1069,67 @@ theorem card_orderedAverageSet_le {α E : Type*} [Fintype α]
         (Finset.univ : Finset (Fin k → α)).card := Finset.card_image_le
     _ = Fintype.card α ^ k := by simp
 
+/-- Choosing `k = ⌈1 / ε²⌉` makes the empirical-method error scale
+`1 / √k` at most `ε`. -/
+theorem one_div_sqrt_natCeil_inv_sq_le {ε : ℝ} (hε : 0 < ε) :
+    1 / Real.sqrt (Nat.ceil (1 / ε ^ 2) : ℝ) ≤ ε := by
+  let k : ℕ := Nat.ceil (1 / ε ^ 2)
+  have hk : 0 < k := Nat.ceil_pos.mpr (by positivity)
+  have hkReal : 0 < (k : ℝ) := by exact_mod_cast hk
+  have hεsq : 0 < ε ^ 2 := sq_pos_of_pos hε
+  have hceil : 1 / ε ^ 2 ≤ (k : ℝ) := Nat.le_ceil _
+  have hinv : (k : ℝ)⁻¹ ≤ ε ^ 2 := by
+    simpa only [one_div] using (one_div_le hkReal hεsq).2 hceil
+  have hsqrt : 0 < Real.sqrt (k : ℝ) := Real.sqrt_pos.2 hkReal
+  rw [← sq_le_sq₀ (div_nonneg zero_le_one hsqrt.le) hε.le]
+  rw [div_pow, one_pow, Real.sq_sqrt hkReal.le]
+  simpa only [one_div] using hinv
+
+/-- Ordered averages of `k = ⌈1 / ε²⌉` vertices form the finite cover in
+Corollary 0.0.4, with at most `N^k` centers for `N` listed vertices.
+
+Source: Vershynin, Corollary 0.0.4, printed pages 3--4
+(`HDP-00-COR-0.0.4`). -/
+theorem finitePolytope_orderedAverage_cover
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (vertices : Finset E) (hdiam : diameter (vertices : Set E) ≤ 1)
+    (ε : NNReal) (hε : 0 < ε) :
+    let k := Nat.ceil (1 / (ε : ℝ) ^ 2)
+    IsFiniteClosedCover (finitePolytope vertices)
+        (orderedAverageSet (fun v : ↥vertices ↦ (v : E)) k) ε ∧
+      (orderedAverageSet (fun v : ↥vertices ↦ (v : E)) k).card ≤
+        vertices.card ^ k := by
+  classical
+  let k : ℕ := Nat.ceil (1 / (ε : ℝ) ^ 2)
+  let vertex : ↥vertices → E := fun v ↦ (v : E)
+  have hk : 0 < k := Nat.ceil_pos.mpr (by positivity)
+  have hscale : 1 / Real.sqrt (k : ℝ) ≤ (ε : ℝ) := by
+    exact one_div_sqrt_natCeil_inv_sq_le (by exact_mod_cast hε)
+  have hbounded : Bornology.IsBounded (vertices : Set E) :=
+    vertices.finite_toSet.isBounded
+  have hdiamNonneg : 0 ≤ diameter (vertices : Set E) := Metric.diam_nonneg
+  have hdiamUnit : diameter (vertices : Set E) ≤ 1 := by
+    rw [← abs_of_nonneg hdiamNonneg]
+    simpa only [abs_of_nonneg hdiamNonneg] using hdiam
+  constructor
+  · rw [isFiniteClosedCover_iff]
+    intro y hy
+    have hyHull : y ∈ convexHull ℝ (vertices : Set E) := by
+      simpa only [finitePolytope] using hy
+    obtain ⟨sample, hsample, herror⟩ :=
+      approximateCaratheodory_unitDiameter hbounded hdiamUnit hyHull k hk
+    let tuple : Fin k → ↥vertices := fun j ↦ ⟨sample j, hsample j⟩
+    let center : E := (k : ℝ)⁻¹ • ∑ j, vertex (tuple j)
+    refine ⟨center, ?_, ?_⟩
+    · rw [orderedAverageSet]
+      exact Finset.mem_image.mpr ⟨tuple, Finset.mem_univ tuple, rfl⟩
+    · rw [dist_eq_norm]
+      simpa only [center, vertex, tuple] using herror.trans hscale
+  · simpa only [vertex, Fintype.card_coe] using
+      card_orderedAverageSet_le vertex k
+
 end NumStability.HDP.Geometry.Convexity
 
 namespace NumStability.HDP.Contract
@@ -1219,5 +1280,22 @@ theorem hdp_00_hlem_hordered_haverage_hcard
     (Geometry.Convexity.orderedAverageSet point k).card ≤
       Fintype.card α ^ k :=
   Geometry.Convexity.card_orderedAverageSet_le point k
+
+/-- Stable source alias for `HDP-00-COR-0.0.4`. -/
+theorem hdp_00_hcor_h0_d0_d4
+    {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (vertices : Finset E)
+    (hdiam : Geometry.Convexity.diameter (vertices : Set E) ≤ 1)
+    (ε : NNReal) (hε : 0 < ε) :
+    let k := Nat.ceil (1 / (ε : ℝ) ^ 2)
+    Geometry.Convexity.IsFiniteClosedCover
+        (Geometry.Convexity.finitePolytope vertices)
+        (Geometry.Convexity.orderedAverageSet
+          (fun v : ↥vertices ↦ (v : E)) k) ε ∧
+      (Geometry.Convexity.orderedAverageSet
+          (fun v : ↥vertices ↦ (v : E)) k).card ≤ vertices.card ^ k :=
+  Geometry.Convexity.finitePolytope_orderedAverage_cover vertices hdiam ε hε
 
 end NumStability.HDP.Contract
