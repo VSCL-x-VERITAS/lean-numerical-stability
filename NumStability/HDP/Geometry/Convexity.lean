@@ -173,6 +173,37 @@ theorem caratheodory_sparse_convexCombination
   exact hindependent.card_le_finrank_succ.trans
     (Nat.add_le_add_right (Submodule.finrank_le _) 1)
 
+/-- The centroid of an affine-independent finite family cannot lie in the
+convex hull obtained by deleting any one vertex.  For a family indexed by
+`Fin (n + 1)`, this is the canonical simplex witness showing that the
+`n + 1` bound in Carathéodory's theorem is sharp.
+
+Source: Vershynin, prose after Theorem 0.0.1, printed page 2
+(`HDP-00-EXAMPLE-SIMPLEX-SHARPNESS`). -/
+theorem simplexCentroid_not_mem_convexHull_without_vertex
+    {ι E : Type*} [Fintype ι] [Nonempty ι]
+    [AddCommGroup E] [Module ℝ E]
+    (point : ι → E) (hindependent : AffineIndependent ℝ point) (j : ι) :
+    Finset.univ.centroid ℝ point ∉
+      convexHull ℝ (point '' {i | i ≠ j}) := by
+  intro hcentroid
+  have hspan : Finset.univ.centroid ℝ point ∈
+      affineSpan ℝ (point '' {i | i ≠ j}) :=
+    convexHull_subset_affineSpan _ hcentroid
+  have hsum : ∑ i ∈ (Finset.univ : Finset ι),
+      Finset.univ.centroidWeights ℝ i = 1 :=
+    Finset.univ.sum_centroidWeights_eq_one_of_nonempty ℝ Finset.univ_nonempty
+  have hcombination : Finset.univ.affineCombination ℝ point
+      (Finset.univ.centroidWeights ℝ) ∈
+        affineSpan ℝ (point '' {i | i ≠ j}) := by
+    simpa only [Finset.centroid_def] using hspan
+  have hzero : Finset.univ.centroidWeights ℝ j = 0 :=
+    hindependent.eq_zero_of_affineCombination_mem_affineSpan
+      hsum hcombination (Finset.mem_univ j) (by simp)
+  have hcard : (Fintype.card ι : ℝ) ≠ 0 := by
+    exact_mod_cast Fintype.card_ne_zero
+  exact (inv_ne_zero hcard) (by simpa using hzero)
+
 /-- The book's diameter notation, bound directly to Mathlib's metric
 diameter.  For unbounded sets, statements using this real-valued diameter
 should also carry `Bornology.IsBounded` so that `ENNReal.toReal` does not hide
@@ -666,6 +697,16 @@ theorem hdp_00_hthm_h0_d0_d1
         (∀ i, point i ∈ T) ∧ (∀ i, 0 ≤ weight i) ∧
           (∑ i, weight i = 1) ∧ ∑ i, weight i • point i = x :=
   Geometry.Convexity.caratheodory_sparse_convexCombination hx
+
+/-- Stable source alias for `HDP-00-EXAMPLE-SIMPLEX-SHARPNESS`. -/
+theorem hdp_00_hexample_hsimplex_hsharpness
+    {ι E : Type*} [Fintype ι] [Nonempty ι]
+    [AddCommGroup E] [Module ℝ E]
+    (point : ι → E) (hindependent : AffineIndependent ℝ point) (j : ι) :
+    Finset.univ.centroid ℝ point ∉
+      convexHull ℝ (point '' {i | i ≠ j}) :=
+  Geometry.Convexity.simplexCentroid_not_mem_convexHull_without_vertex
+    point hindependent j
 
 /-- Stable source alias for `HDP-00-DEF-DIAMETER-RADIUS`. -/
 noncomputable def hdp_00_hdef_hdiameter_hradius
