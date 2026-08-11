@@ -162,6 +162,65 @@ theorem gaussianMatrixProjection_measure_ge_le {m n : ℕ}
               standardGaussianMatrix m n].toNNReal))) :=
   (gaussianMatrixProjection_hasSubgaussianMGF z x).measure_ge_le hε
 
+/-- Finite union bound for scalar projection tail events indexed by a finite
+net in the range and a finite set in the source. -/
+theorem gaussianMatrixProjection_finset_exists_tail_le {m n : ℕ}
+    (N : Finset (EuclideanSpace ℝ (Fin m)))
+    (S : Finset (EuclideanSpace ℝ (Fin n)))
+    {ε : ℝ} (hε : 0 ≤ ε) :
+    (standardGaussianMatrix m n).real
+        {G : GaussianMatrixSample m n |
+          ∃ z ∈ N, ∃ x ∈ S, ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ} ≤
+      ∑ z ∈ N, ∑ x ∈ S,
+        Real.exp
+          (-ε ^ 2 /
+            (2 *
+              (Var[fun G : GaussianMatrixSample m n ↦
+                ⟪z, gaussianMatrixMul G x⟫_ℝ;
+                standardGaussianMatrix m n].toNNReal))) := by
+  calc
+    (standardGaussianMatrix m n).real
+        {G : GaussianMatrixSample m n |
+          ∃ z ∈ N, ∃ x ∈ S, ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ}
+        =
+      (standardGaussianMatrix m n).real
+        (⋃ z ∈ N, ⋃ x ∈ S,
+          {G : GaussianMatrixSample m n |
+            ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ}) := by
+        congr 1
+        ext G
+        simp
+    _ ≤
+      ∑ z ∈ N,
+        (standardGaussianMatrix m n).real
+          (⋃ x ∈ S,
+            {G : GaussianMatrixSample m n |
+              ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ}) :=
+        measureReal_biUnion_finset_le N
+          (fun z ↦ ⋃ x ∈ S,
+            {G : GaussianMatrixSample m n |
+              ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ})
+    _ ≤
+      ∑ z ∈ N, ∑ x ∈ S,
+        (standardGaussianMatrix m n).real
+          {G : GaussianMatrixSample m n |
+            ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ} := by
+        gcongr with z hz
+        exact measureReal_biUnion_finset_le S
+          (fun x ↦
+            {G : GaussianMatrixSample m n |
+              ε ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ})
+    _ ≤
+      ∑ z ∈ N, ∑ x ∈ S,
+        Real.exp
+          (-ε ^ 2 /
+            (2 *
+              (Var[fun G : GaussianMatrixSample m n ↦
+                ⟪z, gaussianMatrixMul G x⟫_ℝ;
+                standardGaussianMatrix m n].toNNReal))) := by
+        gcongr with z hz x hx
+        exact gaussianMatrixProjection_measure_ge_le z x hε
+
 /-- Image of a set under a flattened Gaussian matrix. -/
 noncomputable def gaussianMatrixImage {m n : ℕ}
     (G : GaussianMatrixSample m n) (T : Set (EuclideanSpace ℝ (Fin n))) :
@@ -267,5 +326,82 @@ theorem gaussianMatrixImageDiameter_le_two_halfNet_projection_bound {m n : ℕ}
       gcongr
       rw [Finset.sup'_le_iff]
       exact fun z hz ↦ hA z hz x hx
+
+/-- A finite cover of `T - T`, together with scalar control on a half-net,
+controls the Gaussian image diameter. -/
+theorem gaussianMatrixImageDiameter_le_two_halfNet_finite_cover {m n : ℕ}
+    (G : GaussianMatrixSample m n) (T : Set (EuclideanSpace ℝ (Fin n)))
+    {N : Finset (EuclideanSpace ℝ (Fin m))} (hNne : N.Nonempty)
+    (hN : IsHalfNetOfUnitSphere N)
+    (D : Finset (EuclideanSpace ℝ (Fin n))) (A : ℝ) (hA0 : 0 ≤ A)
+    (hD : ∀ x ∈ (T - T : Set (EuclideanSpace ℝ (Fin n))), x ∈ D)
+    (hA : ∀ z ∈ N, ∀ x ∈ D, ⟪z, gaussianMatrixMul G x⟫_ℝ ≤ A) :
+    gaussianMatrixImageDiameter G T ≤ 2 * A := by
+  refine gaussianMatrixImageDiameter_le_two_halfNet_projection_bound G T hNne hN A hA0 ?_
+  intro z hz x hx
+  exact hA z hz x (hD x hx)
+
+/-- If the image diameter exceeds the finite-net scalar envelope, then some
+scalar projection indexed by the net and finite difference cover is large. -/
+theorem gaussianMatrixImageDiameter_gt_subset_finset_exists_projection_tail {m n : ℕ}
+    (T : Set (EuclideanSpace ℝ (Fin n)))
+    {N : Finset (EuclideanSpace ℝ (Fin m))} (hNne : N.Nonempty)
+    (hN : IsHalfNetOfUnitSphere N)
+    (D : Finset (EuclideanSpace ℝ (Fin n))) {A : ℝ} (hA0 : 0 ≤ A)
+    (hD : ∀ x ∈ (T - T : Set (EuclideanSpace ℝ (Fin n))), x ∈ D) :
+    {G : GaussianMatrixSample m n | 2 * A < gaussianMatrixImageDiameter G T} ⊆
+      {G : GaussianMatrixSample m n |
+        ∃ z ∈ N, ∃ x ∈ D, A < ⟪z, gaussianMatrixMul G x⟫_ℝ} := by
+  intro G hdiam
+  by_contra hnone
+  have hA :
+      ∀ z ∈ N, ∀ x ∈ D, ⟪z, gaussianMatrixMul G x⟫_ℝ ≤ A := by
+    intro z hz x hxD
+    by_contra hx
+    exact hnone ⟨z, hz, x, hxD, lt_of_not_ge hx⟩
+  have hle :
+      gaussianMatrixImageDiameter G T ≤ 2 * A :=
+    gaussianMatrixImageDiameter_le_two_halfNet_finite_cover G T hNne hN D A hA0 hD hA
+  exact not_lt_of_ge hle hdiam
+
+/-- Finite-net diameter tail bound obtained by combining the deterministic
+half-net bridge with the scalar Gaussian projection union bound. -/
+theorem gaussianMatrixImageDiameter_gt_measure_le_finset {m n : ℕ}
+    (T : Set (EuclideanSpace ℝ (Fin n)))
+    {N : Finset (EuclideanSpace ℝ (Fin m))} (hNne : N.Nonempty)
+    (hN : IsHalfNetOfUnitSphere N)
+    (D : Finset (EuclideanSpace ℝ (Fin n))) {A : ℝ} (hA0 : 0 ≤ A)
+    (hD : ∀ x ∈ (T - T : Set (EuclideanSpace ℝ (Fin n))), x ∈ D) :
+    (standardGaussianMatrix m n).real
+        {G : GaussianMatrixSample m n | 2 * A < gaussianMatrixImageDiameter G T} ≤
+      ∑ z ∈ N, ∑ x ∈ D,
+        Real.exp
+          (-A ^ 2 /
+            (2 *
+              (Var[fun G : GaussianMatrixSample m n ↦
+                ⟪z, gaussianMatrixMul G x⟫_ℝ;
+                standardGaussianMatrix m n].toNNReal))) := by
+  calc
+    (standardGaussianMatrix m n).real
+        {G : GaussianMatrixSample m n | 2 * A < gaussianMatrixImageDiameter G T}
+      ≤
+      (standardGaussianMatrix m n).real
+        {G : GaussianMatrixSample m n |
+          ∃ z ∈ N, ∃ x ∈ D, A ≤ ⟪z, gaussianMatrixMul G x⟫_ℝ} := by
+        refine measureReal_mono ?_
+        intro G hG
+        obtain ⟨z, hz, x, hxD, hx⟩ :=
+          gaussianMatrixImageDiameter_gt_subset_finset_exists_projection_tail
+            T hNne hN D hA0 hD hG
+        exact ⟨z, hz, x, hxD, le_of_lt hx⟩
+    _ ≤
+      ∑ z ∈ N, ∑ x ∈ D,
+        Real.exp
+          (-A ^ 2 /
+            (2 *
+              (Var[fun G : GaussianMatrixSample m n ↦
+                ⟪z, gaussianMatrixMul G x⟫_ℝ;
+                standardGaussianMatrix m n].toNNReal))) :=
+        gaussianMatrixProjection_finset_exists_tail_le N D hA0
 
 end NumStability.HDP.Geometry.GaussianProjection
