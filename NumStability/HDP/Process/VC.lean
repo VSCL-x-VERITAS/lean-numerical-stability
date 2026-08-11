@@ -4,6 +4,7 @@ import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.Hull
+import Mathlib.Combinatorics.SetFamily.Shatter
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Tactic.NormNum
@@ -544,6 +545,32 @@ theorem fourStringPajorIllustrationCorrection :
     fourStringClass trueSupport
   native_decide
 
+/-- Deletion-coordinate recurrence behind Pajor's argument.  A set shattered
+by both restricted branches extends, after reinserting the deleted
+coordinate, to a set shattered by the original family.  The accompanying
+cardinality inequality records the recurrence's global consequence.
+
+Source: proof of Vershynin, *High-Dimensional Probability*, Lemma 8.3.13,
+printed pages 205--207 (`HDP-08-AUX-8.3-PAJOR-SPLIT`). -/
+theorem pajorDeletionRecurrence {α : Type*} [DecidableEq α]
+    (𝒜 : Finset (Finset α)) (a : α) (s : Finset α)
+    (hmem : (𝒜.memberSubfamily a).Shatters s)
+    (hnon : (𝒜.nonMemberSubfamily a).Shatters s) :
+    𝒜.Shatters (insert a s) ∧ 𝒜.card ≤ 𝒜.shatterer.card := by
+  constructor
+  · intro t ht
+    rw [Finset.subset_insert_iff] at ht
+    by_cases ha : a ∈ t
+    · obtain ⟨u, hu, hsu⟩ := hmem ht
+      rw [Finset.mem_memberSubfamily] at hu
+      refine ⟨insert a u, hu.1, ?_⟩
+      rw [← Finset.insert_inter_distrib, hsu, Finset.insert_erase ha]
+    · obtain ⟨u, hu, hsu⟩ := hnon ht
+      rw [Finset.mem_nonMemberSubfamily] at hu
+      refine ⟨u, hu.1, ?_⟩
+      rwa [Finset.insert_inter_of_notMem hu.2, hsu, Finset.erase_eq_self]
+  · exact Finset.card_le_card_shatterer 𝒜
+
 /-- Binary strings in the Hamming ball are in bijection with subsets of
 cardinality at most `d`. -/
 def hammingBallEquivBoundedFinsets (n d : ℕ) :
@@ -647,6 +674,14 @@ theorem hdp_08_heg_h8_d3_hpajor_hillustration :
       Process.VC.fourStringSupportFamily.card ≤
         Process.VC.fourStringShatteredSubsets.card :=
   Process.VC.fourStringPajorIllustrationCorrection
+
+/-- Stable source alias for `HDP-08-AUX-8.3-PAJOR-SPLIT`. -/
+theorem hdp_08_haux_h8_d3_hpajor_hsplit {α : Type*} [DecidableEq α]
+    (𝒜 : Finset (Finset α)) (a : α) (s : Finset α)
+    (hmem : (𝒜.memberSubfamily a).Shatters s)
+    (hnon : (𝒜.nonMemberSubfamily a).Shatters s) :
+    𝒜.Shatters (insert a s) ∧ 𝒜.card ≤ 𝒜.shatterer.card :=
+  Process.VC.pajorDeletionRecurrence 𝒜 a s hmem hnon
 
 /-- Stable source alias for `HDP-08-EX-8.3.5`. -/
 theorem hdp_08_hex_h8_d3_d5 :
