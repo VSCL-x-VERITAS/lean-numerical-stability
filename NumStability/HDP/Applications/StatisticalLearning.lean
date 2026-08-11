@@ -1,4 +1,5 @@
 import Mathlib.MeasureTheory.Integral.Bochner.Set
+import Mathlib.Algebra.Order.Ring.Abs
 import Mathlib.Order.Filter.Extr
 import NumStability.HDP.Process.Empirical
 
@@ -129,6 +130,29 @@ theorem empiricalRiskMinimizer_definition
   refine ⟨rfl, ?_⟩
   simp only [IsEmpiricalRiskMinimizer, isMinOn_iff]
 
+/-- A uniform empirical/population risk bound controls the excess population
+risk of an empirical minimizer.  The first conclusion records that the excess
+is nonnegative when a certified population minimizer is supplied.
+
+Source: Vershynin, *High-Dimensional Probability*, Lemma 8.4.5,
+printed page 218 (`HDP-08-LEM-8.4.5`). -/
+theorem excessRisk_le_two_mul_uniformDeviation
+    {A : Type*} (population empirical : A → ℝ) (H : Set A)
+    (fStar fHat : A) (δ : ℝ)
+    (hStar : fStar ∈ H) (hHat : fHat ∈ H)
+    (hPop : IsMinOn population H fStar)
+    (hEmp : IsMinOn empirical H fHat)
+    (hdev : ∀ f ∈ H, |empirical f - population f| ≤ δ) :
+    0 ≤ population fHat - population fStar ∧
+      population fHat - population fStar ≤ 2 * δ := by
+  have hPopOrder : population fStar ≤ population fHat :=
+    (isMinOn_iff.mp hPop) fHat hHat
+  have hEmpOrder : empirical fHat ≤ empirical fStar :=
+    (isMinOn_iff.mp hEmp) fStar hStar
+  have hHatBounds := abs_le.mp (hdev fHat hHat)
+  have hStarBounds := abs_le.mp (hdev fStar hStar)
+  constructor <;> linarith
+
 end NumStability.HDP.Applications.StatisticalLearning
 
 namespace NumStability.HDP.Contract
@@ -187,5 +211,18 @@ theorem hdp_08_hdef_h8_d4_d3
             Applications.StatisticalLearning.empiricalSquaredRisk X target f ω) :=
   Applications.StatisticalLearning.empiricalRiskMinimizer_definition
     X target H fHat ω
+
+/-- Stable source alias for `HDP-08-LEM-8.4.5`. -/
+theorem hdp_08_hlem_h8_d4_d5
+    {A : Type*} (population empirical : A → ℝ) (H : Set A)
+    (fStar fHat : A) (δ : ℝ)
+    (hStar : fStar ∈ H) (hHat : fHat ∈ H)
+    (hPop : IsMinOn population H fStar)
+    (hEmp : IsMinOn empirical H fHat)
+    (hdev : ∀ f ∈ H, |empirical f - population f| ≤ δ) :
+    0 ≤ population fHat - population fStar ∧
+      population fHat - population fStar ≤ 2 * δ :=
+  Applications.StatisticalLearning.excessRisk_le_two_mul_uniformDeviation
+    population empirical H fStar fHat δ hStar hHat hPop hEmp hdev
 
 end NumStability.HDP.Contract
