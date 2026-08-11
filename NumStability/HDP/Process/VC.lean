@@ -516,6 +516,34 @@ theorem fourStringClass_vcDimension :
   · apply le_sSup
     exact ⟨{0, 2}, fourStringClass_shatters_pair, by simp⟩
 
+/-- The finite family of supports defining the four-string class. -/
+def fourStringSupportFamily : Finset (Finset (Fin 3)) :=
+  {({2} : Finset (Fin 3)), {1}, {0}, Finset.univ}
+
+/-- The corrected list in the Pajor-inequality illustration: the empty set,
+the three singletons, and the three two-point subsets. -/
+def fourStringShatteredSubsets : Finset (Finset (Fin 3)) :=
+  {∅, {0}, {1}, {2}, {0, 1}, {0, 2}, {1, 2}}
+
+/-- The printed Pajor illustration omits the empty set.  Its four-string
+class shatters exactly seven subsets, not six, and the corrected count is
+`4 ≤ 7`.
+
+Source: Vershynin, *High-Dimensional Probability*, unnumbered illustration
+after Lemma 8.3.13, printed page 205
+(`HDP-08-EG-8.3-PAJOR-ILLUSTRATION`). -/
+theorem fourStringPajorIllustrationCorrection :
+    (∀ A : Finset (Fin 3),
+        Shatters fourStringClass A ↔ A ∈ fourStringShatteredSubsets) ∧
+      ∅ ∈ fourStringShatteredSubsets ∧
+      (Finset.univ : Finset (Fin 3)) ∉ fourStringShatteredSubsets ∧
+      fourStringShatteredSubsets.card = 7 ∧
+      fourStringSupportFamily.card = 4 ∧
+      fourStringSupportFamily.card ≤ fourStringShatteredSubsets.card := by
+  unfold fourStringShatteredSubsets fourStringSupportFamily Shatters
+    fourStringClass trueSupport
+  native_decide
+
 /-- Binary strings in the Hamming ball are in bijection with subsets of
 cardinality at most `d`. -/
 def hammingBallEquivBoundedFinsets (n d : ℕ) :
@@ -606,6 +634,19 @@ theorem hdp_08_heg_h8_d3_d3 :
 theorem hdp_08_heg_h8_d3_d4 :
     Process.VC.vcDimension Process.VC.fourStringClass = 2 :=
   Process.VC.fourStringClass_vcDimension
+
+/-- Stable source alias for `HDP-08-EG-8.3-PAJOR-ILLUSTRATION`. -/
+theorem hdp_08_heg_h8_d3_hpajor_hillustration :
+    (∀ A : Finset (Fin 3),
+        Process.VC.Shatters Process.VC.fourStringClass A ↔
+          A ∈ Process.VC.fourStringShatteredSubsets) ∧
+      ∅ ∈ Process.VC.fourStringShatteredSubsets ∧
+      (Finset.univ : Finset (Fin 3)) ∉ Process.VC.fourStringShatteredSubsets ∧
+      Process.VC.fourStringShatteredSubsets.card = 7 ∧
+      Process.VC.fourStringSupportFamily.card = 4 ∧
+      Process.VC.fourStringSupportFamily.card ≤
+        Process.VC.fourStringShatteredSubsets.card :=
+  Process.VC.fourStringPajorIllustrationCorrection
 
 /-- Stable source alias for `HDP-08-EX-8.3.5`. -/
 theorem hdp_08_hex_h8_d3_d5 :
