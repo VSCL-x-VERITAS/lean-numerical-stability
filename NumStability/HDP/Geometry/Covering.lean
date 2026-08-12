@@ -5,6 +5,9 @@ import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
 import Mathlib.Analysis.Normed.Affine.AddTorsor
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Mathlib.MeasureTheory.Measure.Real
 import Mathlib.Topology.Instances.Nat
 import Mathlib.Tactic
 
@@ -25,7 +28,8 @@ namespace Covering
 universe u
 
 open Set
-open scoped Pointwise
+open MeasureTheory
+open scoped Pointwise ENNReal
 
 /-- An internal `ε`-net of `K`: centers lie in `K` and every point of `K` is
 within closed distance `ε` of a center. -/
@@ -658,6 +662,147 @@ def minkowskiSum {E : Type*} [Add E] (A B : Set E) : Set E :=
 def scalarDilate {𝕜 E : Type*} [SMul 𝕜 E] (r : 𝕜) (B : Set E) : Set E :=
   r • B
 
+/-! Volumetric witness inequalities for finite nets and packings. -/
+
+theorem volume_le_finset_card_mul_closedBall
+    {n : ℕ} [NeZero n] (K : Set (EuclideanSpace ℝ (Fin n))) {ε : ℝ}
+    (hε : 0 < ε) (N : Finset (EuclideanSpace ℝ (Fin n)))
+    (hnet : isFiniteEpsilonNet K N ε) :
+    volume K ≤ (N.card : ℝ≥0∞) * volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε) := by
+  have hcover : K ⊆ ⋃ x ∈ N, Metric.closedBall x ε := by
+    exact (isEpsilonNet_iff_closedBallCover K (N : Set (EuclideanSpace ℝ (Fin n))) ε).mp hnet
+      |>.2
+  have hballs :
+      ∀ x : EuclideanSpace ℝ (Fin n),
+        volume (Metric.closedBall x ε) =
+          volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε) := by
+    intro x
+    calc
+      volume (Metric.closedBall x ε) = volume (Metric.ball x ε) :=
+        Measure.addHaar_closedBall_eq_addHaar_ball volume x ε
+      _ = ENNReal.ofReal (ε ^ Module.finrank ℝ (EuclideanSpace ℝ (Fin n))) *
+          volume (Metric.ball 0 1) := Measure.addHaar_ball volume x hε.le
+      _ = volume (Metric.ball (0 : EuclideanSpace ℝ (Fin n)) ε) :=
+        (Measure.addHaar_ball volume 0 hε.le).symm
+      _ = volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε) :=
+        (Measure.addHaar_closedBall_eq_addHaar_ball volume 0 ε).symm
+  calc
+    volume K ≤ volume (⋃ x ∈ N, Metric.closedBall x ε) := measure_mono hcover
+    _ ≤ ∑ x ∈ N, volume (Metric.closedBall x ε) :=
+      measure_biUnion_finset_le N (fun x => Metric.closedBall x ε)
+    _ = ∑ _x ∈ N, volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε) := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      rw [hballs x]
+    _ = (N.card : ℝ≥0∞) * volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε) := by
+      simp [Finset.sum_const, nsmul_eq_mul]
+
+theorem finset_card_mul_half_closedBall_le_volume_minkowskiSum
+    {n : ℕ} [NeZero n] (K : Set (EuclideanSpace ℝ (Fin n))) {ε : ℝ}
+    (hε : 0 < ε) (N : Finset (EuclideanSpace ℝ (Fin n)))
+    (hNK : (N : Set (EuclideanSpace ℝ (Fin n))) ⊆ K)
+    (hsep : isEpsilonSeparated (N : Set (EuclideanSpace ℝ (Fin n))) ε) :
+    (N.card : ℝ≥0∞) *
+        volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) ≤
+      volume (minkowskiSum K
+        (scalarDilate (ε / 2) (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) 1))) := by
+  have hdisj :
+      (N : Set (EuclideanSpace ℝ (Fin n))).PairwiseDisjoint
+        (fun x => Metric.closedBall x (ε / 2)) := by
+    exact (halfClosedBallPairwiseDisjoint_iff (N : Set (EuclideanSpace ℝ (Fin n))) ε).2 hsep
+  have hmeas :
+      ∀ x ∈ N, MeasurableSet (Metric.closedBall x (ε / 2)) := by
+    intro x hx
+    exact Metric.isClosed_closedBall.measurableSet
+  have hballs :
+      ∀ x : EuclideanSpace ℝ (Fin n),
+        volume (Metric.closedBall x (ε / 2)) =
+          volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) := by
+    intro x
+    calc
+      volume (Metric.closedBall x (ε / 2)) = volume (Metric.ball x (ε / 2)) :=
+        Measure.addHaar_closedBall_eq_addHaar_ball volume x (ε / 2)
+      _ = ENNReal.ofReal ((ε / 2) ^ Module.finrank ℝ (EuclideanSpace ℝ (Fin n))) *
+          volume (Metric.ball 0 1) :=
+        Measure.addHaar_ball volume x (by linarith)
+      _ = volume (Metric.ball (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) :=
+        (Measure.addHaar_ball volume 0 (by linarith)).symm
+      _ = volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) :=
+        (Measure.addHaar_closedBall_eq_addHaar_ball volume 0 (ε / 2)).symm
+  have hunion :
+      volume (⋃ x ∈ N, Metric.closedBall x (ε / 2)) =
+        ∑ x ∈ N, volume (Metric.closedBall x (ε / 2)) := by
+    exact measure_biUnion_finset hdisj hmeas
+  have hsubset :
+      (⋃ x ∈ N, Metric.closedBall x (ε / 2)) ⊆
+        minkowskiSum K
+          (scalarDilate (ε / 2) (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) 1)) := by
+    intro z hz
+    rcases Set.mem_iUnion.mp hz with ⟨x, hz⟩
+    rcases Set.mem_iUnion.mp hz with ⟨hxN, hzball⟩
+    have hxK : x ∈ K := hNK (by simpa using hxN)
+    have hdist : dist z x ≤ ε / 2 := Metric.mem_closedBall.mp hzball
+    have hunit : (1 / (ε / 2)) • (z - x) ∈
+        Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) 1 := by
+      rw [Metric.mem_closedBall]
+      rw [dist_eq_norm]
+      simp only [sub_zero, norm_smul, Real.norm_eq_abs]
+      rw [abs_of_pos (by positivity : 0 < (1 / (ε / 2) : ℝ))]
+      have hnorm : ‖z - x‖ / (ε / 2) ≤ 1 := by
+        apply (div_le_iff₀ (by linarith : 0 < ε / 2)).2
+        simpa [dist_eq_norm] using hdist
+      calc
+        1 / (ε / 2) * ‖z - x‖ = ‖z - x‖ / (ε / 2) := by ring
+        _ ≤ 1 := hnorm
+    have hdiff : z - x ∈ scalarDilate (ε / 2)
+        (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) 1) := by
+      rw [scalarDilate, Set.mem_smul_set]
+      refine ⟨(1 / (ε / 2)) • (z - x), hunit, ?_⟩
+      rw [smul_smul]
+      have hne : (ε / 2 : ℝ) ≠ 0 := by linarith
+      field_simp
+      simp
+    rw [minkowskiSum, Set.mem_add]
+    exact ⟨x, hxK, z - x, hdiff, by abel⟩
+  calc
+    (N.card : ℝ≥0∞) *
+        volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) =
+      ∑ _x ∈ N, volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) := by
+        simp [Finset.sum_const, nsmul_eq_mul]
+    _ = ∑ x ∈ N, volume (Metric.closedBall x (ε / 2)) := by
+      apply Finset.sum_congr rfl
+      intro x hx
+      rw [hballs x]
+    _ = volume (⋃ x ∈ N, Metric.closedBall x (ε / 2)) := hunion.symm
+    _ ≤ volume (minkowskiSum K
+        (scalarDilate (ε / 2) (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) 1))) :=
+      measure_mono hsubset
+
+def volumetricCoveringWitnessStatement : Prop :=
+  ∀ {n : ℕ} [NeZero n] (K : Set (EuclideanSpace ℝ (Fin n))) {ε : ℝ},
+    0 < ε →
+      (∀ N : Finset (EuclideanSpace ℝ (Fin n)),
+        isFiniteEpsilonNet K N ε →
+          volume K ≤ (N.card : ℝ≥0∞) *
+            volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε)) ∧
+      (∀ N : Finset (EuclideanSpace ℝ (Fin n)),
+        (N : Set (EuclideanSpace ℝ (Fin n))) ⊆ K →
+        isEpsilonSeparated (N : Set (EuclideanSpace ℝ (Fin n))) ε →
+          (N.card : ℝ≥0∞) *
+              volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) ≤
+            volume (minkowskiSum K
+              (scalarDilate (ε / 2)
+                (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) 1))))
+
+theorem volumetricCoveringWitnesses :
+    volumetricCoveringWitnessStatement := by
+  intro n _ K ε hε
+  constructor
+  · intro N hnet
+    exact volume_le_finset_card_mul_closedBall K hε N hnet
+  · intro N hNK hsep
+    exact finset_card_mul_half_closedBall_le_volume_minkowskiSum K hε N hNK hsep
+
 /-- The bundled pointwise set-geometry interface. -/
 structure MinkowskiSetInterface (𝕜 E : Type*) [Add E] [SMul 𝕜 E] where
   sum : Set E → Set E → Set E
@@ -735,6 +880,11 @@ theorem hdp_04_hex_h4_d2_d10 :
             Geometry.Covering.coveringNumber K (ε / 2)) ∧
       Geometry.Covering.internalCoveringCenterCounterexampleStatement :=
   Geometry.Covering.internalCoveringMonotonicityExerciseStatement
+
+/-- Stable source-facing alias for the volumetric covering-number witnesses. -/
+theorem hdp_04_hprop_h4_d2_d12 :
+    Geometry.Covering.volumetricCoveringWitnessStatement :=
+  Geometry.Covering.volumetricCoveringWitnesses
 
 end Contract
 end HDP
