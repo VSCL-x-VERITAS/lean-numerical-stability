@@ -2,6 +2,7 @@ import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Algebra.Group.Pointwise.Set.Basic
 import Mathlib.Algebra.GroupWithZero.Action.Pointwise.Set
 import Mathlib.SetTheory.Cardinal.Basic
+import Mathlib.Topology.MetricSpace.Pseudo.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
 
 /-!
@@ -150,6 +151,73 @@ theorem coveringNumber_properties {T : Type*} [PseudoMetricSpace T]
   · intro ε h
     exact coveringNumber_has_finite_witness K ε h
 
+/-- At positive radius, finiteness of the cardinal covering number is
+equivalent to the existence of a finite internal net. -/
+theorem coveringNumber_lt_aleph0_iff {T : Type u} [PseudoMetricSpace T]
+    (K : Set T) {ε : ℝ} (hε : 0 < ε) :
+    coveringNumber K ε < Cardinal.aleph0.{u} ↔
+      ∃ N : Finset T, isFiniteEpsilonNet K N ε := by
+  constructor
+  · intro hfinite
+    have hnonempty : (coveringCardinals K ε).Nonempty := by
+      refine ⟨Cardinal.mk K, ?_⟩
+      refine ⟨K, ?_, rfl⟩
+      constructor
+      · exact subset_rfl
+      · intro x hx
+        exact ⟨x, hx, by simpa using hε.le⟩
+    have hmem : coveringNumber K ε ∈ coveringCardinals K ε := by
+      exact csInf_mem hnonempty
+    rcases hmem with ⟨N, hN, hcard⟩
+    have hNfinite : N.Finite := by
+      apply Cardinal.lt_aleph0_iff_set_finite.mp
+      rw [hcard]
+      exact hfinite
+    exact (finite_net_witness_iff K ε).2 ⟨N, hNfinite, hN⟩
+  · rintro ⟨N, hN⟩
+    have hle : coveringNumber K ε ≤ Cardinal.mk (N : Set T) := by
+      apply csInf_le'
+      exact ⟨(N : Set T), hN, rfl⟩
+    exact hle.trans_lt N.finite_toSet.lt_aleph0
+
+/-- A metric-space set is totally bounded exactly when its covering number is
+finite at every positive radius. -/
+theorem totallyBounded_iff_coveringNumber_lt_aleph0
+    {T : Type u} [PseudoMetricSpace T] (K : Set T) :
+    TotallyBounded K ↔ ∀ ε > 0, coveringNumber K ε < Cardinal.aleph0.{u} := by
+  constructor
+  · intro htot ε hε
+    rcases Metric.finite_approx_of_totallyBounded htot (ε / 2) (by linarith) with
+      ⟨N, hNK, hNfinite, hcover⟩
+    apply (coveringNumber_lt_aleph0_iff K hε).2
+    classical
+    refine ⟨hNfinite.toFinset, ?_⟩
+    unfold isFiniteEpsilonNet isEpsilonNet
+    refine ⟨?_, ?_⟩
+    · intro x hx
+      exact hNK (hNfinite.mem_toFinset.mp hx)
+    · intro x hx
+      rcases Set.mem_iUnion.mp (hcover hx) with ⟨y, hy⟩
+      rcases Set.mem_iUnion.mp hy with ⟨hyN, hyball⟩
+      refine ⟨y, hNfinite.mem_toFinset.mpr hyN, ?_⟩
+      have hy' : dist x y < ε / 2 := by
+        simpa [Metric.mem_ball, dist_comm] using hyball
+      exact le_of_lt (hy'.trans_le (by linarith))
+  · intro hfinite
+    rw [Metric.totallyBounded_iff]
+    intro ε hε
+    have hcovering := hfinite (ε / 2) (by linarith)
+    rcases (coveringNumber_lt_aleph0_iff K (by linarith)).1 hcovering with
+      ⟨N, hN⟩
+    rcases hN with ⟨hNK, hnet⟩
+    refine ⟨(N : Set T), N.finite_toSet, ?_⟩
+    intro x hx
+    rcases hnet x hx with ⟨y, hyN, hy⟩
+    have hy' : dist x y < ε := lt_of_le_of_lt hy (by linarith)
+    change x ∈ ⋃ z ∈ (N : Set T), Metric.ball z ε
+    simp only [Set.mem_iUnion]
+    exact ⟨y, ⟨hyN, by simpa [Metric.mem_ball, dist_comm] using hy'⟩⟩
+
 /-- The packaged Chapter 4 metric-cover interface. -/
 structure MetricCoverInterface (T : Type u) [PseudoMetricSpace T] where
   isNet : Set T → Set T → ℝ → Prop
@@ -231,6 +299,13 @@ theorem hdp_04_hdef_h4_d2_d2 {T : Type*} [PseudoMetricSpace T]
         (∃ N : Finset T, Geometry.Covering.isFiniteEpsilonNet K N ε) →
           ∃ N : Finset T, Geometry.Covering.isFiniteEpsilonNet K N ε) :=
   Geometry.Covering.coveringNumber_properties K
+
+/-- Stable contract alias for the total-boundedness characterization. -/
+theorem hdp_04_hrem_h4_d2_d3 {T : Type u} [PseudoMetricSpace T]
+    (K : Set T) :
+    TotallyBounded K ↔
+      ∀ ε > 0, Geometry.Covering.coveringNumber K ε < Cardinal.aleph0.{u} :=
+  Geometry.Covering.totallyBounded_iff_coveringNumber_lt_aleph0 K
 
 end Contract
 end HDP
