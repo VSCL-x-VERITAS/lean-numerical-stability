@@ -92,8 +92,9 @@ def radialDirectionIndependence {n : ℕ}
     (μ : Measure (EuclideanSpace ℝ (Fin n)))
     (r : EuclideanSpace ℝ (Fin n) → ℝ)
     (θ : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) : Prop :=
-  Measure.map (fun x => (r x, θ x)) μ =
-    (Measure.map r μ).prod (Measure.map θ μ)
+  μ Set.univ = 1 ∧
+    Measure.map (fun x => (r x, θ x)) μ =
+      (Measure.map r μ).prod (Measure.map θ μ)
 
 /-- Polar-coordinate independence is exposed as an explicit Gaussian polar
 measure contract; the null-point convention is left in the chosen direction
