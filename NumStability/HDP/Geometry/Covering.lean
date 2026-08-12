@@ -110,6 +110,12 @@ noncomputable def packingNumber {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Cardinal :=
   sSup (packingCardinals K ε)
 
+/-- The packing number is the supremum of cardinalities of internal strictly
+`ε`-separated subsets. -/
+theorem packingNumber_spec {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) (ε : ℝ) :
+    packingNumber K ε = sSup (packingCardinals K ε) := rfl
+
 /-- The finite witness form of an internal covering. -/
 theorem finite_net_witness_iff {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) :
@@ -299,6 +305,13 @@ theorem hdp_04_hdef_h4_d2_d2 {T : Type*} [PseudoMetricSpace T]
         (∃ N : Finset T, Geometry.Covering.isFiniteEpsilonNet K N ε) →
           ∃ N : Finset T, Geometry.Covering.isFiniteEpsilonNet K N ε) :=
   Geometry.Covering.coveringNumber_properties K
+
+/-- Stable contract alias for the internal separated-set packing definition. -/
+theorem hdp_04_hdef_h4_d2_d4 {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) (ε : ℝ) :
+    Geometry.Covering.packingNumber K ε =
+      sSup (Geometry.Covering.packingCardinals K ε) :=
+  Geometry.Covering.packingNumber_spec K ε
 
 end Contract
 end HDP
