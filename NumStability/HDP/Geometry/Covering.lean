@@ -56,17 +56,6 @@ theorem isEpsilonNet_iff_closedBallCover {T : Type*} [PseudoMetricSpace T]
     refine ⟨y, hyN, ?_⟩
     simpa [Metric.mem_closedBall, dist_comm] using hyball
 
-namespace NumStability.HDP.Contract
-
-/-- Stable contract alias for the internal net/closed-ball-cover equivalence. -/
-theorem hdp_04_hdef_h4_d2_d1 {T : Type*} [PseudoMetricSpace T]
-    (K N : Set T) (ε : ℝ) :
-    Geometry.Covering.isEpsilonNet K N ε ↔
-      N ⊆ K ∧ K ⊆ Geometry.Covering.closedBallCover N ε :=
-  Geometry.Covering.isEpsilonNet_iff_closedBallCover K N ε
-
-end NumStability.HDP.Contract
-
 /-- A finite internal `ε`-net, represented constructively by a `Finset`. -/
 def isFiniteEpsilonNet {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (N : Finset T) (ε : ℝ) : Prop :=
@@ -184,5 +173,20 @@ def hammingCubeInterface (n : ℕ) : HammingCubeInterface n where
 
 end Covering
 end Geometry
+end HDP
+end NumStability
+
+namespace NumStability
+namespace HDP
+namespace Contract
+
+/-- Stable contract alias for the internal net/closed-ball-cover equivalence. -/
+theorem hdp_04_hdef_h4_d2_d1 {T : Type*} [PseudoMetricSpace T]
+    (K N : Set T) (ε : ℝ) :
+    Geometry.Covering.isEpsilonNet K N ε ↔
+      N ⊆ K ∧ K ⊆ Geometry.Covering.closedBallCover N ε :=
+  Geometry.Covering.isEpsilonNet_iff_closedBallCover K N ε
+
+end Contract
 end HDP
 end NumStability
