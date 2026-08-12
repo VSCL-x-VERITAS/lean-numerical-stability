@@ -103,6 +103,15 @@ noncomputable def metricCoverInterface {T : Type*} [PseudoMetricSpace T] :
   packing := packingNumber
   finiteWitness := Set.Finite.toFinset
 
+/-! Coding-theoretic definitions used by Chapter 4. -/
+
+/-- The binary Hamming cube of dimension `n`. -/
+def hammingCube (n : ℕ) : Type := Fin n → Bool
+
+/-- The Hamming distance: the number of coordinates on which two words differ. -/
+def hammingDistance {n : ℕ} (x y : hammingCube n) : ℕ :=
+  (Finset.univ.filter (fun i => x i != y i)).card
+
 end Covering
 end Geometry
 end HDP
