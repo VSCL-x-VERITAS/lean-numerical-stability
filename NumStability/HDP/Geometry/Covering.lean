@@ -727,6 +727,15 @@ theorem hdp_04_hrem_h4_d2_d7 {T : Type*} [PseudoMetricSpace T]
     Geometry.Covering.isEpsilonNet K N ε :=
   Geometry.Covering.isEpsilonNet_of_terminalGreedySelection hε hNK hsep hterminal
 
+/-- Stable source-facing alias for the internal-center monotonicity exercise. -/
+theorem hdp_04_hex_h4_d2_d10 :
+    (∀ {T : Type} [PseudoMetricSpace T] {L K : Set T}, L ⊆ K →
+        ∀ {ε : ℝ}, 0 < ε →
+          Geometry.Covering.coveringNumber L ε ≤
+            Geometry.Covering.coveringNumber K (ε / 2)) ∧
+      Geometry.Covering.internalCoveringCenterCounterexampleStatement :=
+  Geometry.Covering.internalCoveringMonotonicityExerciseStatement
+
 end Contract
 end HDP
 end NumStability
