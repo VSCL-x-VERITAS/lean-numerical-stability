@@ -1,6 +1,8 @@
 import Mathlib.Analysis.Convex.Combination
 import Mathlib.Analysis.Convex.Jensen
 import Mathlib.Data.Real.Basic
+import Mathlib.Analysis.Normed.Module.Convex
+import Mathlib.Tactic
 
 namespace NumStability.HDP.Quadratic.Contraction
 
@@ -9,6 +11,47 @@ open scoped BigOperators
 /-- The coefficient cube used in the deterministic contraction argument. -/
 def coefficientCube (N : ℕ) : Set (Fin N → ℝ) :=
   Set.pi Set.univ (fun _ => Set.Icc (-1) 1)
+
+/-- Convexity of the deterministic signed linear norm appearing in the
+contraction proof. -/
+theorem signedLinearNormConvex {N : ℕ} {E : Type*}
+    [SeminormedAddCommGroup E] [NormedSpace ℝ E]
+    (ε : Fin N → ℝ) (x : Fin N → E) :
+    ConvexOn ℝ Set.univ
+      (fun a : Fin N → ℝ => ‖∑ i, a i • (ε i • x i)‖) := by
+  refine ⟨convex_univ, ?_⟩
+  intro a ha b hb α β hα hβ hab
+  have hsum : (∑ i, (α • a + β • b) i • (ε i • x i)) =
+      α • (∑ i, a i • (ε i • x i)) +
+        β • (∑ i, b i • (ε i • x i)) := by
+    calc
+      (∑ i, (α • a + β • b) i • (ε i • x i)) =
+          ∑ i, ((α * a i * ε i) • x i + (β * b i * ε i) • x i) := by
+        apply Finset.sum_congr rfl
+        intro i hi
+        simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, add_smul,
+          smul_smul]
+        module
+      _ = (∑ i, (α * a i * ε i) • x i) +
+          ∑ i, (β * b i * ε i) • x i := Finset.sum_add_distrib
+      _ = α • (∑ i, a i • (ε i • x i)) +
+          β • (∑ i, b i • (ε i • x i)) := by
+        rw [Finset.smul_sum, Finset.smul_sum]
+        simp only [smul_smul]
+        congr 1 <;> apply Finset.sum_congr rfl <;> intro i hi <;> ring
+  change ‖∑ i, (α • a + β • b) i • (ε i • x i)‖ ≤
+    α • ‖∑ i, a i • (ε i • x i)‖ +
+      β • ‖∑ i, b i • (ε i • x i)‖
+  calc
+    ‖∑ i, (α • a + β • b) i • (ε i • x i)‖ =
+        ‖α • (∑ i, a i • (ε i • x i)) +
+          β • (∑ i, b i • (ε i • x i))‖ := by rw [hsum]
+    _ ≤ ‖α • (∑ i, a i • (ε i • x i))‖ +
+        ‖β • (∑ i, b i • (ε i • x i))‖ := norm_add_le _ _
+    _ = α • ‖∑ i, a i • (ε i • x i)‖ +
+        β • ‖∑ i, b i • (ε i • x i)‖ := by
+      rw [norm_smul_of_nonneg hα, norm_smul_of_nonneg hβ]
+      simp only [smul_eq_mul]
 
 /-- The finite set of cube vertices, represented coordinatewise by `-1` and `1`. -/
 noncomputable def coefficientCubeVertices (N : ℕ) : Finset (Fin N → ℝ) := by
