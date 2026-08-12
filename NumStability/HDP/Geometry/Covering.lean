@@ -29,6 +29,33 @@ def isEpsilonNet {T : Type*} [PseudoMetricSpace T]
     (K N : Set T) (ε : ℝ) : Prop :=
   N ⊆ K ∧ ∀ x ∈ K, ∃ y ∈ N, dist x y ≤ ε
 
+/-- The union of closed `ε`-balls centered at a set of points. -/
+def closedBallCover {T : Type*} [PseudoMetricSpace T]
+    (N : Set T) (ε : ℝ) : Set T :=
+  ⋃ y ∈ N, Metric.closedBall y ε
+
+/-- An internal `ε`-net is exactly an internal set whose closed centered
+balls cover the target. -/
+theorem isEpsilonNet_iff_closedBallCover {T : Type*} [PseudoMetricSpace T]
+    (K N : Set T) (ε : ℝ) :
+    isEpsilonNet K N ε ↔ N ⊆ K ∧ K ⊆ closedBallCover N ε := by
+  constructor
+  · rintro ⟨hNK, hcover⟩
+    refine ⟨hNK, ?_⟩
+    intro x hx
+    obtain ⟨y, hyN, hdist⟩ := hcover x hx
+    simp only [closedBallCover, mem_iUnion]
+    exact ⟨y, ⟨hyN, by simpa [Metric.mem_closedBall, dist_comm] using hdist⟩⟩
+  · rintro ⟨hNK, hcover⟩
+    refine ⟨hNK, ?_⟩
+    intro x hx
+    have hxcover : x ∈ closedBallCover N ε := hcover hx
+    change x ∈ ⋃ y ∈ N, Metric.closedBall y ε at hxcover
+    obtain ⟨y, hyball⟩ := Set.mem_iUnion.mp hxcover
+    obtain ⟨hyN, hyball⟩ := Set.mem_iUnion.mp hyball
+    refine ⟨y, hyN, ?_⟩
+    simpa [Metric.mem_closedBall, dist_comm] using hyball
+
 /-- A finite internal `ε`-net, represented constructively by a `Finset`. -/
 def isFiniteEpsilonNet {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (N : Finset T) (ε : ℝ) : Prop :=
