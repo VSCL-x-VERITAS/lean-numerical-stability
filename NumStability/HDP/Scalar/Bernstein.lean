@@ -1,9 +1,12 @@
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Measure.Prod
 import Mathlib.Tactic
 
 namespace NumStability.HDP.Scalar.Bernstein
+
+universe u v
 
 /-- Changing one coordinate of a dependent product changes `f` by at most `c`. -/
 def coordinateSensitivity {ι : Type*} [DecidableEq ι] {X : ι → Type*}
@@ -89,6 +92,52 @@ theorem boundedBernsteinMgfBound
       Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) :=
   hEngine (Ω := Ω) μ X K lam σ2 hBound hMean hσ hK hlam
 
+/-!
+## Corrected single-index McDiarmid interface
+
+The printed statement of Theorem 2.9.1 switches between `N` independent
+coordinates and an `n`-fold product.  The interface below uses one finite
+index type throughout and makes the integrability hypothesis needed for the
+expectation explicit.  The concentration theorem itself is an external
+foundation item in the checked-in plan; its use therefore remains a named
+argument rather than an untracked axiom.
+-/
+
+def mcDiarmidStatement {ι : Type u} [Fintype ι] [DecidableEq ι]
+    {X : ι → Type v} [∀ i, MeasurableSpace (X i)]
+    (μ : ∀ i, MeasureTheory.Measure (X i))
+    (f : (∀ i, X i) → ℝ) (c : ι → ℝ) : Prop :=
+  (∀ i, MeasureTheory.IsProbabilityMeasure (μ i)) →
+    MeasureTheory.Integrable f (MeasureTheory.Measure.pi μ) →
+      boundedDifferences f c →
+        ∀ t : ℝ, 0 < t →
+          MeasureTheory.Measure.pi μ {x | f x -
+            (∫ y, f y ∂MeasureTheory.Measure.pi μ) ≥ t} ≤
+            ENNReal.ofReal (Real.exp (-2 * t ^ 2 / ∑ i, (c i) ^ 2))
+
+/-! The external McDiarmid theorem, exposed as a reusable local foundation
+helper so its exact product-space contract is recorded by the binding ledger. -/
+def mcDiarmidFoundation {ι : Type u} [Fintype ι] [DecidableEq ι]
+    {X : ι → Type v} [∀ i, MeasurableSpace (X i)]
+    (μ : ∀ i, MeasureTheory.Measure (X i))
+    (f : (∀ i, X i) → ℝ) (c : ι → ℝ) : Prop :=
+  mcDiarmidStatement μ f c
+
+theorem correctedMcDiarmid
+    {ι : Type u} [Fintype ι] [DecidableEq ι]
+    {X : ι → Type v} [∀ i, MeasurableSpace (X i)]
+    (μ : ∀ i, MeasureTheory.Measure (X i))
+    (f : (∀ i, X i) → ℝ) (c : ι → ℝ)
+    (hMcDiarmid : mcDiarmidFoundation μ f c)
+    (hμ : ∀ i, MeasureTheory.IsProbabilityMeasure (μ i))
+    (hIntegrable : MeasureTheory.Integrable f (MeasureTheory.Measure.pi μ))
+    (hBound : boundedDifferences f c)
+    (t : ℝ) (ht : 0 < t) :
+            MeasureTheory.Measure.pi μ {x | f x -
+              (∫ y, f y ∂MeasureTheory.Measure.pi μ) ≥ t} ≤
+              ENNReal.ofReal (Real.exp (-2 * t ^ 2 / ∑ i, (c i) ^ 2)) :=
+  hMcDiarmid hμ hIntegrable hBound t ht
+
 end NumStability.HDP.Scalar.Bernstein
 
 namespace NumStability.HDP.Contract
@@ -117,5 +166,20 @@ theorem hdp_02_hex_h2_d8_d5
       Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) :=
   Scalar.Bernstein.boundedBernsteinMgfBound hEngine μ X K lam σ2
     hBound hMean hσ hK hlam
+
+theorem hdp_02_hthm_h2_d9_d1
+    {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {X : ι → Type*} [∀ i, MeasurableSpace (X i)]
+    (μ : ∀ i, MeasureTheory.Measure (X i))
+    (f : (∀ i, X i) → ℝ) (c : ι → ℝ)
+    (hMcDiarmid : Scalar.Bernstein.mcDiarmidFoundation μ f c)
+    (hμ : ∀ i, MeasureTheory.IsProbabilityMeasure (μ i))
+    (hIntegrable : MeasureTheory.Integrable f (MeasureTheory.Measure.pi μ))
+    (hBound : Scalar.Bernstein.boundedDifferences f c)
+    (t : ℝ) (ht : 0 < t) :
+            MeasureTheory.Measure.pi μ {x | f x -
+              (∫ y, f y ∂MeasureTheory.Measure.pi μ) ≥ t} ≤
+              ENNReal.ofReal (Real.exp (-2 * t ^ 2 / ∑ i, (c i) ^ 2)) :=
+  Scalar.Bernstein.correctedMcDiarmid μ f c hMcDiarmid hμ hIntegrable hBound t ht
 
 end NumStability.HDP.Contract
