@@ -84,9 +84,9 @@ noncomputable def lipNorm (f : ℝ → ℝ) : ℝ≥0∞ :=
   ENNReal.ofNNReal (sInf (lipConstants f))
 
 structure LipschitzCertificate (f : ℝ → ℝ) where
-  constant : NNReal
-  bound : LipschitzWith constant f
-  restriction : ∀ s : Set ℝ, LipschitzWith constant (s.restrict f)
+  lipschitzConstant : NNReal
+  bound : LipschitzWith lipschitzConstant f
+  restriction : ∀ s : Set ℝ, LipschitzWith lipschitzConstant (s.restrict f)
   restriction_rule :
     ∀ s, LipschitzWith.restrict bound s = restriction s
   norm : ℝ≥0∞
@@ -114,7 +114,7 @@ def lipschitz_interface_mk
     {f : ℝ → ℝ} {K : NNReal} (h : LipschitzWith K f) :
     LipschitzInterface f := by
   exact {
-    constant := K
+    lipschitzConstant := K
     bound := h
     restriction := fun s => LipschitzWith.restrict h s
     restriction_rule := fun _ => rfl
@@ -266,8 +266,8 @@ def IsContraction
 structure LipschitzMapData
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     (f : α → β) where
-  constant : NNReal
-  bound : LipschitzWith constant f
+  lipschitzConstant : NNReal
+  bound : LipschitzWith lipschitzConstant f
   norm : ℝ≥0∞
   norm_eq : norm = metricLipNorm f
 
@@ -283,7 +283,7 @@ def lipschitz_map_data_mk
     {f : α → β} {K : NNReal} (h : LipschitzWith K f) :
     LipschitzMapData f := by
   exact {
-    constant := K
+    lipschitzConstant := K
     bound := h
     norm := metricLipNorm f
     norm_eq := rfl
