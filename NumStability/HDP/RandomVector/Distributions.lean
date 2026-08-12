@@ -2,12 +2,17 @@ import Mathlib.Analysis.InnerProductSpace.EuclideanDist
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.Normed.Lp.MeasurableSpace
 import Mathlib.Analysis.Convex.Basic
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Algebra.Group.Pointwise.Set.Basic
 import Mathlib.MeasureTheory.Measure.Map
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.Tactic
 
 namespace NumStability.HDP.RandomVector.Distributions
 
 open MeasureTheory
 open scoped BigOperators
+open scoped Pointwise
 
 /-- The Euclidean sphere of radius `r` in dimension `n`. -/
 def euclideanSphere (n : ℕ) (r : ℝ) : Set (EuclideanSpace ℝ (Fin n)) :=
@@ -47,6 +52,54 @@ def convexBodyUniform (n : ℕ) (K : Set (EuclideanSpace ℝ (Fin n)))
     volumeMeasure K ≠ 0 ∧
     μ Set.univ = 1 ∧
     ∀ A, μ A = volumeMeasure (A ∩ K) / volumeMeasure K}
+
+/-- Isotropy of a finite second-moment measure, expressed through quadratic
+forms of the Euclidean inner product. -/
+def isotropicMeasure {n : ℕ}
+    (μ : Measure (EuclideanSpace ℝ (Fin n))) : Prop :=
+  ∀ x, ∫ y, (inner ℝ y x) ^ 2 ∂μ = ‖x‖ ^ 2
+
+/-- The exponential-moment predicate used here as the concrete `ψ₁` marginal
+interface. -/
+def subexponentialMarginalBound {n : ℕ}
+    (μ : Measure (EuclideanSpace ℝ (Fin n))) (C : ℝ) : Prop :=
+  ∀ x, ‖x‖ ≤ 1 →
+    ∫⁻ y, ENNReal.ofReal (Real.exp (‖inner ℝ y x‖ / C)) ∂μ ≤ 2
+
+/-- Brunn--Minkowski is retained as an explicit, reusable external premise.
+The content functional is supplied by the consuming probability model. -/
+def brunnMinkowskiPrerequisite : Prop :=
+  ∀ {n : ℕ} (volume : Set (EuclideanSpace ℝ (Fin n)) → ℝ)
+    (A B : Set (EuclideanSpace ℝ (Fin n))),
+    isConvexBody A → isConvexBody B →
+      0 ≤ volume A → 0 ≤ volume B → 0 ≤ volume (A + B) →
+      Real.rpow (volume A) (1 / (n : ℝ)) +
+          Real.rpow (volume B) (1 / (n : ℝ)) ≤
+        Real.rpow (volume (A + B)) (1 / (n : ℝ))
+
+/-- Borell's convex-body marginal estimate, parameterized by the preceding
+Brunn--Minkowski foundation so the external dependency remains visible. -/
+def borellConvexMarginalPrerequisite : Prop :=
+  ∀ {n : ℕ} (K : Set (EuclideanSpace ℝ (Fin n)))
+    (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n)))
+    (μ : Measure (EuclideanSpace ℝ (Fin n))) (C : ℝ),
+    brunnMinkowskiPrerequisite → isConvexBody K →
+      μ ∈ convexBodyUniform n K volumeMeasure → isotropicMeasure μ → 0 < C →
+      subexponentialMarginalBound μ C
+
+/-- Composition of the two external analytic prerequisites for isotropic
+uniform convex-body marginals. -/
+theorem borellConvexMarginal {n : ℕ}
+    (K : Set (EuclideanSpace ℝ (Fin n)))
+    (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n)))
+    (μ : Measure (EuclideanSpace ℝ (Fin n))) (C : ℝ)
+    (hBM : brunnMinkowskiPrerequisite)
+    (hBorell : borellConvexMarginalPrerequisite)
+    (hK : isConvexBody K)
+    (hμ : μ ∈ convexBodyUniform n K volumeMeasure)
+    (hIso : isotropicMeasure μ) (hC : 0 < C) :
+    subexponentialMarginalBound μ C :=
+  hBorell K volumeMeasure μ C hBM hK hμ hIso hC
 
 /-- A finite indexed family satisfying the frame inequalities. -/
 def isFrame {ι E : Type*} [Fintype ι] [NormedAddCommGroup E]
@@ -99,6 +152,19 @@ def hdp_03_hdef_hconvex_hbody_huniform (n : ℕ)
     (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n))) :
     Set (Measure (EuclideanSpace ℝ (Fin n))) :=
   RandomVector.Distributions.convexBodyUniform n K volumeMeasure
+
+theorem hdp_03_hthm_hborell_hconvex_hmarginal {n : ℕ}
+    (K : Set (EuclideanSpace ℝ (Fin n)))
+    (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n)))
+    (μ : Measure (EuclideanSpace ℝ (Fin n))) (C : ℝ)
+    (hBM : RandomVector.Distributions.brunnMinkowskiPrerequisite)
+    (hBorell : RandomVector.Distributions.borellConvexMarginalPrerequisite)
+    (hK : RandomVector.Distributions.isConvexBody K)
+    (hμ : μ ∈ RandomVector.Distributions.convexBodyUniform n K volumeMeasure)
+    (hIso : RandomVector.Distributions.isotropicMeasure μ) (hC : 0 < C) :
+    RandomVector.Distributions.subexponentialMarginalBound μ C :=
+  RandomVector.Distributions.borellConvexMarginal K volumeMeasure μ C
+    hBM hBorell hK hμ hIso hC
 
 theorem hdp_03_hthm_hcramer_hwold {n : ℕ}
     (huniq : RandomVector.Distributions.characteristicFunctionUniqueness n)
