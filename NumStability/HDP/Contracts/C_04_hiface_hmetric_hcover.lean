@@ -13,8 +13,8 @@ universe u
 /-- Stable contract alias for the Chapter 4 metric-cover interface. -/
 noncomputable def hdp_04_hiface_hmetric_hcover
     {T : Type u} [PseudoMetricSpace T] :
-    Geometry.MetricCoverInterface T :=
-  Geometry.metricCoverInterface
+    Geometry.Covering.MetricCoverInterface T :=
+  Geometry.Covering.metricCoverInterface
 
 end Contract
 end HDP

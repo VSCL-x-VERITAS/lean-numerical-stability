@@ -14,6 +14,7 @@ the finite-net witness API used by the volumetric and entropy arguments.
 namespace NumStability
 namespace HDP
 namespace Geometry
+namespace Covering
 
 universe u
 
@@ -102,6 +103,7 @@ noncomputable def metricCoverInterface {T : Type*} [PseudoMetricSpace T] :
   packing := packingNumber
   finiteNetWitness := coveringNumber_has_finite_witness
 
+end Covering
 end Geometry
 end HDP
 end NumStability
