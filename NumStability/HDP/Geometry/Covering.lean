@@ -37,7 +37,8 @@ def isEpsilonSeparated {T : Type*} [PseudoMetricSpace T]
     (N : Set T) (ε : ℝ) : Prop :=
   N.Pairwise (fun x y => ε < dist x y)
 
-private def coveringCardinals {T : Type*} [PseudoMetricSpace T]
+/-- The candidate cardinal family used by `coveringNumber`. -/
+def coveringCardinals {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Set Cardinal :=
   {c | ∃ N : Set T, isEpsilonNet K N ε ∧ Cardinal.mk N = c}
 
@@ -48,7 +49,8 @@ noncomputable def coveringNumber {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Cardinal :=
   sInf (coveringCardinals K ε)
 
-private def packingCardinals {T : Type*} [PseudoMetricSpace T]
+/-- The candidate cardinal family used by `packingNumber`. -/
+def packingCardinals {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Set Cardinal :=
   {c | ∃ N : Set T, N ⊆ K ∧ isEpsilonSeparated N ε ∧ Cardinal.mk N = c}
 
