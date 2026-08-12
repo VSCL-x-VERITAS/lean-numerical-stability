@@ -1,4 +1,6 @@
 import Mathlib.Data.Set.Finite.Basic
+import Mathlib.Algebra.Group.Pointwise.Set.Basic
+import Mathlib.Algebra.GroupWithZero.Action.Pointwise.Set
 import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
 
@@ -19,6 +21,7 @@ namespace Covering
 universe u
 
 open Set
+open scoped Pointwise
 
 /-- An internal `ε`-net of `K`: centers lie in `K` and every point of `K` is
 within closed distance `ε` of a center. -/
@@ -111,6 +114,25 @@ def hammingCube (n : ℕ) : Type := Fin n → Bool
 /-- The Hamming distance: the number of coordinates on which two words differ. -/
 def hammingDistance {n : ℕ} (x y : hammingCube n) : ℕ :=
   (Finset.univ.filter (fun i => x i != y i)).card
+
+/-- Pointwise Minkowski addition of two sets. -/
+def minkowskiSum {E : Type*} [Add E] (A B : Set E) : Set E :=
+  A + B
+
+/-- Pointwise scalar dilation of a set. -/
+def scalarDilate {𝕜 E : Type*} [SMul 𝕜 E] (r : 𝕜) (B : Set E) : Set E :=
+  r • B
+
+/-- The bundled pointwise set-geometry interface. -/
+structure MinkowskiSetInterface (𝕜 E : Type*) [Add E] [SMul 𝕜 E] where
+  sum : Set E → Set E → Set E
+  dilate : 𝕜 → Set E → Set E
+
+/-- The canonical pointwise Minkowski/dilation interface. -/
+def minkowskiSetInterface {𝕜 E : Type*} [Add E] [SMul 𝕜 E] :
+    MinkowskiSetInterface 𝕜 E where
+  sum := minkowskiSum
+  dilate := scalarDilate
 
 /-- The bundled binary-cube definition and its Hamming distance. -/
 structure HammingCubeInterface (n : ℕ) where
