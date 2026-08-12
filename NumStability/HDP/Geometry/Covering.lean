@@ -10,6 +10,7 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 import Mathlib.MeasureTheory.Measure.Real
 import Mathlib.Topology.Instances.Nat
 import Mathlib.Tactic
+import NumStability.HDP.Contracts.C_00_hex_h0_d0_d5
 
 /-!
 # Nets, covering numbers, and packing numbers
@@ -707,6 +708,23 @@ theorem hammingDistance_isMetric :
   intro n x y z
   exact ⟨hammingDistance_eq_zero_iff x y, hammingDistance_symm x y,
     hammingDistance_triangle x y z⟩
+
+def hammingCubeCountingExerciseStatement : Prop :=
+  ∀ (n : ℕ),
+    hammingDistanceIsMetricStatement ∧
+      Fintype.card (Fin n → Bool) = 2 ^ n ∧
+      ∀ (m : ℕ), 1 ≤ m → m ≤ n →
+        (n.choose m : ℝ) ≤ ∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ) ∧
+          (∑ k ∈ Finset.range (m + 1), (n.choose k : ℝ)) ≤
+            (Real.exp 1 * (n : ℝ) / m) ^ m
+
+theorem hammingCubeCountingExercise :
+    hammingCubeCountingExerciseStatement := by
+  intro n
+  refine ⟨hammingDistance_isMetric, ?_, ?_⟩
+  · simp
+  · intro m hm hmn
+    exact (NumStability.HDP.Contract.hdp_00_hex_h0_d0_d5 m n hm hmn).2
 
 /-- Pointwise Minkowski addition of two sets. -/
 def minkowskiSum {E : Type*} [Add E] (A B : Set E) : Set E :=
