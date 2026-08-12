@@ -387,6 +387,59 @@ theorem exteriorCoveringNumber_le_coveringNumber_le_exteriorCoveringNumber_half
     rcases internal_net_of_exterior_net hM with ⟨N, hN, hcard⟩
     exact (csInf_le' (s := coveringCardinals K ε) ⟨N, hN, rfl⟩).trans hcard
 
+theorem coveringNumber_subset_le_coveringNumber_half
+    {T : Type*} [PseudoMetricSpace T] {L K : Set T} (hLK : L ⊆ K)
+    {ε : ℝ} (hε : 0 < ε) :
+    coveringNumber L ε ≤ coveringNumber K (ε / 2) := by
+  have hcover_nonempty :
+      (coveringCardinals K (ε / 2)).Nonempty := by
+    refine ⟨Cardinal.mk K, ?_⟩
+    refine ⟨K, ?_, rfl⟩
+    constructor
+    · exact subset_rfl
+    · intro x hx
+      exact ⟨x, hx, by simpa using (by linarith : 0 ≤ ε / 2)⟩
+  apply le_csInf hcover_nonempty
+  intro c hc
+  rcases hc with ⟨N, hN, rfl⟩
+  have hNext : isExteriorEpsilonNet L N (ε / 2) := by
+    intro x hx
+    exact hN.2 x (hLK hx)
+  rcases internal_net_of_exterior_net hNext with ⟨M, hM, hcard⟩
+  exact (csInf_le' (s := coveringCardinals L ε) ⟨M, hM, rfl⟩).trans hcard
+
+def internalCoveringCenterCounterexampleStatement : Prop :=
+  ∃ K L : Set ℕ, L ⊆ K ∧
+    isEpsilonNet K ({1} : Set ℕ) 1 ∧
+      ¬ isEpsilonNet L ({1} : Set ℕ) 1
+
+theorem internalCoveringCenterCounterexample :
+    internalCoveringCenterCounterexampleStatement := by
+  refine ⟨{0, 1, 2}, {0, 2}, ?_, ?_, ?_⟩
+  · intro x hx
+    simp at hx ⊢
+    omega
+  · constructor
+    · simp
+    · intro x hx
+      refine ⟨1, by simp, ?_⟩
+      simp only [Nat.dist_eq]
+      simp at hx
+      rcases hx with rfl | rfl | rfl <;> norm_num
+  · intro h
+    have hcenter : (1 : ℕ) ∈ ({0, 2} : Set ℕ) :=
+      h.1 (by simp)
+    simp at hcenter
+
+theorem internalCoveringMonotonicityExerciseStatement :
+    (∀ {T : Type} [PseudoMetricSpace T] {L K : Set T}, L ⊆ K →
+        ∀ {ε : ℝ}, 0 < ε → coveringNumber L ε ≤ coveringNumber K (ε / 2)) ∧
+      internalCoveringCenterCounterexampleStatement := by
+  constructor
+  · intro T _ L K hLK ε hε
+    exact coveringNumber_subset_le_coveringNumber_half hLK hε
+  · exact internalCoveringCenterCounterexample
+
 /-- Pairwise disjoint closed balls of radius `ε/2` centered at `N`. -/
 def halfClosedBallPairwiseDisjoint {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] (N : Set E) (ε : ℝ) : Prop :=
