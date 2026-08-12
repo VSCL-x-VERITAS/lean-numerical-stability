@@ -77,6 +77,45 @@ def isMaximalEpsilonSeparated {T : Type*} [PseudoMetricSpace T]
   N ⊆ K ∧ isEpsilonSeparated N ε ∧
     ∀ M : Set T, N ⊆ M → M ⊆ K → isEpsilonSeparated M ε → M = N
 
+/-- A point is a valid next point for the greedy separated-set procedure. -/
+def canGreedilyAdd {T : Type*} [PseudoMetricSpace T]
+    (K N : Set T) (ε : ℝ) (x : T) : Prop :=
+  x ∈ K ∧ ∀ y ∈ N, ε < dist x y
+
+/-- Adding a point that is more than `ε` from all existing centers preserves
+strict `ε`-separation. -/
+theorem isEpsilonSeparated_insert_of_canGreedilyAdd
+    {T : Type*} [PseudoMetricSpace T] {K N : Set T} {ε : ℝ} {x : T}
+    (hsep : isEpsilonSeparated N ε)
+    (hadd : canGreedilyAdd K N ε x) :
+    isEpsilonSeparated (insert x N) ε := by
+  intro a ha b hb hab
+  simp only [mem_insert_iff] at ha hb
+  rcases ha with rfl | ha
+  · rcases hb with rfl | hb
+    · exact False.elim (hab rfl)
+    · exact hadd.2 b hb
+  · rcases hb with rfl | hb
+    · simpa [dist_comm] using hadd.2 a ha
+    · exact hsep ha hb hab
+
+/-- If no point can be greedily added, the current separated set is maximal. -/
+theorem isMaximalEpsilonSeparated_of_no_canGreedilyAdd
+    {T : Type*} [PseudoMetricSpace T] {K N : Set T} {ε : ℝ}
+    (hNK : N ⊆ K) (hsep : isEpsilonSeparated N ε)
+    (hterminal : ∀ x ∈ K, ¬ canGreedilyAdd K N ε x) :
+    isMaximalEpsilonSeparated K N ε := by
+  refine ⟨hNK, hsep, ?_⟩
+  intro M hNM hMK hM
+  apply Set.Subset.antisymm ?_ hNM
+  intro x hx
+  by_contra hxN
+  have hadd : canGreedilyAdd K N ε x := by
+    refine ⟨hMK hx, ?_⟩
+    intro y hyN
+    simpa [dist_comm] using hM (hNM hyN) hx (by intro h; exact hxN (h ▸ hyN))
+  exact hterminal x (hMK hx) hadd
+
 /-- Every inclusion-maximal separated subset is an internal net. -/
 theorem isEpsilonNet_of_isMaximalEpsilonSeparated
     {T : Type*} [PseudoMetricSpace T] {K N : Set T} {ε : ℝ}
@@ -105,6 +144,15 @@ theorem isEpsilonNet_of_isMaximalEpsilonSeparated
     exact hunion)
   have hxinsert : x ∈ insert x N := mem_insert x N
   exact hxN (by rw [← heq]; exact hxinsert)
+
+/-- A terminal finite greedy selection is an epsilon-net. -/
+theorem isEpsilonNet_of_terminalGreedySelection
+    {T : Type*} [PseudoMetricSpace T] {K N : Set T} {ε : ℝ}
+    (hε : 0 ≤ ε) (hNK : N ⊆ K) (hsep : isEpsilonSeparated N ε)
+    (hterminal : ∀ x ∈ K, ¬ canGreedilyAdd K N ε x) :
+    isEpsilonNet K N ε :=
+  isEpsilonNet_of_isMaximalEpsilonSeparated hε
+    (isMaximalEpsilonSeparated_of_no_canGreedilyAdd hNK hsep hterminal)
 
 /-- The candidate cardinal family used by `coveringNumber`. -/
 def coveringCardinals {T : Type*} [PseudoMetricSpace T]
@@ -431,6 +479,15 @@ theorem hdp_04_hdef_h4_d2_d4 {T : Type*} [PseudoMetricSpace T]
 theorem hdp_04_hex_h4_d2_d5 :
     Geometry.Covering.packingGeometryExampleStatement :=
   Geometry.Covering.packingGeometryExample
+
+/-- Stable source-facing alias for the terminal greedy-selection net remark. -/
+theorem hdp_04_hrem_h4_d2_d7 {T : Type*} [PseudoMetricSpace T]
+    {K N : Set T} {ε : ℝ} (hε : 0 ≤ ε)
+    (hNK : N ⊆ K)
+    (hsep : Geometry.Covering.isEpsilonSeparated N ε)
+    (hterminal : ∀ x ∈ K, ¬ Geometry.Covering.canGreedilyAdd K N ε x) :
+    Geometry.Covering.isEpsilonNet K N ε :=
+  Geometry.Covering.isEpsilonNet_of_terminalGreedySelection hε hNK hsep hterminal
 
 end Contract
 end HDP
