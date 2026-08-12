@@ -92,9 +92,7 @@ structure MetricCoverInterface (T : Type u) [PseudoMetricSpace T] where
   covering : Set T → ℝ → Cardinal.{u}
   isSeparated : Set T → ℝ → Prop
   packing : Set T → ℝ → Cardinal.{u}
-  finiteNetWitness : ∀ K : Set T, ∀ ε : ℝ,
-    (∃ N : Finset T, isFiniteEpsilonNet K N ε) →
-      ∃ N : Finset T, isFiniteEpsilonNet K N ε
+  finiteWitness : ∀ {s : Set T}, s.Finite → Finset T
 
 /-- The canonical metric-cover interface. -/
 noncomputable def metricCoverInterface {T : Type*} [PseudoMetricSpace T] :
@@ -103,7 +101,7 @@ noncomputable def metricCoverInterface {T : Type*} [PseudoMetricSpace T] :
   covering := coveringNumber
   isSeparated := isEpsilonSeparated
   packing := packingNumber
-  finiteNetWitness := coveringNumber_has_finite_witness
+  finiteWitness := Set.Finite.toFinset
 
 end Covering
 end Geometry
