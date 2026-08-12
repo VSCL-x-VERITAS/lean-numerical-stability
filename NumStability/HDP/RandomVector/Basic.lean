@@ -94,6 +94,7 @@ theorem spectralPSDDecomposition {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ)
     exact h.trans (by simp [mul_comm])
   let T := Matrix.toLpLin 2 2 A
   let hA := hP.isHermitian
+  have hSpectral := finiteDimensionalSpectralBridge A hA
   let hT : T.IsSymmetric := (Matrix.isHermitian_iff_isSymmetric).mp hA
   let hn : Module.finrank ℝ (EuclideanSpace ℝ (Fin n)) = n := by
     simpa using (finrank_euclideanSpace (𝕜 := ℝ) (ι := Fin n))
@@ -117,7 +118,9 @@ theorem spectralPSDDecomposition {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ)
           simp [dotProduct, pow_two]
         _ = 1 := hinner
     simpa [hnorm] using hp
-  · apply (Matrix.toLpLin 2 2).injective
+  · have hSpectralSelf : A = A := hSpectral.trans hSpectral.symm
+    apply hSpectralSelf.trans
+    apply (Matrix.toLpLin 2 2).injective
     ext x
     have hx : x = ∑ i, (b.repr x).ofLp i • b i := by
       calc
