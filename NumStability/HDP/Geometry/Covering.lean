@@ -652,7 +652,61 @@ def hammingCube (n : ℕ) : Type := Fin n → Bool
 
 /-- The Hamming distance: the number of coordinates on which two words differ. -/
 def hammingDistance {n : ℕ} (x y : hammingCube n) : ℕ :=
-  (Finset.univ.filter (fun i => x i != y i)).card
+  (Finset.univ.filter (fun i => x i ≠ y i)).card
+
+def hammingDistanceIsMetricStatement : Prop :=
+  ∀ {n : ℕ} (x y z : hammingCube n),
+    (hammingDistance x y = 0 ↔ x = y) ∧
+      hammingDistance x y = hammingDistance y x ∧
+      hammingDistance x z ≤ hammingDistance x y + hammingDistance y z
+
+theorem hammingDistance_eq_zero_iff {n : ℕ} (x y : hammingCube n) :
+    hammingDistance x y = 0 ↔ x = y := by
+  constructor
+  · intro h
+    have hempty : Finset.univ.filter (fun i => x i ≠ y i) = ∅ :=
+      Finset.card_eq_zero.mp h
+    funext i
+    by_contra hxy
+    have hi : i ∈ Finset.univ.filter (fun j => x j ≠ y j) := by
+      simp [hxy]
+    rw [hempty] at hi
+    simpa using hi
+  · intro h
+    subst y
+    simp [hammingDistance]
+
+theorem hammingDistance_symm {n : ℕ} (x y : hammingCube n) :
+    hammingDistance x y = hammingDistance y x := by
+  unfold hammingDistance
+  apply congrArg Finset.card
+  ext i
+  cases hxi : x i <;> cases hyi : y i <;> simp [hxi, hyi]
+
+theorem hammingDistance_triangle {n : ℕ} (x y z : hammingCube n) :
+    hammingDistance x z ≤ hammingDistance x y + hammingDistance y z := by
+  let A := Finset.univ.filter (fun i => x i ≠ z i)
+  let B := Finset.univ.filter (fun i => x i ≠ y i)
+  let C := Finset.univ.filter (fun i => y i ≠ z i)
+  have hsub : A ⊆ B ∪ C := by
+    intro i hi
+    have hiz : x i ≠ z i := (Finset.mem_filter.mp hi).2
+    by_cases hxy : x i = y i
+    · have hyz : y i ≠ z i := by
+        intro hyz
+        apply hiz
+        exact hxy.trans hyz
+      exact Finset.mem_union_right B (Finset.mem_filter.mpr ⟨Finset.mem_univ _, hyz⟩)
+    · exact Finset.mem_union_left C (Finset.mem_filter.mpr ⟨Finset.mem_univ _, hxy⟩)
+  have hcard : A.card ≤ (B ∪ C).card := Finset.card_le_card hsub
+  have hunion : (B ∪ C).card ≤ B.card + C.card := Finset.card_union_le B C
+  simpa [A, B, C, hammingDistance] using hcard.trans hunion
+
+theorem hammingDistance_isMetric :
+    hammingDistanceIsMetricStatement := by
+  intro n x y z
+  exact ⟨hammingDistance_eq_zero_iff x y, hammingDistance_symm x y,
+    hammingDistance_triangle x y z⟩
 
 /-- Pointwise Minkowski addition of two sets. -/
 def minkowskiSum {E : Type*} [Add E] (A B : Set E) : Set E :=
