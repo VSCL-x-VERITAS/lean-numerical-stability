@@ -51,6 +51,21 @@ theorem sqrtDeviationBound {z δ : ℝ} (hz : 0 ≤ z) (hδ : 0 ≤ δ)
         (add_nonneg hz (by norm_num : (0 : ℝ) ≤ 1))]
     · nlinarith
 
+/-- Symmetric bilinear forms are determined by their quadratic evaluations. -/
+theorem symmetricQuadraticExtensionality {V : Type*}
+    [AddCommGroup V] [Module ℝ V]
+    (B C : V →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (hB : ∀ x y, B x y = B y x)
+    (hC : ∀ x y, C x y = C y x)
+    (hquad : ∀ x, B x x = C x x) : B = C := by
+  ext x y
+  have hplus := hquad (x + y)
+  have hminus := hquad (x - y)
+  simp only [map_add, map_sub, LinearMap.add_apply, LinearMap.sub_apply] at hplus hminus
+  rw [hB y x, hC y x] at hplus
+  rw [hB y x, hC y x] at hminus
+  linarith
+
 end NumStability.HDP.RandomVector.Basic
 
 namespace NumStability.HDP.Contract
@@ -64,5 +79,13 @@ theorem hdp_03_hlem_hsqrt_hdeviation {z δ : ℝ} (hz : 0 ≤ z) (hδ : 0 ≤ δ
     (hdev : δ ≤ |z - 1|) :
     max δ (δ ^ 2) ≤ |z ^ 2 - 1| :=
   RandomVector.Basic.sqrtDeviationBound hz hδ hdev
+
+theorem hdp_03_hlem_hsymmetric_hquadratic_hext {V : Type*}
+    [AddCommGroup V] [Module ℝ V]
+    (B C : V →ₗ[ℝ] V →ₗ[ℝ] ℝ)
+    (hB : ∀ x y, B x y = B y x)
+    (hC : ∀ x y, C x y = C y x)
+    (hquad : ∀ x, B x x = C x x) : B = C :=
+  RandomVector.Basic.symmetricQuadraticExtensionality B C hB hC hquad
 
 end NumStability.HDP.Contract
