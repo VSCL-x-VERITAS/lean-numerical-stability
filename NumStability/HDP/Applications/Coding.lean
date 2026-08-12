@@ -97,6 +97,16 @@ theorem repetitionCodeBlockLength (r k : ℕ) :
     Fintype.card (Fin (2 * r + 1) × Fin k) = (2 * r + 1) * k := by
   simp [Fintype.card_prod]
 
+def repetitionCodeExampleStatement : Prop :=
+  repetitionCodeGlobalCorrectionStatement ∧
+    ∀ r k : ℕ,
+      Fintype.card (Fin (2 * r + 1) × Fin k) = (2 * r + 1) * k
+
+theorem repetitionCodeExample : repetitionCodeExampleStatement := by
+  constructor
+  · exact repetitionCodeCorrectOfGlobalErrors
+  · exact repetitionCodeBlockLength
+
 /-- A finite metric codebook with disjoint closed balls of radius `r`. -/
 def PairwiseDisjointClosedBalls {α : Type*} [PseudoMetricSpace α]
     (C : Set α) (r : ℝ) : Prop :=
@@ -129,8 +139,8 @@ end NumStability.HDP.Applications.Coding
 namespace NumStability.HDP.Contract
 
 theorem hdp_04_hexample_h4_d3_d2 :
-    NumStability.HDP.Applications.Coding.repetitionCodeGlobalCorrectionStatement :=
-  NumStability.HDP.Applications.Coding.repetitionCodeCorrectOfGlobalErrors
+    NumStability.HDP.Applications.Coding.repetitionCodeExampleStatement :=
+  NumStability.HDP.Applications.Coding.repetitionCodeExample
 
 theorem hdp_04_hexample_h4_d3_d2_hlength (r k : ℕ) :
     Fintype.card (Fin (2 * r + 1) × Fin k) = (2 * r + 1) * k :=
