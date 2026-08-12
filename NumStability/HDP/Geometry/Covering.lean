@@ -79,6 +79,25 @@ noncomputable def coveringNumber {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Cardinal :=
   sInf (coveringCardinals K ε)
 
+/-- Covering numbers decrease as the radius grows, for nonnegative radii. -/
+theorem coveringNumber_anti_mono {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) {ε₁ ε₂ : ℝ} (hε₁ : 0 ≤ ε₁) (hε : ε₁ ≤ ε₂) :
+    coveringNumber K ε₂ ≤ coveringNumber K ε₁ := by
+  apply csInf_le_csInf'
+  · refine ⟨Cardinal.mk K, ?_⟩
+    refine ⟨K, ?_, rfl⟩
+    constructor
+    · exact subset_rfl
+    · intro x hx
+      exact ⟨x, hx, by simpa using hε₁⟩
+  · intro c hc
+    rcases hc with ⟨N, hN, hcard⟩
+    refine ⟨N, ?_, hcard⟩
+    refine ⟨hN.1, ?_⟩
+    intro x hx
+    rcases hN.2 x hx with ⟨y, hyN, hxy⟩
+    exact ⟨y, hyN, hxy.trans hε⟩
+
 /-- The candidate cardinal family used by `packingNumber`. -/
 def packingCardinals {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Set Cardinal :=
@@ -115,6 +134,21 @@ theorem coveringNumber_has_finite_witness {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ)
     (h : ∃ N : Finset T, isFiniteEpsilonNet K N ε) :
     ∃ N : Finset T, isFiniteEpsilonNet K N ε := h
+
+/-- The Chapter 4 covering-number package: the cardinal infimum definition,
+radius monotonicity, and the finite-net witness interface. -/
+theorem coveringNumber_properties {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) :
+    (∀ {ε₁ ε₂ : ℝ}, 0 ≤ ε₁ → ε₁ ≤ ε₂ →
+      coveringNumber K ε₂ ≤ coveringNumber K ε₁) ∧
+      (∀ {ε : ℝ},
+        (∃ N : Finset T, isFiniteEpsilonNet K N ε) →
+          ∃ N : Finset T, isFiniteEpsilonNet K N ε) := by
+  constructor
+  · intro ε₁ ε₂ hε₁ hε
+    exact coveringNumber_anti_mono K hε₁ hε
+  · intro ε h
+    exact coveringNumber_has_finite_witness K ε h
 
 /-- The packaged Chapter 4 metric-cover interface. -/
 structure MetricCoverInterface (T : Type u) [PseudoMetricSpace T] where
@@ -186,6 +220,17 @@ theorem hdp_04_hdef_h4_d2_d1 {T : Type*} [PseudoMetricSpace T]
     Geometry.Covering.isEpsilonNet K N ε ↔
       N ⊆ K ∧ K ⊆ Geometry.Covering.closedBallCover N ε :=
   Geometry.Covering.isEpsilonNet_iff_closedBallCover K N ε
+
+/-- Stable contract alias for the covering-number package. -/
+theorem hdp_04_hdef_h4_d2_d2 {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) :
+    (∀ {ε₁ ε₂ : ℝ}, 0 ≤ ε₁ → ε₁ ≤ ε₂ →
+      Geometry.Covering.coveringNumber K ε₂ ≤
+        Geometry.Covering.coveringNumber K ε₁) ∧
+      (∀ {ε : ℝ},
+        (∃ N : Finset T, Geometry.Covering.isFiniteEpsilonNet K N ε) →
+          ∃ N : Finset T, Geometry.Covering.isFiniteEpsilonNet K N ε) :=
+  Geometry.Covering.coveringNumber_properties K
 
 end Contract
 end HDP
