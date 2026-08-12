@@ -803,6 +803,79 @@ theorem volumetricCoveringWitnesses :
   · intro N hNK hsep
     exact finset_card_mul_half_closedBall_le_volume_minkowskiSum K hε N hNK hsep
 
+def euclideanUnitBall {n : ℕ} : Set (EuclideanSpace ℝ (Fin n)) :=
+  Metric.closedBall 0 1
+
+def euclideanUnitSphere {n : ℕ} : Set (EuclideanSpace ℝ (Fin n)) :=
+  {x | ‖x‖ = 1}
+
+theorem euclideanUnitSphere_subset_unitBall {n : ℕ} :
+    (euclideanUnitSphere (n := n)) ⊆ (euclideanUnitBall (n := n)) := by
+  intro x hx
+  rw [euclideanUnitBall, Metric.mem_closedBall, dist_zero_right]
+  exact hx.le
+
+theorem euclideanUnitBall_minkowski_half_subset
+    {n : ℕ} (h : ℝ) (hh : 0 ≤ h) :
+    minkowskiSum (euclideanUnitBall (n := n))
+        (scalarDilate h (euclideanUnitBall (n := n))) ⊆
+      Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (1 + h) := by
+  intro z hz
+  rcases Set.mem_add.mp hz with ⟨x, hx, y, hy, rfl⟩
+  rcases Set.mem_smul_set.mp hy with ⟨u, hu, rfl⟩
+  rw [Metric.mem_closedBall, dist_zero_right]
+  have hxnorm : ‖x‖ ≤ 1 := by
+    simpa [dist_zero_right] using (Metric.mem_closedBall.mp hx)
+  have hunorm : ‖u‖ ≤ 1 := by
+    simpa [dist_zero_right] using (Metric.mem_closedBall.mp hu)
+  calc
+    ‖x + h • u‖ ≤ ‖x‖ + ‖h • u‖ := norm_add_le _ _
+    _ = ‖x‖ + |h| * ‖u‖ := by simp [norm_smul, Real.norm_eq_abs]
+    _ = ‖x‖ + h * ‖u‖ := by rw [abs_of_nonneg hh]
+    _ ≤ 1 + h := by nlinarith
+
+def euclideanBallSphereCoveringCorollaryStatement : Prop :=
+  ∀ {n : ℕ} [NeZero n] {ε : ℝ}, 0 < ε →
+    (∀ N : Finset (EuclideanSpace ℝ (Fin n)),
+      isFiniteEpsilonNet (euclideanUnitBall (n := n)) N ε →
+        volume (euclideanUnitBall (n := n)) ≤
+          (N.card : ℝ≥0∞) *
+            volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) ε)) ∧
+    (∀ N : Finset (EuclideanSpace ℝ (Fin n)),
+      (N : Set (EuclideanSpace ℝ (Fin n))) ⊆ euclideanUnitBall →
+      isEpsilonSeparated (N : Set (EuclideanSpace ℝ (Fin n))) ε →
+        (N.card : ℝ≥0∞) *
+            volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (ε / 2)) ≤
+          volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin n)) (1 + ε / 2))) ∧
+    (1 < ε → isFiniteEpsilonNet (euclideanUnitBall (n := n)) {0} ε) ∧
+    (∀ N : Finset (EuclideanSpace ℝ (Fin n)),
+      isFiniteEpsilonNet (euclideanUnitBall (n := n)) N ε →
+        isExteriorEpsilonNet (euclideanUnitSphere (n := n)) (N : Set _) ε)
+
+theorem euclideanBallSphereCoveringCorollary :
+    euclideanBallSphereCoveringCorollaryStatement := by
+  intro n _ ε hε
+  constructor
+  · intro N hnet
+    exact volume_le_finset_card_mul_closedBall (euclideanUnitBall (n := n)) hε N hnet
+  constructor
+  · intro N hNK hsep
+    have hvol := finset_card_mul_half_closedBall_le_volume_minkowskiSum
+      (euclideanUnitBall (n := n)) hε N hNK hsep
+    exact hvol.trans (measure_mono
+      (euclideanUnitBall_minkowski_half_subset (ε / 2) (by linarith)))
+  constructor
+  · intro hε1
+    refine ⟨?_, ?_⟩
+    · simp [euclideanUnitBall]
+    · intro x hx
+      refine ⟨0, by simp, ?_⟩
+      have hx' : dist x 0 ≤ 1 := by
+        exact Metric.mem_closedBall.mp hx
+      linarith
+  · intro N hnet x hx
+    exact hnet.2 x (euclideanUnitSphere_subset_unitBall hx)
+
 /-- The bundled pointwise set-geometry interface. -/
 structure MinkowskiSetInterface (𝕜 E : Type*) [Add E] [SMul 𝕜 E] where
   sum : Set E → Set E → Set E
@@ -880,6 +953,11 @@ theorem hdp_04_hex_h4_d2_d10 :
             Geometry.Covering.coveringNumber K (ε / 2)) ∧
       Geometry.Covering.internalCoveringCenterCounterexampleStatement :=
   Geometry.Covering.internalCoveringMonotonicityExerciseStatement
+
+/-- Stable source-facing alias for the Euclidean ball/sphere covering corollary. -/
+theorem hdp_04_hcor_h4_d2_d13 :
+    Geometry.Covering.euclideanBallSphereCoveringCorollaryStatement :=
+  Geometry.Covering.euclideanBallSphereCoveringCorollary
 
 end Contract
 end HDP
