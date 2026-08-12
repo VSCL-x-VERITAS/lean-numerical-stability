@@ -7,6 +7,7 @@ import Mathlib.MeasureTheory.Measure.Map
 namespace NumStability.HDP.RandomVector.Distributions
 
 open MeasureTheory
+open scoped BigOperators
 
 /-- The Euclidean sphere of radius `r` in dimension `n`. -/
 def euclideanSphere (n : ℕ) (r : ℝ) : Set (EuclideanSpace ℝ (Fin n)) :=
@@ -60,6 +61,28 @@ def isTightFrame {ι E : Type*} [Fintype ι] [NormedAddCommGroup E]
     [Inner ℝ E] (u : ι → E) (A : ℝ) : Prop :=
   isFrame u A A
 
+/-- The one-dimensional projection associated with a coefficient vector. -/
+def linearProjection {n : ℕ} (θ : Fin n → ℝ) (x : Fin n → ℝ) : ℝ :=
+  ∑ i, θ i * x i
+
+/-- Foundation-helper contract for uniqueness from all one-dimensional laws.
+The analytic characteristic-function uniqueness theorem is not supplied by
+the pinned Mathlib baseline, so it is kept as an explicit reusable premise. -/
+def characteristicFunctionUniqueness (n : ℕ) : Prop :=
+  ∀ μ ν : Measure (Fin n → ℝ),
+    (∀ θ : Fin n → ℝ,
+      Measure.map (linearProjection θ) μ = Measure.map (linearProjection θ) ν) →
+      μ = ν
+
+/-- Cramér--Wold in the measure-level form consumed by the HDP distribution API. -/
+theorem cramerWold {n : ℕ}
+    (huniq : characteristicFunctionUniqueness n)
+    (μ ν : Measure (Fin n → ℝ))
+    (hproj : ∀ θ : Fin n → ℝ,
+      Measure.map (linearProjection θ) μ = Measure.map (linearProjection θ) ν) :
+    μ = ν :=
+  huniq μ ν hproj
+
 end NumStability.HDP.RandomVector.Distributions
 
 namespace NumStability.HDP.Contract
@@ -76,6 +99,15 @@ def hdp_03_hdef_hconvex_hbody_huniform (n : ℕ)
     (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n))) :
     Set (Measure (EuclideanSpace ℝ (Fin n))) :=
   RandomVector.Distributions.convexBodyUniform n K volumeMeasure
+
+theorem hdp_03_hthm_hcramer_hwold {n : ℕ}
+    (huniq : RandomVector.Distributions.characteristicFunctionUniqueness n)
+    (μ ν : Measure (Fin n → ℝ))
+    (hproj : ∀ θ : Fin n → ℝ,
+      Measure.map (RandomVector.Distributions.linearProjection θ) μ =
+        Measure.map (RandomVector.Distributions.linearProjection θ) ν) :
+    μ = ν :=
+  RandomVector.Distributions.cramerWold huniq μ ν hproj
 
 def hdp_03_hdef_h3_d3_d8 {ι E : Type*} [Fintype ι]
     [NormedAddCommGroup E] [Inner ℝ E] (u : ι → E) (A B : ℝ) : Prop :=
