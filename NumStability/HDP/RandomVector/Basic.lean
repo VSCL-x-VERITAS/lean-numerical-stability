@@ -3,7 +3,10 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Matrix.PosDef
 import Mathlib.Analysis.InnerProductSpace.Positive
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Tactic
+
+open Set MeasureTheory
 
 namespace NumStability.HDP.RandomVector.Basic
 
@@ -157,9 +160,28 @@ theorem spectralPSDDecomposition {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ)
     simp only [dotProduct]
     ring
 
+theorem cubeVolumeGrowth (n : ℕ) :
+    volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (2 : ℝ))) =
+        ENNReal.ofReal ((2 : ℝ) ^ n) ∧
+      volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (1 : ℝ))) = 1 ∧
+      volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (2 : ℝ))) /
+          volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (1 : ℝ))) =
+        ENNReal.ofReal ((2 : ℝ) ^ n) := by
+  simp only [Real.volume_Icc_pi]
+  simp
+
 end NumStability.HDP.RandomVector.Basic
 
 namespace NumStability.HDP.Contract
+
+theorem hdp_03_hexample_hcube_hvolume_hgrowth (n : ℕ) :
+    volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (2 : ℝ))) =
+        ENNReal.ofReal ((2 : ℝ) ^ n) ∧
+      volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (1 : ℝ))) = 1 ∧
+      volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (2 : ℝ))) /
+          volume (Icc (fun _ : Fin n => (0 : ℝ)) (fun _ => (1 : ℝ))) =
+        ENNReal.ofReal ((2 : ℝ) ^ n) :=
+  RandomVector.Basic.cubeVolumeGrowth n
 
 theorem hdp_03_hlem_hnorm_hsquare_hexpectation (n : ℕ)
     (secondMoment : Fin n → ℝ) (h : ∀ i, secondMoment i = 1) :
