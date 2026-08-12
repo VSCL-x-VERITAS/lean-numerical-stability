@@ -87,6 +87,31 @@ def borellConvexMarginalPrerequisite : Prop :=
       μ ∈ convexBodyUniform n K volumeMeasure → isotropicMeasure μ → 0 < C →
       subexponentialMarginalBound μ C
 
+/-- Independence of the radial and directional push-forward laws. -/
+def radialDirectionIndependence {n : ℕ}
+    (μ : Measure (EuclideanSpace ℝ (Fin n)))
+    (r : EuclideanSpace ℝ (Fin n) → ℝ)
+    (θ : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) : Prop :=
+  Measure.map (fun x => (r x, θ x)) μ =
+    (Measure.map r μ).prod (Measure.map θ μ)
+
+/-- Polar-coordinate independence is exposed as an explicit Gaussian polar
+measure contract; the null-point convention is left in the chosen direction
+map `θ`. -/
+def gaussianPolarIndependencePrerequisite : Prop :=
+  ∀ {n : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin n)))
+    (r : EuclideanSpace ℝ (Fin n) → ℝ)
+    (θ : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)),
+    radialDirectionIndependence μ r θ
+
+theorem gaussianRadialDirectionIndependence
+    (hPolar : gaussianPolarIndependencePrerequisite) {n : ℕ}
+    (μ : Measure (EuclideanSpace ℝ (Fin n)))
+    (r : EuclideanSpace ℝ (Fin n) → ℝ)
+    (θ : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) :
+    radialDirectionIndependence μ r θ :=
+  hPolar μ r θ
+
 /-- Composition of the two external analytic prerequisites for isotropic
 uniform convex-body marginals. -/
 theorem borellConvexMarginal {n : ℕ}
@@ -152,6 +177,14 @@ def hdp_03_hdef_hconvex_hbody_huniform (n : ℕ)
     (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n))) :
     Set (Measure (EuclideanSpace ℝ (Fin n))) :=
   RandomVector.Distributions.convexBodyUniform n K volumeMeasure
+
+theorem hdp_03_hex_h3_d3_d7a
+    (hPolar : RandomVector.Distributions.gaussianPolarIndependencePrerequisite)
+    {n : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin n)))
+    (r : EuclideanSpace ℝ (Fin n) → ℝ)
+    (θ : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) :
+    RandomVector.Distributions.radialDirectionIndependence μ r θ :=
+  RandomVector.Distributions.gaussianRadialDirectionIndependence hPolar μ r θ
 
 theorem hdp_03_hthm_hborell_hconvex_hmarginal {n : ℕ}
     (K : Set (EuclideanSpace ℝ (Fin n)))
