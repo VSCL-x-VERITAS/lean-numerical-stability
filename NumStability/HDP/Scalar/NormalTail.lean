@@ -3,6 +3,7 @@ import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Data.Real.Basic
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
+import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Scalar tail and comparison interfaces
@@ -237,6 +238,84 @@ theorem gaussianTailIntegral_mills_bounds {t : ℝ} (ht : 0 < t) :
       _ ≤ gaussianTailIntegral t := by linarith
   · exact gaussianTailIntegral_le ht
 
+/-! The source-facing normalized form of Proposition 2.1.2.  The book writes
+`ℙ(g ≥ t)` and `φ(t)`; `Ici t` and `gaussianPDFReal 0 1 t` make those two
+conventions explicit in Mathlib. -/
+
+noncomputable def standardNormalTail (t : ℝ) : ENNReal :=
+  ProbabilityTheory.gaussianReal 0 1 (Set.Ici t)
+
+theorem proposition_2_1_2 :
+    (∀ t : ℝ, 0 < t →
+      (ENNReal.ofReal
+          ((1 / t - 1 / t ^ 3) * ProbabilityTheory.gaussianPDFReal 0 1 t) ≤
+          standardNormalTail t ∧
+        standardNormalTail t ≤ ENNReal.ofReal
+          ((1 / t) * ProbabilityTheory.gaussianPDFReal 0 1 t))) ∧
+      (∀ t : ℝ, 1 ≤ t →
+        standardNormalTail t ≤
+          ENNReal.ofReal (ProbabilityTheory.gaussianPDFReal 0 1 t)) := by
+  have hpdf : ∀ x : ℝ,
+      ProbabilityTheory.gaussianPDFReal 0 1 x =
+        (Real.sqrt (2 * Real.pi))⁻¹ * gaussianKernel x := by
+    intro x
+    rw [ProbabilityTheory.gaussianPDFReal, gaussianKernel]
+    simp only [sub_zero, NNReal.coe_one, mul_one]
+    congr 1
+    · ring
+  have htail_pdf {t : ℝ} :
+      (∫ x in Set.Ici t, ProbabilityTheory.gaussianPDFReal 0 1 x) =
+        (Real.sqrt (2 * Real.pi))⁻¹ * gaussianTailIntegral t := by
+    rw [MeasureTheory.integral_Ici_eq_integral_Ioi]
+    simp_rw [hpdf]
+    rw [MeasureTheory.integral_const_mul]
+    rfl
+  have hc : 0 ≤ (Real.sqrt (2 * Real.pi))⁻¹ := by positivity
+  have hc_pos : 0 < (Real.sqrt (2 * Real.pi))⁻¹ := by positivity
+  have hmain : ∀ {t : ℝ}, 0 < t →
+      (ENNReal.ofReal
+          ((1 / t - 1 / t ^ 3) * ProbabilityTheory.gaussianPDFReal 0 1 t) ≤
+          standardNormalTail t ∧
+        standardNormalTail t ≤ ENNReal.ofReal
+          ((1 / t) * ProbabilityTheory.gaussianPDFReal 0 1 t)) := by
+    intro t ht
+    change ENNReal.ofReal
+        ((1 / t - 1 / t ^ 3) * ProbabilityTheory.gaussianPDFReal 0 1 t) ≤
+        ProbabilityTheory.gaussianReal 0 1 (Set.Ici t) ∧
+      ProbabilityTheory.gaussianReal 0 1 (Set.Ici t) ≤ ENNReal.ofReal
+        ((1 / t) * ProbabilityTheory.gaussianPDFReal 0 1 t)
+    rw [ProbabilityTheory.gaussianReal_apply_eq_integral 0
+      (show (1 : NNReal) ≠ 0 by norm_num) (Set.Ici t), htail_pdf]
+    have hmills := gaussianTailIntegral_mills_bounds ht
+    have hlow := mul_le_mul_of_nonneg_left hmills.1 hc
+    have hupp := mul_le_mul_of_nonneg_left hmills.2 hc
+    constructor
+    · apply ENNReal.ofReal_le_ofReal
+      calc
+        (1 / t - 1 / t ^ 3) * ProbabilityTheory.gaussianPDFReal 0 1 t =
+            (Real.sqrt (2 * Real.pi))⁻¹ *
+              ((1 / t - 1 / t ^ 3) * gaussianKernel t) := by rw [hpdf]; ring
+        _ ≤ (Real.sqrt (2 * Real.pi))⁻¹ * gaussianTailIntegral t := hlow
+    · apply ENNReal.ofReal_le_ofReal
+      calc
+        (Real.sqrt (2 * Real.pi))⁻¹ * gaussianTailIntegral t ≤
+            (Real.sqrt (2 * Real.pi))⁻¹ * ((1 / t) * gaussianKernel t) := hupp
+        _ = (1 / t) * ProbabilityTheory.gaussianPDFReal 0 1 t := by rw [hpdf]; ring
+  constructor
+  · intro t ht
+    exact hmain ht
+  · intro t ht
+    have hupper := hmain (lt_of_lt_of_le (by norm_num) ht)
+    apply le_trans hupper.2
+    apply ENNReal.ofReal_le_ofReal
+    rw [hpdf]
+    have hdiv : 1 / t ≤ (1 : ℝ) := by
+      apply (div_le_iff₀ (lt_of_lt_of_le zero_lt_one ht)).2
+      simpa using ht
+    have hnonneg : 0 ≤ (Real.sqrt (2 * Real.pi))⁻¹ * gaussianKernel t :=
+      mul_nonneg hc (Real.exp_pos _).le
+    simpa using mul_le_mul_of_nonneg_right hdiv hnonneg
+
 /-- The two reusable calculus conclusions in the proof of the standard-normal
 tail estimate: the shifted upper integral and the equivalent
 integration-by-parts Mills bounds. -/
@@ -320,6 +399,20 @@ theorem eventuallyComparable_iff_comparisonTheta
 end NumStability.HDP.Scalar.NormalTail
 
 namespace NumStability.HDP.Contract
+
+/-- Stable source alias for Proposition 2.1.2, the normalized Gaussian Mills
+tail bounds and their `t ≥ 1` corollary. -/
+theorem hdp_02_hprop_h2_d1_d2 :
+    (∀ t : ℝ, 0 < t →
+      (ENNReal.ofReal
+          ((1 / t - 1 / t ^ 3) * ProbabilityTheory.gaussianPDFReal 0 1 t) ≤
+          Scalar.NormalTail.standardNormalTail t ∧
+        Scalar.NormalTail.standardNormalTail t ≤ ENNReal.ofReal
+          ((1 / t) * ProbabilityTheory.gaussianPDFReal 0 1 t))) ∧
+      (∀ t : ℝ, 1 ≤ t →
+        Scalar.NormalTail.standardNormalTail t ≤
+          ENNReal.ofReal (ProbabilityTheory.gaussianPDFReal 0 1 t)) :=
+  Scalar.NormalTail.proposition_2_1_2
 
 /-- Stable source alias for `HDP-02-LEM-NORMAL-TAIL-CALCULUS`. -/
 theorem hdp_02_hlem_hnormal_htail_hcalculus {t : ℝ} (ht : 0 < t) :
