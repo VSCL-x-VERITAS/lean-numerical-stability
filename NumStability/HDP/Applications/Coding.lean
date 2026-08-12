@@ -1,7 +1,101 @@
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
+import Mathlib.Data.Fin.Tuple.Basic
+import Mathlib.Tactic
 
 namespace NumStability.HDP.Applications.Coding
+
+/-! A small, fully finite model of the repetition-code example.  The block is
+indexed by a repetition coordinate and a message coordinate; this avoids an
+irrelevant flattening convention in the statement. -/
+
+def oddMajority (r : ℕ) (z : Fin (2 * r + 1) → Bool) : Bool :=
+  if r < (Finset.univ.filter (fun i => z i = true)).card then true else false
+
+theorem oddMajority_eq_of_errors_le
+    (r : ℕ) (z : Fin (2 * r + 1) → Bool) (x : Bool)
+    (herrors : (Finset.univ.filter (fun i => z i ≠ x)).card ≤ r) :
+    oddMajority r z = x := by
+  classical
+  cases x with
+  | false =>
+      have hcard := Finset.card_filter_add_card_filter_not
+        (s := (Finset.univ : Finset (Fin (2 * r + 1))))
+        (p := fun i => z i = true)
+      have htrue : (Finset.univ.filter (fun i => z i = true)).card ≤ r := by
+        simpa only [Bool.not_eq_false] using herrors
+      simp [oddMajority, Nat.not_lt_of_ge htrue]
+  | true =>
+      have hcard := Finset.card_filter_add_card_filter_not
+        (s := (Finset.univ : Finset (Fin (2 * r + 1))))
+        (p := fun i => z i = true)
+      have hfalse : (Finset.univ.filter (fun i => z i ≠ true)).card ≤ r := herrors
+      have htrue : r < (Finset.univ.filter (fun i => z i = true)).card := by
+        have hcard' :
+            (Finset.univ.filter (fun i => z i = true)).card +
+                (Finset.univ.filter (fun i => z i ≠ true)).card = 2 * r + 1 := by
+          simpa [Finset.card_univ] using hcard
+        omega
+      simp [oddMajority, htrue]
+
+def repetitionEncode (r k : ℕ) (x : Fin k → Bool) :
+    Fin (2 * r + 1) × Fin k → Bool :=
+  fun p => x p.2
+
+def repetitionDecode (r k : ℕ)
+    (y : Fin (2 * r + 1) × Fin k → Bool) : Fin k → Bool :=
+  fun i => oddMajority r (fun t => y (t, i))
+
+def repetitionCodeCorrectionStatement : Prop :=
+  ∀ {r k : ℕ} (x : Fin k → Bool)
+    (y : Fin (2 * r + 1) × Fin k → Bool),
+    (∀ i : Fin k,
+      (Finset.univ.filter (fun t => y (t, i) ≠ x i)).card ≤ r) →
+      repetitionDecode r k y = x
+
+theorem repetitionCodeCorrect : repetitionCodeCorrectionStatement := by
+  intro r k x y h
+  funext i
+  simp only [repetitionDecode]
+  exact oddMajority_eq_of_errors_le r (fun t => y (t, i)) (x i) (h i)
+
+theorem repetitionFiberErrors_le_global
+    {r k : ℕ} (x : Fin k → Bool)
+    (y : Fin (2 * r + 1) × Fin k → Bool) (i : Fin k) :
+    (Finset.univ.filter (fun t => y (t, i) ≠ x i)).card ≤
+      (Finset.univ.filter (fun p => y p ≠ x p.2)).card := by
+  classical
+  let s := Finset.univ.filter (fun t : Fin (2 * r + 1) => y (t, i) ≠ x i)
+  let g := Finset.univ.filter
+    (fun p : Fin (2 * r + 1) × Fin k => y p ≠ x p.2)
+  have hinj : Function.Injective (fun t : Fin (2 * r + 1) => (t, i)) := by
+    intro a b hab
+    exact congrArg Prod.fst hab
+  have hsubset : s.image (fun t => (t, i)) ⊆ g := by
+    intro p hp
+    rcases Finset.mem_image.mp hp with ⟨t, ht, rfl⟩
+    simpa [s, g] using ht
+  calc
+    s.card = (s.image (fun t => (t, i))).card := by
+      rw [Finset.card_image_of_injective _ hinj]
+    _ ≤ g.card := Finset.card_le_card hsubset
+
+def repetitionCodeGlobalCorrectionStatement : Prop :=
+  ∀ {r k : ℕ} (x : Fin k → Bool)
+    (y : Fin (2 * r + 1) × Fin k → Bool),
+    (Finset.univ.filter (fun p => y p ≠ x p.2)).card ≤ r →
+      repetitionDecode r k y = x
+
+theorem repetitionCodeCorrectOfGlobalErrors :
+    repetitionCodeGlobalCorrectionStatement := by
+  intro r k x y h
+  apply repetitionCodeCorrect
+  intro i
+  exact (repetitionFiberErrors_le_global x y i).trans h
+
+theorem repetitionCodeBlockLength (r k : ℕ) :
+    Fintype.card (Fin (2 * r + 1) × Fin k) = (2 * r + 1) * k := by
+  simp [Fintype.card_prod]
 
 /-- A finite metric codebook with disjoint closed balls of radius `r`. -/
 def PairwiseDisjointClosedBalls {α : Type*} [PseudoMetricSpace α]
@@ -33,6 +127,14 @@ theorem nearestCodewordCorrect {α : Type*} [PseudoMetricSpace α]
 end NumStability.HDP.Applications.Coding
 
 namespace NumStability.HDP.Contract
+
+theorem hdp_04_hexample_h4_d3_d2 :
+    NumStability.HDP.Applications.Coding.repetitionCodeGlobalCorrectionStatement :=
+  NumStability.HDP.Applications.Coding.repetitionCodeCorrectOfGlobalErrors
+
+theorem hdp_04_hexample_h4_d3_d2_hlength (r k : ℕ) :
+    Fintype.card (Fin (2 * r + 1) × Fin k) = (2 * r + 1) * k :=
+  NumStability.HDP.Applications.Coding.repetitionCodeBlockLength r k
 
 theorem hdp_04_hproof_h4_d3_d4_hnn {α : Type*} [PseudoMetricSpace α]
     (C : Set α) (hfinite : C.Finite) (r : ℝ) (D : α → α)
