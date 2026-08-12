@@ -65,6 +65,11 @@ def isFiniteEpsilonNet {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (N : Finset T) (ε : ℝ) : Prop :=
   isEpsilonNet K (N : Set T) ε
 
+/-- An exterior `ε`-net: centers need not lie in the target set. -/
+def isExteriorEpsilonNet {T : Type*} [PseudoMetricSpace T]
+    (K N : Set T) (ε : ℝ) : Prop :=
+  ∀ x ∈ K, ∃ y ∈ N, dist x y ≤ ε
+
 /-- A set is `ε`-separated when distinct points are at strictly greater
 distance than `ε`. -/
 def isEpsilonSeparated {T : Type*} [PseudoMetricSpace T]
@@ -165,6 +170,15 @@ the empty candidate family. -/
 noncomputable def coveringNumber {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Cardinal :=
   sInf (coveringCardinals K ε)
+
+/-- The cardinal-valued exterior covering number, with unrestricted centers. -/
+def exteriorCoveringCardinals {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) (ε : ℝ) : Set Cardinal :=
+  {c | ∃ N : Set T, isExteriorEpsilonNet K N ε ∧ Cardinal.mk N = c}
+
+noncomputable def exteriorCoveringNumber {T : Type*} [PseudoMetricSpace T]
+    (K : Set T) (ε : ℝ) : Cardinal :=
+  sInf (exteriorCoveringCardinals K ε)
 
 /-- Covering numbers decrease as the radius grows, for nonnegative radii. -/
 theorem coveringNumber_anti_mono {T : Type*} [PseudoMetricSpace T]
@@ -295,6 +309,83 @@ theorem packingNumber_two_mul_le_coveringNumber_le_packingNumber
       coveringNumber K ε ≤ Cardinal.mk N := csInf_le' ⟨N, hnet, rfl⟩
       _ ≤ sSup (packingCardinals K ε) :=
         le_csSup hpack_bdd ⟨N, hmax.1, hmax.2.1, rfl⟩
+
+theorem internal_net_of_exterior_net
+    {T : Type*} [PseudoMetricSpace T] {K M : Set T} {ε : ℝ}
+    (hM : isExteriorEpsilonNet K M (ε / 2)) :
+    ∃ N : Set T, isEpsilonNet K N ε ∧ Cardinal.mk N ≤ Cardinal.mk M := by
+  classical
+  let M' : Set T := {m | m ∈ M ∧ ∃ x ∈ K, dist x m ≤ ε / 2}
+  have hchoose (m : M') : ∃ x : K, dist (x : T) m.1 ≤ ε / 2 := by
+    rcases m.2.2 with ⟨x, hxK, hxm⟩
+    exact ⟨⟨x, hxK⟩, hxm⟩
+  let g : M' → K := fun m =>
+    Classical.choose (hchoose m)
+  have hg (m : M') : dist (g m : T) m.1 ≤ ε / 2 := by
+    simpa using Classical.choose_spec (hchoose m)
+  let gT : M' → T := fun m => g m
+  let N : Set T := Set.range gT
+  have hNK : N ⊆ K := by
+    intro x hx
+    rcases hx with ⟨m, rfl⟩
+    exact (g m).2
+  have hNnet : isEpsilonNet K N ε := by
+    refine ⟨hNK, ?_⟩
+    intro x hx
+    rcases hM x hx with ⟨m, hmM, hxm⟩
+    let m' : M' := ⟨m, hmM, ⟨x, hx, hxm⟩⟩
+    refine ⟨gT m', ⟨m', rfl⟩, ?_⟩
+    calc
+      dist x (gT m') ≤ dist x m + dist m (gT m') :=
+        dist_triangle _ _ _
+      _ = dist x m + dist (gT m') m := by
+        congr 1
+        exact dist_comm _ _
+      _ ≤ ε / 2 + ε / 2 := add_le_add hxm (hg m')
+      _ = ε := by ring
+  have hcard : Cardinal.mk N ≤ Cardinal.mk M' := by
+    exact Cardinal.mk_range_le
+  have hsubcard : Cardinal.mk M' ≤ Cardinal.mk M := by
+    apply Cardinal.mk_subtype_mono
+    intro m hm
+    exact hm.1
+  exact ⟨N, hNnet, hcard.trans hsubcard⟩
+
+theorem exteriorCoveringNumber_le_coveringNumber_le_exteriorCoveringNumber_half
+    {T : Type*} [PseudoMetricSpace T] (K : Set T) {ε : ℝ} (hε : 0 < ε) :
+    exteriorCoveringNumber K ε ≤ coveringNumber K ε ∧
+      coveringNumber K ε ≤ exteriorCoveringNumber K (ε / 2) := by
+  have hcover_nonempty : (coveringCardinals K ε).Nonempty := by
+    refine ⟨Cardinal.mk K, ?_⟩
+    refine ⟨K, ?_, rfl⟩
+    constructor
+    · exact subset_rfl
+    · intro x hx
+      exact ⟨x, hx, by simpa using hε.le⟩
+  have hexterior_nonempty :
+      (exteriorCoveringCardinals K ε).Nonempty := by
+    refine ⟨Cardinal.mk K, ?_⟩
+    refine ⟨K, ?_, rfl⟩
+    intro x hx
+    exact ⟨x, hx, by simpa using hε.le⟩
+  constructor
+  · change sInf (exteriorCoveringCardinals K ε) ≤ coveringNumber K ε
+    apply csInf_le_csInf' hcover_nonempty
+    intro c hc
+    rcases hc with ⟨N, hN, rfl⟩
+    exact ⟨N, hN.2, rfl⟩
+  · change coveringNumber K ε ≤ sInf (exteriorCoveringCardinals K (ε / 2))
+    have hexterior_half_nonempty :
+        (exteriorCoveringCardinals K (ε / 2)).Nonempty := by
+      refine ⟨Cardinal.mk K, ?_⟩
+      refine ⟨K, ?_, rfl⟩
+      intro x hx
+      exact ⟨x, hx, by simpa using (by linarith : 0 ≤ ε / 2)⟩
+    apply le_csInf hexterior_half_nonempty
+    intro c hc
+    rcases hc with ⟨M, hM, rfl⟩
+    rcases internal_net_of_exterior_net hM with ⟨N, hN, hcard⟩
+    exact (csInf_le' (s := coveringCardinals K ε) ⟨N, hN, rfl⟩).trans hcard
 
 /-- Pairwise disjoint closed balls of radius `ε/2` centered at `N`. -/
 def halfClosedBallPairwiseDisjoint {E : Type*} [NormedAddCommGroup E]
