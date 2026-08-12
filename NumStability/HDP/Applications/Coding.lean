@@ -2,8 +2,44 @@ import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
 import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.Tactic
+import NumStability.HDP.Geometry.Covering
 
 namespace NumStability.HDP.Applications.Coding
+
+/-! Metric entropy and finite-resolution coding.  The code below fixes the
+fiber convention used by Chapter 4: points assigned the same codeword must
+be at distance at most `ε`.  The bit length is the least natural number for
+which such a code exists; when no finite code exists, the definition uses the
+explicit default value `0` and callers should retain the existence premise. -/
+
+noncomputable def metricDiameter {α : Type*} [PseudoMetricSpace α] (K : Set α) : ℝ :=
+  sSup ((fun p : α × α => dist p.1 p.2) '' (K ×ˢ K))
+
+noncomputable def metricEntropy {α : Type*} [PseudoMetricSpace α]
+    (K : Set α) (ε : ℝ) : ℝ :=
+  if h : Geometry.Covering.coveringNumber K ε < Cardinal.aleph0 then
+    Real.log (Cardinal.toNat (Geometry.Covering.coveringNumber K ε)) /
+      Real.log 2
+  else 0
+
+def hasFiberDiameterCode {α : Type*} [PseudoMetricSpace α]
+    (K : Set α) (ε : ℝ) (b : ℕ) : Prop :=
+  ∃ code : K → Fin (2 ^ b),
+    ∀ x y : K, code x = code y → dist x y ≤ ε
+
+noncomputable def codingComplexity {α : Type*} [PseudoMetricSpace α]
+    (K : Set α) (ε : ℝ) : ℕ :=
+  by
+    classical
+    exact if h : ∃ b : ℕ, hasFiberDiameterCode K ε b then Nat.find h else 0
+
+theorem codingComplexity_spec {α : Type*} [PseudoMetricSpace α]
+    (K : Set α) (ε : ℝ)
+    (h : ∃ b : ℕ, hasFiberDiameterCode K ε b) :
+    hasFiberDiameterCode K ε (codingComplexity K ε) := by
+  classical
+  simp only [codingComplexity, dif_pos h]
+  exact Nat.find_spec h
 
 /-! A small, fully finite model of the repetition-code example.  The block is
 indexed by a repetition coordinate and a message coordinate; this avoids an
@@ -137,6 +173,12 @@ theorem nearestCodewordCorrect {α : Type*} [PseudoMetricSpace α]
 end NumStability.HDP.Applications.Coding
 
 namespace NumStability.HDP.Contract
+
+noncomputable def hdp_04_hdef_h4_d3_hmetric_hentropy
+    {α : Type*} [PseudoMetricSpace α]
+    (K : Set α) (ε : ℝ) :
+    ℝ :=
+  NumStability.HDP.Applications.Coding.metricEntropy K ε
 
 theorem hdp_04_hexample_h4_d3_d2 :
     NumStability.HDP.Applications.Coding.repetitionCodeExampleStatement :=
