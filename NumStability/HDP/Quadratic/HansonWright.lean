@@ -1,11 +1,44 @@
 import Mathlib.MeasureTheory.Measure.Map
 import Mathlib.MeasureTheory.Measure.Prod
 import Mathlib.Probability.Independence.Basic
+import Mathlib.Data.Matrix.Basic
 
 namespace NumStability.HDP.Quadratic.HansonWright
 
 open MeasureTheory
 open ProbabilityTheory
+open scoped BigOperators
+
+/-! Deterministic quadratic-chaos vocabulary.  The matrix and vector indices
+are fixed together at `Fin n`, making the diagonal/off-diagonal split and the
+decoupled bilinear form explicit. -/
+
+def quadraticChaos {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ)
+    (X : Fin n → ℝ) : ℝ :=
+  ∑ i, ∑ j, A i j * X i * X j
+
+def offDiagonalPart {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) :
+    Matrix (Fin n) (Fin n) ℝ :=
+  fun i j => if i = j then 0 else A i j
+
+def decoupledBilinearChaos {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ)
+    (X X' : Fin n → ℝ) : ℝ :=
+  ∑ i, ∑ j, A i j * X i * X' j
+
+def isDiagonalFree {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) : Prop :=
+  ∀ i, A i i = 0
+
+structure QuadraticChaosInterface (n : ℕ) where
+  quadratic : Matrix (Fin n) (Fin n) ℝ → (Fin n → ℝ) → ℝ
+  offDiagonal : Matrix (Fin n) (Fin n) ℝ → Matrix (Fin n) (Fin n) ℝ
+  decoupled : Matrix (Fin n) (Fin n) ℝ → (Fin n → ℝ) → (Fin n → ℝ) → ℝ
+  diagonalFree : Matrix (Fin n) (Fin n) ℝ → Prop
+
+def quadraticChaosInterface (n : ℕ) : QuadraticChaosInterface n where
+  quadratic := quadraticChaos
+  offDiagonal := offDiagonalPart
+  decoupled := decoupledBilinearChaos
+  diagonalFree := isDiagonalFree
 
 /-!
 An interface for the independent-copy construction used in the Hanson--Wright
@@ -81,3 +114,11 @@ noncomputable def jointIndependentCopyInterface {ι Ω α : Type*} [Fintype ι]
   independent := jointCopiesAreIndependent μ X
 
 end NumStability.HDP.Quadratic.HansonWright
+
+namespace NumStability.HDP.Contract
+
+def hdp_06_hdef_h6_d1_hchaos (n : ℕ) :
+    NumStability.HDP.Quadratic.HansonWright.QuadraticChaosInterface n :=
+  NumStability.HDP.Quadratic.HansonWright.quadraticChaosInterface n
+
+end NumStability.HDP.Contract
