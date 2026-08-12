@@ -4,6 +4,9 @@ import Mathlib.Algebra.GroupWithZero.Action.Pointwise.Set
 import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Basic
 import Mathlib.Topology.MetricSpace.Pseudo.Defs
+import Mathlib.Analysis.Normed.Affine.AddTorsor
+import Mathlib.Topology.Instances.Nat
+import Mathlib.Tactic
 
 /-!
 # Nets, covering numbers, and packing numbers
@@ -115,6 +118,82 @@ noncomputable def packingNumber {T : Type*} [PseudoMetricSpace T]
 theorem packingNumber_spec {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) :
     packingNumber K ε = sSup (packingCardinals K ε) := rfl
+
+/-- Pairwise disjoint closed balls of radius `ε/2` centered at `N`. -/
+def halfClosedBallPairwiseDisjoint {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (N : Set E) (ε : ℝ) : Prop :=
+  N.Pairwise (fun x y =>
+    Disjoint (Metric.closedBall x (ε / 2)) (Metric.closedBall y (ε / 2)))
+
+/-- In a normed space, strict separation by `ε` is equivalent to disjointness
+of the centered closed `ε/2`-balls. -/
+theorem halfClosedBallPairwiseDisjoint_iff {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E] (N : Set E) (ε : ℝ) :
+    halfClosedBallPairwiseDisjoint N ε ↔
+      N.Pairwise (fun x y => ε < dist x y) := by
+  constructor
+  · intro h x hx y hy hxy
+    by_contra hnot
+    have hle : dist x y ≤ ε := le_of_not_gt hnot
+    have hmemx : midpoint ℝ x y ∈ Metric.closedBall x (ε / 2) := by
+      rw [Metric.mem_closedBall, dist_midpoint_left (𝕜 := ℝ)]
+      norm_num
+      linarith
+    have hmemy : midpoint ℝ x y ∈ Metric.closedBall y (ε / 2) := by
+      rw [Metric.mem_closedBall, dist_midpoint_right (𝕜 := ℝ)]
+      norm_num
+      linarith
+    exact Set.disjoint_left.1 (h hx hy hxy) hmemx hmemy
+  · intro h x hx y hy hxy
+    apply Set.disjoint_left.2
+    intro z hzx hzy
+    have hxy' : ε < dist x y := h hx hy hxy
+    have hdistx : dist x z ≤ ε / 2 := by
+      simpa [dist_comm] using Metric.mem_closedBall.mp hzx
+    have hdisty : dist z y ≤ ε / 2 := Metric.mem_closedBall.mp hzy
+    have hdist : dist x y ≤ ε := by
+      calc
+        dist x y ≤ dist x z + dist z y := dist_triangle _ _ _
+        _ ≤ ε / 2 + ε / 2 := add_le_add hdistx hdisty
+        _ = ε := by ring
+    exact (not_lt_of_ge hdist) hxy'
+
+/-- A discrete metric need not have the midpoint property: on `ℕ`, the two
+closed half-radius balls around `0` and `1` are disjoint although the centers
+are not strictly more than one unit apart. -/
+theorem halfClosedBall_nat_counterexample :
+    Disjoint (Metric.closedBall (0 : ℕ) (1 / 2 : ℝ))
+        (Metric.closedBall 1 (1 / 2 : ℝ)) ∧
+      ¬ ((1 : ℝ) < dist (0 : ℕ) 1) := by
+  constructor
+  · rw [Set.disjoint_left]
+    intro z hz0 hz1
+    have h0 := Metric.mem_closedBall.mp hz0
+    have h1 := Metric.mem_closedBall.mp hz1
+    simp only [Nat.dist_eq] at h0 h1
+    have h0' : (z : ℝ) ≤ 1 / 2 := by simpa using h0
+    have hzlt : (z : ℝ) < 1 := lt_of_le_of_lt h0' (by norm_num)
+    have hzlt' : z < 1 := by exact_mod_cast hzlt
+    have hz : z = 0 := by omega
+    subst z
+    norm_num at h1
+  · norm_num [Nat.dist_eq]
+
+/-- Bundled source-facing statement for the normed-space packing-ball
+identification and its metric-space boundary counterexample. -/
+def packingGeometryExampleStatement : Prop :=
+    (∀ {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+      (N : Set E) (ε : ℝ),
+      halfClosedBallPairwiseDisjoint N ε ↔
+        N.Pairwise (fun x y => ε < dist x y)) ∧
+      Disjoint (Metric.closedBall (0 : ℕ) (1 / 2 : ℝ))
+        (Metric.closedBall 1 (1 / 2 : ℝ)) ∧
+      ¬ ((1 : ℝ) < dist (0 : ℕ) 1)
+
+theorem packingGeometryExample : packingGeometryExampleStatement := by
+  exact ⟨fun N ε => halfClosedBallPairwiseDisjoint_iff N ε,
+    halfClosedBall_nat_counterexample.1,
+    halfClosedBall_nat_counterexample.2⟩
 
 /-- The finite witness form of an internal covering. -/
 theorem finite_net_witness_iff {T : Type*} [PseudoMetricSpace T]
@@ -312,6 +391,11 @@ theorem hdp_04_hdef_h4_d2_d4 {T : Type*} [PseudoMetricSpace T]
     Geometry.Covering.packingNumber K ε =
       sSup (Geometry.Covering.packingCardinals K ε) :=
   Geometry.Covering.packingNumber_spec K ε
+
+/-- Stable contract alias for the normed packing-ball identification example. -/
+theorem hdp_04_hex_h4_d2_d5 :
+    Geometry.Covering.packingGeometryExampleStatement :=
+  Geometry.Covering.packingGeometryExample
 
 end Contract
 end HDP
