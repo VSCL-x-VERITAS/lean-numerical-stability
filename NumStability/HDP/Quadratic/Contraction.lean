@@ -139,6 +139,13 @@ end NumStability.HDP.Quadratic.Contraction
 
 namespace NumStability.HDP.Contract
 
+theorem hdp_06_hex_h6_d7_d2 {N : ℕ} {E : Type*}
+    [SeminormedAddCommGroup E] [NormedSpace ℝ E]
+    (ε : Fin N → ℝ) (x : Fin N → E) :
+    ConvexOn ℝ Set.univ
+      (fun a : Fin N → ℝ => ‖∑ i, a i • (ε i • x i)‖) :=
+  NumStability.HDP.Quadratic.Contraction.signedLinearNormConvex ε x
+
 theorem hdp_06_hproof_h6_d7_hcube_hmax {N : ℕ}
     {f : (Fin N → ℝ) → ℝ} {s : Set (Fin N → ℝ)}
     (hf : ConvexOn ℝ s f)
