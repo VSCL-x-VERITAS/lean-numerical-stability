@@ -31,3 +31,14 @@ def sphericalUniform (n : ℕ) (r : ℝ)
     (∀ A, μ A = surface A / surface (euclideanSphere n r))}
 
 end NumStability.HDP.RandomVector.Distributions
+
+namespace NumStability.HDP.Contract
+
+open MeasureTheory
+
+def hdp_03_hdef_hspherical_huniform (n : ℕ) (r : ℝ)
+    (surface : Measure (EuclideanSpace ℝ (Fin n))) :
+    Set (Measure (EuclideanSpace ℝ (Fin n))) :=
+  RandomVector.Distributions.sphericalUniform n r surface
+
+end NumStability.HDP.Contract
