@@ -954,11 +954,6 @@ theorem hdp_04_hex_h4_d2_d10 :
       Geometry.Covering.internalCoveringCenterCounterexampleStatement :=
   Geometry.Covering.internalCoveringMonotonicityExerciseStatement
 
-/-- Stable source-facing alias for the Euclidean ball/sphere covering corollary. -/
-theorem hdp_04_hcor_h4_d2_d13 :
-    Geometry.Covering.euclideanBallSphereCoveringCorollaryStatement :=
-  Geometry.Covering.euclideanBallSphereCoveringCorollary
-
 end Contract
 end HDP
 end NumStability
