@@ -881,11 +881,6 @@ theorem hdp_04_hex_h4_d2_d10 :
       Geometry.Covering.internalCoveringCenterCounterexampleStatement :=
   Geometry.Covering.internalCoveringMonotonicityExerciseStatement
 
-/-- Stable source-facing alias for the volumetric covering-number witnesses. -/
-theorem hdp_04_hprop_h4_d2_d12 :
-    Geometry.Covering.volumetricCoveringWitnessStatement :=
-  Geometry.Covering.volumetricCoveringWitnesses
-
 end Contract
 end HDP
 end NumStability
