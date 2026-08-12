@@ -187,6 +187,29 @@ noncomputable def spectralGapInterface (n : ℕ) : SpectralGapInterface n where
   subspaceAngle := subspaceAngle
   signEquivalenceDistance := signEquivalenceDistance
 
+/-- A positive universal constant, independent of dimensions and distributions. -/
+def UniversalConstant : Type := {C : ℝ // 0 < C}
+
+/-- A positive lower universal constant.  This is definitionally the same
+representation as `UniversalConstant`, but names the lower-bound role. -/
+abbrev UniversalLowerConstant : Type := UniversalConstant
+
+/-- Explicit comparison by a universal constant. -/
+def universallyBounded {α : Type*} (quantity scale : α → ℝ)
+    (C : UniversalConstant) : Prop :=
+  ∀ x, quantity x ≤ C.1 * scale x
+
+/-- The Chapter 4 constants convention as a reusable interface. -/
+structure ConstantsInterface where
+  universal : UniversalConstant
+  lower : UniversalLowerConstant
+  upperBound : ∀ {α : Type*}, (α → ℝ) → (α → ℝ) → UniversalConstant → Prop
+
+def constantsInterface : ConstantsInterface where
+  universal := ⟨1, by norm_num⟩
+  lower := ⟨1, by norm_num⟩
+  upperBound := fun quantity scale C => universallyBounded quantity scale C
+
 end Basic
 end RandomMatrix
 end HDP
