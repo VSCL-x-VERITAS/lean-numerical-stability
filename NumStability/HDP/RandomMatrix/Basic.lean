@@ -210,6 +210,50 @@ def constantsInterface : ConstantsInterface where
   lower := ⟨1, by norm_num⟩
   upperBound := fun quantity scale C => universallyBounded quantity scale C
 
+/-- Scalar normalization used in the proof of approximate isometry Lemma 4.1.5. -/
+theorem scalarMaxDeviationBound {z : ℝ} (hz : 0 ≤ z) :
+    max |z - 1| (|z - 1| ^ 2) ≤ |z ^ 2 - 1| := by
+  refine max_le (a := |z - 1|) (b := |z - 1| ^ 2)
+    (c := |z ^ 2 - 1|) ?_ ?_
+  · by_cases h : z ≤ 1
+    · have hleft : |z - 1| = 1 - z := by
+        rw [abs_of_nonpos (sub_nonpos.mpr h)]
+        ring
+      have hright : |z ^ 2 - 1| = 1 - z ^ 2 := by
+        have hsq : z ^ 2 - 1 ≤ 0 := by
+          nlinarith [mul_nonneg hz (sub_nonneg.mpr h)]
+        rw [abs_of_nonpos hsq]
+        ring
+      rw [hleft, hright]
+      nlinarith [mul_nonneg hz (sub_nonneg.mpr h)]
+    · have hz1 : 1 ≤ z := le_of_not_ge h
+      have hleft : |z - 1| = z - 1 :=
+        abs_of_nonneg (sub_nonneg.mpr hz1)
+      have hright : |z ^ 2 - 1| = z ^ 2 - 1 := by
+        rw [abs_of_nonneg]
+        nlinarith
+      rw [hleft, hright]
+      nlinarith [mul_nonneg hz (sub_nonneg.mpr hz1)]
+  · by_cases h : z ≤ 1
+    · have hleft : |z - 1| = 1 - z := by
+        rw [abs_of_nonpos (sub_nonpos.mpr h)]
+        ring
+      have hright : |z ^ 2 - 1| = 1 - z ^ 2 := by
+        have hsq : z ^ 2 - 1 ≤ 0 := by
+          nlinarith [mul_nonneg hz (sub_nonneg.mpr h)]
+        rw [abs_of_nonpos hsq]
+        ring
+      rw [hleft, hright]
+      nlinarith [mul_nonneg hz (sub_nonneg.mpr h)]
+    · have hz1 : 1 ≤ z := le_of_not_ge h
+      have hleft : |z - 1| = z - 1 :=
+        abs_of_nonneg (sub_nonneg.mpr hz1)
+      have hright : |z ^ 2 - 1| = z ^ 2 - 1 := by
+        rw [abs_of_nonneg]
+        nlinarith
+      rw [hleft, hright]
+      nlinarith [mul_nonneg (sub_nonneg.mpr hz1) (by norm_num : (0 : ℝ) ≤ 2)]
+
 end Basic
 end RandomMatrix
 end HDP
@@ -220,5 +264,9 @@ namespace NumStability.HDP.Contract
 def hdp_04_hiface_hconstants :
     RandomMatrix.Basic.ConstantsInterface :=
   RandomMatrix.Basic.constantsInterface
+
+theorem hdp_04_hproof_h4_d1_d5_hscalar {z : ℝ} (hz : 0 ≤ z) :
+    max |z - 1| (|z - 1| ^ 2) ≤ |z ^ 2 - 1| :=
+  RandomMatrix.Basic.scalarMaxDeviationBound hz
 
 end NumStability.HDP.Contract
