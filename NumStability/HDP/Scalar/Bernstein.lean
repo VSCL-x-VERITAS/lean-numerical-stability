@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Tactic
 
 namespace NumStability.HDP.Scalar.Bernstein
@@ -67,6 +68,27 @@ theorem bennettHInterface :
   · intro hu2
     exact bennettH_large_lower hu2
 
+/-- Bernstein's bounded-MGF conclusion, with the measure-theoretic analytic
+engine left explicit so integrability and the exponential remainder estimate
+are part of the contract rather than hidden assumptions. -/
+def boundedBernsteinMgfStatement : Prop :=
+  ∀ {Ω : Type} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) (X : Ω → ℝ) (K lam σ2 : ℝ),
+    (∀ᵐ ω ∂μ, |X ω| ≤ K) →
+      (∫ ω, X ω ∂μ) = 0 → 0 ≤ σ2 → 0 < K → |lam| < 3 / K →
+      (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+        Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2)
+
+theorem boundedBernsteinMgfBound
+    (hEngine : boundedBernsteinMgfStatement) {Ω : Type} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) (X : Ω → ℝ) (K lam σ2 : ℝ)
+    (hBound : ∀ᵐ ω ∂μ, |X ω| ≤ K)
+    (hMean : (∫ ω, X ω ∂μ) = 0) (hσ : 0 ≤ σ2) (hK : 0 < K)
+    (hlam : |lam| < 3 / K) :
+    (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+      Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) :=
+  hEngine (Ω := Ω) μ X K lam σ2 hBound hMean hσ hK hlam
+
 end NumStability.HDP.Scalar.Bernstein
 
 namespace NumStability.HDP.Contract
@@ -83,5 +105,17 @@ theorem hdp_02_hdef_hbennett_hh :
       (Real.exp 2 ≤ u →
         (u / 2) * Real.log u ≤ Scalar.Bernstein.bennettH u) :=
   Scalar.Bernstein.bennettHInterface
+
+theorem hdp_02_hex_h2_d8_d5
+    (hEngine : Scalar.Bernstein.boundedBernsteinMgfStatement)
+    {Ω : Type} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) (X : Ω → ℝ) (K lam σ2 : ℝ)
+    (hBound : ∀ᵐ ω ∂μ, |X ω| ≤ K)
+    (hMean : (∫ ω, X ω ∂μ) = 0) (hσ : 0 ≤ σ2) (hK : 0 < K)
+    (hlam : |lam| < 3 / K) :
+    (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+      Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) :=
+  Scalar.Bernstein.boundedBernsteinMgfBound hEngine μ X K lam σ2
+    hBound hMean hσ hK hlam
 
 end NumStability.HDP.Contract
