@@ -1,4 +1,5 @@
 import Mathlib.Analysis.InnerProductSpace.EuclideanDist
+import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.Normed.Lp.MeasurableSpace
 import Mathlib.Analysis.Convex.Basic
 import Mathlib.MeasureTheory.Measure.Map
@@ -46,6 +47,19 @@ def convexBodyUniform (n : ℕ) (K : Set (EuclideanSpace ℝ (Fin n)))
     μ Set.univ = 1 ∧
     ∀ A, μ A = volumeMeasure (A ∩ K) / volumeMeasure K}
 
+/-- A finite indexed family satisfying the frame inequalities. -/
+def isFrame {ι E : Type*} [Fintype ι] [NormedAddCommGroup E]
+    [Inner ℝ E] (u : ι → E) (A B : ℝ) : Prop :=
+  0 < A ∧ 0 < B ∧
+    ∀ x, A * ‖x‖ ^ 2 ≤
+      ∑ i, ‖@Inner.inner ℝ E _ (u i) x‖ ^ 2 ∧
+      (∑ i, ‖@Inner.inner ℝ E _ (u i) x‖ ^ 2) ≤ B * ‖x‖ ^ 2
+
+/-- A frame is tight when its lower and upper frame bounds agree. -/
+def isTightFrame {ι E : Type*} [Fintype ι] [NormedAddCommGroup E]
+    [Inner ℝ E] (u : ι → E) (A : ℝ) : Prop :=
+  isFrame u A A
+
 end NumStability.HDP.RandomVector.Distributions
 
 namespace NumStability.HDP.Contract
@@ -62,5 +76,9 @@ def hdp_03_hdef_hconvex_hbody_huniform (n : ℕ)
     (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n))) :
     Set (Measure (EuclideanSpace ℝ (Fin n))) :=
   RandomVector.Distributions.convexBodyUniform n K volumeMeasure
+
+def hdp_03_hdef_h3_d3_d8 {ι E : Type*} [Fintype ι]
+    [NormedAddCommGroup E] [Inner ℝ E] (u : ι → E) (A B : ℝ) : Prop :=
+  RandomVector.Distributions.isFrame u A B
 
 end NumStability.HDP.Contract
