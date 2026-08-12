@@ -202,6 +202,100 @@ theorem packingNumber_spec {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) :
     packingNumber K ε = sSup (packingCardinals K ε) := rfl
 
+/-! The basic witness comparison behind the packing/covering inequalities. -/
+
+theorem cardinal_mk_le_of_two_mul_epsilon_separated_of_epsilonNet
+    {T : Type*} [PseudoMetricSpace T] {K M N : Set T} {ε : ℝ}
+    (hnet : isEpsilonNet K N ε) (hMK : M ⊆ K)
+    (hMsep : isEpsilonSeparated M (2 * ε)) :
+    Cardinal.mk M ≤ Cardinal.mk N := by
+  classical
+  let center : M → T := fun x =>
+    Classical.choose (hnet.2 x.1 (hMK x.2))
+  have hcenter (x : M) : center x ∈ N ∧ dist (x : T) (center x) ≤ ε := by
+    simpa using Classical.choose_spec (hnet.2 x.1 (hMK x.2))
+  let f : M → N := fun x => ⟨center x, (hcenter x).1⟩
+  apply Cardinal.mk_le_of_injective (f := f)
+  intro x y hxy
+  by_contra hne
+  have hxneq : (x : T) ≠ (y : T) := by
+    intro hxy
+    exact hne (Subtype.ext hxy)
+  have hsep := hMsep x.2 y.2 hxneq
+  have hcenters : center x = center y := congrArg Subtype.val hxy
+  have hdist : dist (x : T) (y : T) ≤ ε + ε := by
+    calc
+      dist (x : T) (y : T) ≤ dist (x : T) (center x) + dist (center x) (y : T) :=
+        dist_triangle _ _ _
+      _ = dist (x : T) (center x) + dist (y : T) (center y) := by
+        rw [hcenters, dist_comm (center y) (y : T)]
+      _ ≤ ε + ε := add_le_add (hcenter x).2 (hcenter y).2
+  linarith
+
+theorem exists_maximalEpsilonSeparated
+    {T : Type*} [PseudoMetricSpace T] (K : Set T) (ε : ℝ) :
+    ∃ N : Set T, isMaximalEpsilonSeparated K N ε := by
+  classical
+  let S : Set (Set T) := {N | N ⊆ K ∧ isEpsilonSeparated N ε}
+  have hS : (∅ : Set T) ∈ S := by
+    exact ⟨empty_subset K, by simp [isEpsilonSeparated]⟩
+  have hchain : ∀ c ⊆ S, IsChain (· ⊆ ·) c → c.Nonempty →
+      ∃ ub ∈ S, ∀ s ∈ c, s ⊆ ub := by
+    intro c hc hcc hcn
+    refine ⟨⋃₀ c, ?_, ?_⟩
+    · refine ⟨?_, ?_⟩
+      · intro x hx
+        rcases Set.mem_sUnion.mp hx with ⟨s, hs, hxs⟩
+        exact (hc hs).1 hxs
+      · intro x hx y hy hxy
+        rcases Set.mem_sUnion.mp hx with ⟨s, hs, hxs⟩
+        rcases Set.mem_sUnion.mp hy with ⟨t, ht, hyt⟩
+        obtain rfl | hst := eq_or_ne s t
+        · exact (hc hs).2 hxs hyt hxy
+        · obtain hst | hts := hcc hs ht hst
+          · exact (hc ht).2 (hst hxs) hyt hxy
+          · exact (hc hs).2 hxs (hts hyt) hxy
+    · intro s hs
+      exact Set.subset_sUnion_of_mem hs
+  obtain ⟨N, hNsub, hNmax⟩ := zorn_subset_nonempty S hchain ∅ hS
+  refine ⟨N, hNmax.prop.1, hNmax.prop.2, ?_⟩
+  intro M hNM hMK hM
+  apply Set.Subset.antisymm (hNmax.2 ⟨hMK, hM⟩ hNM) hNM
+
+theorem packingNumber_two_mul_le_coveringNumber_le_packingNumber
+    {T : Type*} [PseudoMetricSpace T] (K : Set T) {ε : ℝ} (hε : 0 < ε) :
+    packingNumber K (2 * ε) ≤ coveringNumber K ε ∧
+      coveringNumber K ε ≤ packingNumber K ε := by
+  have hcover_nonempty : (coveringCardinals K ε).Nonempty := by
+    refine ⟨Cardinal.mk K, ?_⟩
+    refine ⟨K, ?_, rfl⟩
+    constructor
+    · exact subset_rfl
+    · intro x hx
+      exact ⟨x, hx, by simpa using hε.le⟩
+  constructor
+  · change sSup (packingCardinals K (2 * ε)) ≤ coveringNumber K ε
+    apply csSup_le'
+    intro c hc
+    rcases hc with ⟨M, hMK, hMsep, rfl⟩
+    apply le_csInf hcover_nonempty
+    intro d hd
+    rcases hd with ⟨N, hN, rfl⟩
+    exact cardinal_mk_le_of_two_mul_epsilon_separated_of_epsilonNet
+      hN hMK hMsep
+  · change coveringNumber K ε ≤ sSup (packingCardinals K ε)
+    obtain ⟨N, hmax⟩ := exists_maximalEpsilonSeparated K ε
+    have hnet := isEpsilonNet_of_isMaximalEpsilonSeparated hε.le hmax
+    have hpack_bdd : BddAbove (packingCardinals K ε) := by
+      refine ⟨Cardinal.mk K, ?_⟩
+      intro c hc
+      rcases hc with ⟨M, hMK, hsep, rfl⟩
+      exact Cardinal.mk_le_mk_of_subset hMK
+    calc
+      coveringNumber K ε ≤ Cardinal.mk N := csInf_le' ⟨N, hnet, rfl⟩
+      _ ≤ sSup (packingCardinals K ε) :=
+        le_csSup hpack_bdd ⟨N, hmax.1, hmax.2.1, rfl⟩
+
 /-- Pairwise disjoint closed balls of radius `ε/2` centered at `N`. -/
 def halfClosedBallPairwiseDisjoint {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] (N : Set E) (ε : ℝ) : Prop :=
