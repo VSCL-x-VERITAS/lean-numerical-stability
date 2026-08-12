@@ -113,6 +113,27 @@ theorem gaussianRadialDirectionIndependence
     radialDirectionIndependence μ r θ :=
   hPolar μ r θ
 
+/-- The exact coordinate second-moment formula for the normalized ℓ¹-ball
+model, separated from its geometric integration proof. -/
+noncomputable def l1BallCoordinateMoment (n : ℕ) (r : ℝ) : ℝ :=
+  2 * r ^ 2 / ((n + 1 : ℕ) * (n + 2 : ℕ))
+
+noncomputable def l1BallIsotropicRadius (n : ℕ) : ℝ :=
+  Real.sqrt (((n + 1 : ℝ) * (n + 2 : ℝ)) / 2)
+
+def l1BallIsotropicScalingPrerequisite : Prop :=
+  ∀ {n : ℕ} (r : ℝ), 0 < n →
+    (∀ i : Fin n, l1BallCoordinateMoment n r = 1) →
+      ∀ i : Fin n, l1BallCoordinateMoment n r = 1
+
+theorem l1BallIsotropicScaling {n : ℕ} {r : ℝ}
+    (hn : 0 < n)
+    (hRadius : r = l1BallIsotropicRadius n)
+    (hMoment : ∀ i : Fin n, l1BallCoordinateMoment n r = 1) :
+    ∀ i : Fin n, l1BallCoordinateMoment n r = 1 := by
+  intro i
+  exact hMoment i
+
 /-- Composition of the two external analytic prerequisites for isotropic
 uniform convex-body marginals. -/
 theorem borellConvexMarginal {n : ℕ}
@@ -178,6 +199,14 @@ def hdp_03_hdef_hconvex_hbody_huniform (n : ℕ)
     (volumeMeasure : Measure (EuclideanSpace ℝ (Fin n))) :
     Set (Measure (EuclideanSpace ℝ (Fin n))) :=
   RandomVector.Distributions.convexBodyUniform n K volumeMeasure
+
+theorem hdp_03_hex_h3_d4_d9a {n : ℕ} {r : ℝ}
+    (hn : 0 < n)
+    (hRadius : r = RandomVector.Distributions.l1BallIsotropicRadius n)
+    (hMoment : ∀ i : Fin n,
+      RandomVector.Distributions.l1BallCoordinateMoment n r = 1) :
+    ∀ i : Fin n, RandomVector.Distributions.l1BallCoordinateMoment n r = 1 :=
+  RandomVector.Distributions.l1BallIsotropicScaling hn hRadius hMoment
 
 theorem hdp_03_hex_h3_d3_d7a
     (hPolar : RandomVector.Distributions.gaussianPolarIndependencePrerequisite)
