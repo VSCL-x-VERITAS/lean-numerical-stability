@@ -71,6 +71,41 @@ def isEpsilonSeparated {T : Type*} [PseudoMetricSpace T]
     (N : Set T) (ε : ℝ) : Prop :=
   N.Pairwise (fun x y => ε < dist x y)
 
+/-- Inclusion-maximal internal `ε`-separated subset of `K`. -/
+def isMaximalEpsilonSeparated {T : Type*} [PseudoMetricSpace T]
+    (K N : Set T) (ε : ℝ) : Prop :=
+  N ⊆ K ∧ isEpsilonSeparated N ε ∧
+    ∀ M : Set T, N ⊆ M → M ⊆ K → isEpsilonSeparated M ε → M = N
+
+/-- Every inclusion-maximal separated subset is an internal net. -/
+theorem isEpsilonNet_of_isMaximalEpsilonSeparated
+    {T : Type*} [PseudoMetricSpace T] {K N : Set T} {ε : ℝ}
+    (hε : 0 ≤ ε) (hmax : isMaximalEpsilonSeparated K N ε) :
+    isEpsilonNet K N ε := by
+  refine ⟨hmax.1, ?_⟩
+  intro x hx
+  by_contra hnot
+  have hxN : x ∉ N := by
+    intro hxN
+    exact hnot ⟨x, hxN, by simpa [dist_self] using hε⟩
+  have hstrict : ∀ y ∈ N, ε < dist x y := by
+    intro y hy
+    exact lt_of_not_ge (fun hy' => hnot ⟨y, hy, hy'⟩)
+  have hunion : isEpsilonSeparated (insert x N) ε := by
+    intro a ha b hb hab
+    simp only [mem_insert_iff] at ha hb
+    rcases ha with rfl | ha
+    · rcases hb with rfl | hb
+      · exact False.elim (hab rfl)
+      · exact hstrict b hb
+    · rcases hb with rfl | hb
+      · simpa [dist_comm] using hstrict a ha
+      · exact hmax.2.1 ha hb hab
+  have heq := hmax.2.2 (insert x N) (subset_insert x N) (insert_subset hx hmax.1) (by
+    exact hunion)
+  have hxinsert : x ∈ insert x N := mem_insert x N
+  exact hxN (by rw [← heq]; exact hxinsert)
+
 /-- The candidate cardinal family used by `coveringNumber`. -/
 def coveringCardinals {T : Type*} [PseudoMetricSpace T]
     (K : Set T) (ε : ℝ) : Set Cardinal :=
@@ -396,6 +431,13 @@ theorem hdp_04_hdef_h4_d2_d4 {T : Type*} [PseudoMetricSpace T]
 theorem hdp_04_hex_h4_d2_d5 :
     Geometry.Covering.packingGeometryExampleStatement :=
   Geometry.Covering.packingGeometryExample
+
+/-- Stable contract alias for the maximal-separated-set net lemma. -/
+theorem hdp_04_hlem_h4_d2_d6 {T : Type*} [PseudoMetricSpace T]
+    {K N : Set T} {ε : ℝ} (hε : 0 ≤ ε)
+    (hmax : Geometry.Covering.isMaximalEpsilonSeparated K N ε) :
+    Geometry.Covering.isEpsilonNet K N ε :=
+  Geometry.Covering.isEpsilonNet_of_isMaximalEpsilonSeparated hε hmax
 
 end Contract
 end HDP
