@@ -432,13 +432,6 @@ theorem hdp_04_hex_h4_d2_d5 :
     Geometry.Covering.packingGeometryExampleStatement :=
   Geometry.Covering.packingGeometryExample
 
-/-- Stable contract alias for the maximal-separated-set net lemma. -/
-theorem hdp_04_hlem_h4_d2_d6 {T : Type*} [PseudoMetricSpace T]
-    {K N : Set T} {ε : ℝ} (hε : 0 ≤ ε)
-    (hmax : Geometry.Covering.isMaximalEpsilonSeparated K N ε) :
-    Geometry.Covering.isEpsilonNet K N ε :=
-  Geometry.Covering.isEpsilonNet_of_isMaximalEpsilonSeparated hε hmax
-
 end Contract
 end HDP
 end NumStability
