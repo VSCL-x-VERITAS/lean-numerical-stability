@@ -112,6 +112,16 @@ def hammingCube (n : ℕ) : Type := Fin n → Bool
 def hammingDistance {n : ℕ} (x y : hammingCube n) : ℕ :=
   (Finset.univ.filter (fun i => x i != y i)).card
 
+/-- The bundled binary-cube definition and its Hamming distance. -/
+structure HammingCubeInterface (n : ℕ) where
+  cube : Type
+  distance : cube → cube → ℕ
+
+/-- The canonical binary Hamming-cube interface. -/
+def hammingCubeInterface (n : ℕ) : HammingCubeInterface n where
+  cube := hammingCube n
+  distance := hammingDistance
+
 end Covering
 end Geometry
 end HDP
