@@ -1,4 +1,5 @@
 import NumStability.Analysis.SingularValues.Realification
+import Mathlib.Analysis.InnerProductSpace.Spectrum
 
 /-!
 # HDP random-matrix deterministic interface
@@ -109,6 +110,82 @@ noncomputable def matrixInterface : MatrixInterface where
   singularValue := singularValue
   frobeniusNorm := frobeniusNorm
   operatorNorm := operatorNorm
+
+/-- Self-adjointness for a square HDP matrix, expressed through its Euclidean
+linear-map interpretation. -/
+def isSelfAdjoint {n : ℕ} (A : RealMatrix n n) : Prop :=
+  (toEuclideanLin A).IsSymmetric
+
+private theorem realVector_finrank (n : ℕ) :
+    Module.finrank ℝ (RealVector n) = n := by
+  simp [RealVector]
+
+/-- The ordered real eigenvalues of a self-adjoint HDP matrix.  The index is
+zero-based and follows Mathlib's decreasing source convention. -/
+noncomputable def orderedEigenvalues {n : ℕ} (A : RealMatrix n n)
+    (hA : isSelfAdjoint A) : Fin n → ℝ :=
+  hA.eigenvalues (realVector_finrank n)
+
+/-- The ordered eigenvalue sequence is antitone. -/
+theorem orderedEigenvalues_antitone {n : ℕ} (A : RealMatrix n n)
+    (hA : isSelfAdjoint A) : Antitone (orderedEigenvalues A hA) :=
+  hA.eigenvalues_antitone (realVector_finrank n)
+
+/-- Index `i` represents a simple eigenvalue when no other ordered slot has the
+same eigenvalue. -/
+def hasSimpleEigenvalue {n : ℕ} (A : RealMatrix n n)
+    (hA : isSelfAdjoint A) (i : Fin n) : Prop :=
+  ∀ j, orderedEigenvalues A hA j = orderedEigenvalues A hA i → j = i
+
+/-- A normalized eigenvector selected from the spectral orthonormal basis.
+The simple-eigenvalue certificate is an explicit argument, so later consumers
+cannot silently treat a repeated eigenspace as having a canonical vector. -/
+noncomputable def normalizedEigenvector {n : ℕ} (A : RealMatrix n n)
+    (hA : isSelfAdjoint A) (i : Fin n)
+    (_hsimple : hasSimpleEigenvalue A hA i) : RealVector n :=
+  hA.eigenvectorBasis (realVector_finrank n) i
+
+/-- The angle between two nonzero Euclidean vectors, in radians. -/
+noncomputable def vectorAngle {n : ℕ} (u v : RealVector n)
+    (_hu : u ≠ 0) (_hv : v ≠ 0) : ℝ :=
+  Real.arccos (inner ℝ u v / (‖u‖ * ‖v‖))
+
+/-- The minimum angle between nonzero vectors in two finite-dimensional
+subspaces.  The `sInf` convention is retained for empty subspace pairs; the
+nonempty hypotheses needed by angle estimates belong to those estimates. -/
+noncomputable def subspaceAngle {n : ℕ}
+    (E F : Submodule ℝ (RealVector n)) : ℝ :=
+  sInf {θ : ℝ | ∃ u ∈ E, ∃ v ∈ F, ∃ hu : u ≠ 0, ∃ hv : v ≠ 0,
+    θ = vectorAngle u v hu hv}
+
+/-- Distance between one-dimensional eigendirections, identifying vectors up
+to sign. -/
+noncomputable def signEquivalenceDistance {n : ℕ} (u v : RealVector n) : ℝ :=
+  min ‖u - v‖ ‖u + v‖
+
+/-- The Chapter 4 spectral-gap interface. -/
+structure SpectralGapInterface (n : ℕ) where
+  isSelfAdjoint : RealMatrix n n → Prop
+  orderedEigenvalues : ∀ A, isSelfAdjoint A → Fin n → ℝ
+  hasSimpleEigenvalue : ∀ (A : RealMatrix n n)
+    (hA : NumStability.HDP.RandomMatrix.Basic.isSelfAdjoint A)
+    (i : Fin n), Prop
+  normalizedEigenvector : ∀ (A : RealMatrix n n)
+    (hA : NumStability.HDP.RandomMatrix.Basic.isSelfAdjoint A)
+    (i : Fin n),
+    Basic.hasSimpleEigenvalue A hA i → RealVector n
+  subspaceAngle : Submodule ℝ (RealVector n) →
+    Submodule ℝ (RealVector n) → ℝ
+  signEquivalenceDistance : RealVector n → RealVector n → ℝ
+
+/-- The canonical Chapter 4 spectral-gap interface. -/
+noncomputable def spectralGapInterface (n : ℕ) : SpectralGapInterface n where
+  isSelfAdjoint := isSelfAdjoint
+  orderedEigenvalues := orderedEigenvalues
+  hasSimpleEigenvalue := hasSimpleEigenvalue
+  normalizedEigenvector := normalizedEigenvector
+  subspaceAngle := subspaceAngle
+  signEquivalenceDistance := signEquivalenceDistance
 
 end Basic
 end RandomMatrix
