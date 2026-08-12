@@ -41,6 +41,42 @@ theorem codingComplexity_spec {α : Type*} [PseudoMetricSpace α]
   simp only [codingComplexity, dif_pos h]
   exact Nat.find_spec h
 
+/-! Binary block-code vocabulary.  Encoding and decoding are kept as fields
+of one structure, so the error-correction predicate cannot silently use a
+different block length or message alphabet. -/
+
+open NumStability.HDP.Geometry.Covering
+
+structure BinaryErrorCorrectingCode (k n r : ℕ) where
+  encode : (Fin k → Bool) → (Fin n → Bool)
+  decode : (Fin n → Bool) → (Fin k → Bool)
+  correct : ∀ (x : Fin k → Bool) (y : Fin n → Bool),
+    hammingDistance y (encode x) ≤ r → decode y = x
+
+def binaryErrorCorrectingCode (k n r : ℕ) :
+    Type :=
+  BinaryErrorCorrectingCode k n r
+
+def codebook {k n r : ℕ} (C : BinaryErrorCorrectingCode k n r) :
+    Set (Fin n → Bool) :=
+  Set.range C.encode
+
+def codeword {k n r : ℕ} (C : BinaryErrorCorrectingCode k n r)
+    (x : Fin k → Bool) : Fin n → Bool :=
+  C.encode x
+
+theorem encode_injective_of_correct
+    {k n r : ℕ} (C : BinaryErrorCorrectingCode k n r) :
+    Function.Injective C.encode := by
+  intro x₁ x₂ h
+  have hzero : hammingDistance (C.encode x₁) (C.encode x₁) ≤ r := by
+    simp [hammingDistance]
+  have hfirst := C.correct x₁ (C.encode x₁) hzero
+  have hsecond : C.decode (C.encode x₁) = x₂ := by
+    rw [h]
+    exact C.correct x₂ (C.encode x₂) (by simp [hammingDistance])
+  exact hfirst.symm.trans hsecond
+
 /-! A small, fully finite model of the repetition-code example.  The block is
 indexed by a repetition coordinate and a message coordinate; this avoids an
 irrelevant flattening convention in the statement. -/
@@ -173,6 +209,10 @@ theorem nearestCodewordCorrect {α : Type*} [PseudoMetricSpace α]
 end NumStability.HDP.Applications.Coding
 
 namespace NumStability.HDP.Contract
+
+def hdp_04_hdef_h4_d3_d3 (k n r : ℕ) :
+    Type :=
+  NumStability.HDP.Applications.Coding.binaryErrorCorrectingCode k n r
 
 noncomputable def hdp_04_hdef_h4_d3_hmetric_hentropy
     {α : Type*} [PseudoMetricSpace α]
