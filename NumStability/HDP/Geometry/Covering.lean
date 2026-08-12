@@ -726,6 +726,7 @@ theorem hammingCubeCountingExercise :
   · intro m hm hmn
     exact (NumStability.HDP.Contract.hdp_00_hex_h0_d0_d5 m n hm hmn).2
 
+
 /-- Pointwise Minkowski addition of two sets. -/
 def minkowskiSum {E : Type*} [Add E] (A B : Set E) : Set E :=
   A + B
@@ -1025,6 +1026,11 @@ theorem hdp_04_hex_h4_d2_d10 :
             Geometry.Covering.coveringNumber K (ε / 2)) ∧
       Geometry.Covering.internalCoveringCenterCounterexampleStatement :=
   Geometry.Covering.internalCoveringMonotonicityExerciseStatement
+
+/-- Stable source-facing alias for the Hamming-cube counting exercise. -/
+theorem hdp_04_hex_h4_d2_d16 :
+    Geometry.Covering.hammingCubeCountingExerciseStatement :=
+  Geometry.Covering.hammingCubeCountingExercise
 
 end Contract
 end HDP
