@@ -214,3 +214,11 @@ end Basic
 end RandomMatrix
 end HDP
 end NumStability
+
+namespace NumStability.HDP.Contract
+
+def hdp_04_hiface_hconstants :
+    RandomMatrix.Basic.ConstantsInterface :=
+  RandomMatrix.Basic.constantsInterface
+
+end NumStability.HDP.Contract
