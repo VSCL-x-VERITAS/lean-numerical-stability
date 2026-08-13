@@ -81,7 +81,7 @@ theorem bennettHInterface :
 engine left explicit so integrability and the exponential remainder estimate
 are part of the contract rather than hidden assumptions. -/
 def boundedBernsteinMgfStatement : Prop :=
-  ∀ {Ω : Type} [MeasurableSpace Ω]
+  ∀ {Ω : Type u} [MeasurableSpace Ω]
     (μ : MeasureTheory.Measure Ω) (X : Ω → ℝ) (K lam σ2 : ℝ),
     (∀ᵐ ω ∂μ, |X ω| ≤ K) →
       (∫ ω, X ω ∂μ) = 0 → 0 ≤ σ2 → 0 < K → |lam| < 3 / K →
@@ -89,7 +89,7 @@ def boundedBernsteinMgfStatement : Prop :=
         Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2)
 
 theorem boundedBernsteinMgfBound
-    (hEngine : boundedBernsteinMgfStatement) {Ω : Type} [MeasurableSpace Ω]
+    (hEngine : boundedBernsteinMgfStatement.{u}) {Ω : Type u} [MeasurableSpace Ω]
     (μ : MeasureTheory.Measure Ω) (X : Ω → ℝ) (K lam σ2 : ℝ)
     (hBound : ∀ᵐ ω ∂μ, |X ω| ≤ K)
     (hMean : (∫ ω, X ω ∂μ) = 0) (hσ : 0 ≤ σ2) (hK : 0 < K)
@@ -162,6 +162,182 @@ theorem bernsteinChernoffEnvelope
       rw [← Real.exp_add]
       congr 1
       ring
+
+/-! The bounded-variable exercise pipeline.  This is the source-facing
+Exercise 2.8.6 API: the MGF engine from Exercise 2.8.5 is applied coordinate
+wise, the two imported contracts perform tensorization and exponential
+Markov, and the positive-variance branch records the exact optimizer
+`t / (σ² + K * t / 3)`.  The zero-variance branch is an explicit premise so
+the theorem does not hide a division-by-zero convention. -/
+theorem boundedBernsteinTail
+    {ι : Type*} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ)
+    (hEngine : boundedBernsteinMgfStatement.{u})
+    (hX : iIndepFun X μ)
+    (hBound : ∀ i, ∀ᵐ ω ∂μ, |X i ω| ≤ K)
+    (hMean : ∀ i, (∫ ω, X i ω ∂μ) = 0)
+    (hVariance : ∀ i, 0 ≤ v i)
+    (hσ : σ2 = ∑ i, v i)
+    (hExp : ∀ (lam : ℝ), |lam| < 3 / K →
+      ∀ i, Integrable (fun ω => Real.exp (lam * X i ω)) μ)
+    (hSumExp : ∀ (lam : ℝ), |lam| < 3 / K →
+      Integrable (fun ω => Real.exp (lam * ∑ i, X i ω)) μ)
+    (hSumMeas : Measurable (fun ω => ∑ i, X i ω))
+    (hσ0 : 0 ≤ σ2) (hK : 0 < K)
+    (hDegenerate : σ2 = 0 → ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)))
+    (hOptimize : ∀ t : ℝ, 0 < t → 0 < σ2 →
+      ∃ lam : ℝ, lam = t / (σ2 + K * t / 3) ∧
+        0 < lam ∧ |lam| < 3 / K) :
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
+  have hMgf : ∀ (lam : ℝ), |lam| < 3 / K →
+      ∀ i, (∫ ω, Real.exp (lam * X i ω) ∂μ) ≤
+        Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * v i) := by
+    intro lam hlam i
+    exact boundedBernsteinMgfBound hEngine (Ω := Ω) μ (X i) K lam (v i)
+      (hBound i) (hMean i) (hVariance i) hK hlam
+  have hσ_cases : σ2 = 0 ∨ 0 < σ2 := by
+    rcases lt_or_eq_of_le hσ0 with hpos | hzero
+    · exact Or.inr hpos
+    · exact Or.inl hzero.symm
+  intro t ht
+  rcases hσ_cases with hσz | hσpos
+  · exact hDegenerate hσz t ht
+  · by_cases ht0 : t = 0
+    · subst t
+      constructor
+      · simpa using (measureReal_le_one (μ := μ) (s :=
+          (fun ω => ∑ i, X i ω) ⁻¹' Set.Ici 0))
+      · simpa using (measureReal_le_one (μ := μ) (s :=
+          (fun ω => ∑ i, X i ω) ⁻¹' Set.Iic 0))
+    · have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
+      obtain ⟨lam, hlam_eq, hlam_pos, hlam_range⟩ :=
+        hOptimize t htpos hσpos
+      have hneg_range : |-lam| < 3 / K := by
+        simpa [abs_neg] using hlam_range
+      have hsum_pos :
+          (∫ ω, Real.exp (lam * ∑ i, X i ω) ∂μ) ≤
+            Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) := by
+        have htensor :=
+          NumStability.HDP.Contract.hdp_02_hlem_hmgf_hindependent_hsum
+            (μ := μ) (X := X) lam (fun _ => (1 : ℝ)) hX (by
+              intro i
+              simpa using hExp lam hlam_range i)
+        have hprod :
+            (∏ i, ∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ) ≤
+              ∏ i, Real.exp (((lam ^ 2 / 2) /
+                (1 - |lam| * K / 3)) * v i) := by
+          apply Finset.prod_le_prod
+          · intro i hi
+            exact integral_nonneg (fun ω => (Real.exp_pos _).le)
+          · intro i hi
+            simpa using hMgf lam hlam_range i
+        calc
+          (∫ ω, Real.exp (lam * ∑ i, X i ω) ∂μ) =
+              ∏ i, ∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ := by
+                simpa using htensor
+          _ ≤ ∏ i, Real.exp (((lam ^ 2 / 2) /
+                (1 - |lam| * K / 3)) * v i) := hprod
+          _ = Real.exp (((lam ^ 2 / 2) /
+                (1 - |lam| * K / 3)) * σ2) := by
+                rw [← Real.exp_sum]
+                congr 1
+                rw [hσ]
+                rw [Finset.mul_sum]
+      have hsum_neg :
+          (∫ ω, Real.exp ((-lam) * ∑ i, X i ω) ∂μ) ≤
+            Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) := by
+        have htensor :=
+          NumStability.HDP.Contract.hdp_02_hlem_hmgf_hindependent_hsum
+            (μ := μ) (X := X) (-lam) (fun _ => (1 : ℝ)) hX (by
+              intro i
+              simpa using hExp (-lam) hneg_range i)
+        have hprod :
+            (∏ i, ∫ ω, Real.exp ((-lam) * (1 * X i ω)) ∂μ) ≤
+              ∏ i, Real.exp ((((-lam) ^ 2 / 2) /
+                (1 - |-lam| * K / 3)) * v i) := by
+          apply Finset.prod_le_prod
+          · intro i hi
+            exact integral_nonneg (fun ω => (Real.exp_pos _).le)
+          · intro i hi
+            simpa [abs_neg] using hMgf (-lam) hneg_range i
+        calc
+          (∫ ω, Real.exp ((-lam) * ∑ i, X i ω) ∂μ) =
+              ∏ i, ∫ ω, Real.exp ((-lam) * (1 * X i ω)) ∂μ := by
+                simpa using htensor
+          _ ≤ ∏ i, Real.exp ((((-lam) ^ 2 / 2) /
+                (1 - |-lam| * K / 3)) * v i) := hprod
+          _ = Real.exp (((lam ^ 2 / 2) /
+                (1 - |lam| * K / 3)) * σ2) := by
+                rw [← Real.exp_sum]
+                congr 1
+                rw [hσ]
+                simp [abs_neg]
+                rw [Finset.mul_sum]
+      have hmarkov_pos :=
+        NumStability.HDP.Contract.hdp_02_hlem_hexponential_hmarkov
+          (μ := μ) (t := t) hSumMeas hlam_pos
+          (hSumExp lam hlam_range)
+          (by simpa [mul_neg, neg_mul] using hSumExp (-lam) hneg_range)
+      have hmarkov_neg :=
+        NumStability.HDP.Contract.hdp_02_hlem_hexponential_hmarkov
+          (μ := μ) (S := fun ω => -(∑ i, X i ω)) (t := t)
+          hSumMeas.neg hlam_pos
+          (by simpa [mul_neg, neg_mul] using hSumExp (-lam) hneg_range)
+          (by simpa using hSumExp lam hlam_range)
+      have hD : 0 < σ2 + K * t / 3 := by positivity
+      have hLamAbs : |lam| = t / (σ2 + K * t / 3) := by
+        rw [hlam_eq, abs_of_pos]
+        exact div_pos htpos hD
+      have hExponent :
+          -(lam * t) + ((lam ^ 2 / 2) /
+              (1 - |lam| * K / 3)) * σ2 =
+            -(t ^ 2 / 2) / (σ2 + K * t / 3) := by
+        rw [hlam_eq, abs_of_pos (div_pos htpos hD)]
+        field_simp [ne_of_gt hD, ne_of_gt hσpos]
+        ring
+      have hLowerSet :
+          (fun ω => -(∑ i, X i ω)) ⁻¹' Set.Ici t =
+            (fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t) := by
+        ext ω
+        simp only [Set.mem_preimage, Set.mem_Ici, Set.mem_Iic]
+        constructor <;> intro h
+        · linarith
+        · linarith
+      constructor
+      · calc
+          μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+              Real.exp (-(lam * t)) *
+                (∫ ω, Real.exp (lam * ∑ i, X i ω) ∂μ) := hmarkov_pos.1
+          _ ≤ Real.exp (-(lam * t)) *
+                Real.exp (((lam ^ 2 / 2) /
+                  (1 - |lam| * K / 3)) * σ2) := by
+            exact mul_le_mul_of_nonneg_left hsum_pos (Real.exp_pos _).le
+          _ = Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
+            rw [← Real.exp_add]
+            congr 1
+      · rw [← hLowerSet]
+        calc
+          μ.real ((fun ω => -(∑ i, X i ω)) ⁻¹' Set.Ici t) ≤
+              Real.exp (-(lam * t)) *
+                (∫ ω, Real.exp (lam * (-(∑ i, X i ω))) ∂μ) :=
+              hmarkov_neg.1
+          _ ≤ Real.exp (-(lam * t)) *
+                Real.exp (((lam ^ 2 / 2) /
+                  (1 - |lam| * K / 3)) * σ2) := by
+            apply mul_le_mul_of_nonneg_left _ (Real.exp_pos _).le
+            simpa [mul_neg, neg_mul] using hsum_neg
+          _ = Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
+            rw [← Real.exp_add]
+            congr 1
 
 /-! Optimized Bernstein form.  `hOptimize` is the checked optimizer witness;
 it makes the zero cases (`σ² = 0` or `B = 0`) explicit at the call site and
@@ -270,8 +446,8 @@ theorem hdp_02_hdef_hbennett_hh :
   Scalar.Bernstein.bennettHInterface
 
 theorem hdp_02_hex_h2_d8_d5
-    (hEngine : Scalar.Bernstein.boundedBernsteinMgfStatement)
-    {Ω : Type} [MeasurableSpace Ω]
+    (hEngine : Scalar.Bernstein.boundedBernsteinMgfStatement.{u})
+    {Ω : Type u} [MeasurableSpace Ω]
     (μ : MeasureTheory.Measure Ω) (X : Ω → ℝ) (K lam σ2 : ℝ)
     (hBound : ∀ᵐ ω ∂μ, |X ω| ≤ K)
     (hMean : (∫ ω, X ω ∂μ) = 0) (hσ : 0 ≤ σ2) (hK : 0 < K)
@@ -280,6 +456,38 @@ theorem hdp_02_hex_h2_d8_d5
       Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) :=
   Scalar.Bernstein.boundedBernsteinMgfBound hEngine μ X K lam σ2
     hBound hMean hσ hK hlam
+
+theorem hdp_02_hex_h2_d8_d6
+    {ι : Type*} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ)
+    (hEngine : Scalar.Bernstein.boundedBernsteinMgfStatement.{u})
+    (hX : iIndepFun X μ)
+    (hBound : ∀ i, ∀ᵐ ω ∂μ, |X i ω| ≤ K)
+    (hMean : ∀ i, (∫ ω, X i ω ∂μ) = 0)
+    (hVariance : ∀ i, 0 ≤ v i)
+    (hσ : σ2 = ∑ i, v i)
+    (hExp : ∀ (lam : ℝ), |lam| < 3 / K →
+      ∀ i, Integrable (fun ω => Real.exp (lam * X i ω)) μ)
+    (hSumExp : ∀ (lam : ℝ), |lam| < 3 / K →
+      Integrable (fun ω => Real.exp (lam * ∑ i, X i ω)) μ)
+    (hSumMeas : Measurable (fun ω => ∑ i, X i ω))
+    (hσ0 : 0 ≤ σ2) (hK : 0 < K)
+    (hDegenerate : σ2 = 0 → ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)))
+    (hOptimize : ∀ t : ℝ, 0 < t → 0 < σ2 →
+      ∃ lam : ℝ, lam = t / (σ2 + K * t / 3) ∧
+        0 < lam ∧ |lam| < 3 / K) :
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) :=
+  Scalar.Bernstein.boundedBernsteinTail X v K σ2 hEngine hX hBound hMean
+    hVariance hσ hExp hSumExp hSumMeas hσ0 hK hDegenerate hOptimize
 
 theorem hdp_02_hlem_hbernstein_hmgf_hpipeline
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
