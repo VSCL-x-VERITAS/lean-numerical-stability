@@ -339,6 +339,54 @@ theorem boundedBernsteinTail
             rw [← Real.exp_add]
             congr 1
 
+/-! The two-sided bounded Bernstein theorem is the union-bound wrapper around
+the source-facing Exercise 2.8.6 pipeline.  Keeping this step separate makes
+the factor `2` and the absolute-value event explicit instead of hiding the
+two-tail reduction in notation. -/
+theorem boundedBernsteinTwoSided
+    {ι : Type*} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (K σ2 : ℝ)
+    (hTail : ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3))) :
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => |∑ i, X i ω|) ⁻¹' Set.Ici t) ≤
+        2 * Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
+  intro t ht
+  let S : Ω → ℝ := fun ω => ∑ i, X i ω
+  let A : Set Ω := S ⁻¹' Set.Ici t
+  let B : Set Ω := S ⁻¹' Set.Iic (-t)
+  have hset : (fun ω => |S ω|) ⁻¹' Set.Ici t = A ∪ B := by
+    ext ω
+    change t ≤ |S ω| ↔ t ≤ S ω ∨ S ω ≤ -t
+    rw [le_abs]
+    constructor
+    · intro h
+      rcases h with h | h
+      · exact Or.inl h
+      · exact Or.inr (by linarith)
+    · intro h
+      rcases h with h | h
+      · exact Or.inl h
+      · exact Or.inr (by linarith)
+  have hUnion : μ.real (A ∪ B) ≤ μ.real A + μ.real B := by
+    rw [measureReal_def, measureReal_def, measureReal_def,
+      ← ENNReal.toReal_add (measure_ne_top μ A) (measure_ne_top μ B)]
+    exact ENNReal.toReal_mono
+      (ENNReal.add_ne_top.mpr ⟨measure_ne_top μ A, measure_ne_top μ B⟩)
+      (measure_union_le A B)
+  have hAB := hTail t ht
+  rw [hset]
+  calc
+    μ.real (A ∪ B) ≤ μ.real A + μ.real B := hUnion
+    _ ≤ Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) +
+        Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
+      exact add_le_add hAB.1 hAB.2
+    _ = 2 * Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by ring
+
 /-! Optimized Bernstein form.  `hOptimize` is the checked optimizer witness;
 it makes the zero cases (`σ² = 0` or `B = 0`) explicit at the call site and
 keeps the main theorem free of unsafe division-by-zero conventions. -/
@@ -488,6 +536,20 @@ theorem hdp_02_hex_h2_d8_d6
           Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) :=
   Scalar.Bernstein.boundedBernsteinTail X v K σ2 hEngine hX hBound hMean
     hVariance hσ hExp hSumExp hSumMeas hσ0 hK hDegenerate hOptimize
+
+theorem hdp_02_hthm_h2_d8_d4
+    {ι : Type*} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (K σ2 : ℝ)
+    (hTail : ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3))) :
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => |∑ i, X i ω|) ⁻¹' Set.Ici t) ≤
+        2 * Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) :=
+  Scalar.Bernstein.boundedBernsteinTwoSided X K σ2 hTail
 
 theorem hdp_02_hlem_hbernstein_hmgf_hpipeline
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
