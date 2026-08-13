@@ -1819,13 +1819,15 @@ the defining exponential moment is integrable and bounded by `2`. -/
 def hdp_02_hdef_h2_d7_d5
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
-  Measurable X ∧ psiOneGauge μ X < ∞
+  Measurable X ∧
+    NumStability.HDP.Scalar.SubExponential.psiOneGauge μ X < ∞
 
 theorem hdp_02_hdef_h2_d7_d5_iff_onePoint
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} {X : Ω → ℝ} :
     hdp_02_hdef_h2_d7_d5 μ X ↔
-      ∃ K : ℝ, SubExponentialOnePointMGF μ X K := by
+      ∃ K : ℝ,
+        NumStability.HDP.Scalar.SubExponential.SubExponentialOnePointMGF μ X K := by
   constructor
   · rintro ⟨hX, hfinite⟩
     let A : Set ℝ≥0∞ := {t |
@@ -1857,7 +1859,8 @@ theorem hdp_02_hdef_h2_d7_d5_iff_onePoint
       · simp [t, ne_of_gt hKpos]
       · simpa [t, ENNReal.toReal_ofReal hKpos.le] using hInt
       · simpa [t, ENNReal.toReal_ofReal hKpos.le] using hbound
-    have hle : psiOneGauge μ X ≤ t := sInf_le ht
+    have hle : NumStability.HDP.Scalar.SubExponential.psiOneGauge μ X ≤ t :=
+      sInf_le ht
     have htop : t < ∞ := by simp [t]
     exact hle.trans_lt htop
 
