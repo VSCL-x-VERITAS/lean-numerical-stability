@@ -1813,6 +1813,8 @@ def hdp_02_hrem_h2_d7_d9__contract_type : Prop :=
     (∀ lam : ℝ, 1 ≤ lam →
       ¬ Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1))
 
+end NumStability.HDP.Contract
+
 /-! Stable Chapter 2 definition for a sub-exponential random variable and its
 source-facing `ψ₁` gauge. The gauge uses the finite positive scales at which
 the defining exponential moment is integrable and bounded by `2`. -/
@@ -1856,7 +1858,7 @@ theorem hdp_02_hdef_h2_d7_d5_iff_onePoint
           Integrable (fun ω => Real.exp (|X ω| / s.toReal)) μ ∧
           (∫ ω, Real.exp (|X ω| / s.toReal) ∂μ) ≤ 2} := by
       refine ⟨?_, ENNReal.ofReal_ne_top, ?_, ?_⟩
-      · simp [t, ne_of_gt hKpos]
+      · exact (ENNReal.ofReal_pos.mpr hKpos).ne'
       · simpa [t, ENNReal.toReal_ofReal hKpos.le] using hInt
       · simpa [t, ENNReal.toReal_ofReal hKpos.le] using hbound
     have hle : NumStability.HDP.Scalar.SubExponential.psiOneGauge μ X ≤ t :=
