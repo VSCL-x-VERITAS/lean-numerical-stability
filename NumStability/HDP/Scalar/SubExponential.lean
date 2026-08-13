@@ -1815,7 +1815,11 @@ namespace NumStability.HDP.Scalar.SubExponential
 def subExponentialModel
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
-  Measurable X ∧ psiOneGauge μ X < ∞
+  Measurable X ∧
+    sInf {t : ℝ≥0∞ |
+      t ≠ 0 ∧ t ≠ ∞ ∧
+        Integrable (fun ω => Real.exp (|X ω| / t.toReal)) μ ∧
+        (∫ ω, Real.exp (|X ω| / t.toReal) ∂μ) ≤ 2} < ∞
 
 end NumStability.HDP.Scalar.SubExponential
 
