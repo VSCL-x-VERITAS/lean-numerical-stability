@@ -6,6 +6,8 @@ variance identity. -/
 noncomputable section
 
 open MeasureTheory
+open ProbabilityTheory
+open scoped BigOperators ProbabilityTheory Function
 
 namespace NumStability.HDP.Contract
 
