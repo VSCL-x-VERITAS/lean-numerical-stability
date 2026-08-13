@@ -6,7 +6,7 @@ identity. -/
 noncomputable section
 
 open MeasureTheory
-open scoped ProbabilityTheory
+open scoped ProbabilityTheory Function
 
 namespace NumStability.HDP.Contract
 
