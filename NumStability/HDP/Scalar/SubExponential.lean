@@ -1809,6 +1809,16 @@ theorem psiTwoOrliczMember_iff_psiTwoMember
 
 end NumStability.HDP.Scalar.SubExponential
 
+namespace NumStability.HDP.Scalar.SubExponential
+
+/-! Content-named semantic model for Definition 2.7.5. -/
+def subExponentialModel
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
+  Measurable X ∧ psiOneGauge μ X < ∞
+
+end NumStability.HDP.Scalar.SubExponential
+
 namespace NumStability.HDP.Contract
 
 /-! Stable Chapter 2 definition for a sub-exponential random variable and its
@@ -1817,8 +1827,7 @@ the defining exponential moment is integrable and bounded by `2`. -/
 def hdp_02_hdef_h2_d7_d5
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
-  Measurable X ∧
-    NumStability.HDP.Scalar.SubExponential.psiOneGauge μ X < ∞
+  NumStability.HDP.Scalar.SubExponential.subExponentialModel μ X
 
 theorem hdp_02_hdef_h2_d7_d5_iff_onePoint
     {Ω : Type*} [MeasurableSpace Ω]
