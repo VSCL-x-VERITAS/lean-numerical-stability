@@ -77,6 +77,75 @@ theorem bennettHInterface :
   · intro hu2
     exact bennettH_large_lower hu2
 
+/-! The exact exponential-Markov contract consumed by the external Bennett
+foundation below.  Keeping this type local makes the dependency explicit in
+the semantic theorem while the executable theorem itself remains supplied by
+the checked-in Split 1 contract. -/
+def exponentialMarkovContractType : Prop :=
+  ∀ {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {S : Ω → ℝ} (hS : Measurable S) {lam t : ℝ} (hlam : 0 < lam)
+    (hExp : Integrable (fun ω => Real.exp (lam * S ω)) μ)
+    (hExpNeg : Integrable (fun ω => Real.exp (lam * (-S ω))) μ),
+    (μ.real (S ⁻¹' Set.Ici t) ≤
+        Real.exp (-(lam * t)) *
+          (∫ ω, Real.exp (lam * S ω) ∂μ)) ∧
+      (μ.real ((fun ω => -S ω) ⁻¹' Set.Ici t) ≤
+        Real.exp (-(lam * t)) *
+          (∫ ω, Real.exp (lam * (-S ω)) ∂μ))
+
+def bennettTailStatement
+    {ι : Type u} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ) : Prop :=
+  ((K = 0 ∨ σ2 = 0) →
+      ∀ t : ℝ, 0 < t →
+        μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) = 0) ∧
+    (0 < K → 0 < σ2 →
+      ∀ t : ℝ, 0 < t →
+        μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+          Real.exp (-(σ2 / K ^ 2) * bennettH (K * t / σ2)))
+
+/-! `EXT-BENNETT` is a search-or-prove closure token in the certified plan.
+This local foundation helper records the complete source-facing one-sided
+statement, including the deterministic `K = 0`/`σ² = 0` branch.  Its only
+unresolved mathematical input is the named external Bennett foundation; the
+exponential-Markov theorem is passed explicitly so the inbound contract is
+not decorative. -/
+def bennettTailFoundation : Prop :=
+  ∀ {ι : Type u} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ)
+    (hX : iIndepFun X μ)
+    (hCentered : ∀ i, (∫ ω, X i ω ∂μ) = 0)
+    (hVarianceValue : ∀ i, v i = ∫ ω, (X i ω) ^ 2 ∂μ)
+    (hVariance : ∀ i, 0 ≤ v i)
+    (hσ : σ2 = ∑ i, v i)
+    (hBound : ∀ i, ∀ᵐ ω ∂μ, |X i ω| ≤ K)
+    (hK : 0 ≤ K) (hσ0 : 0 ≤ σ2)
+    (hMarkov : exponentialMarkovContractType.{u}),
+      bennettTailStatement (μ := μ) X v K σ2
+
+theorem bennettTailTheorem
+    {ι : Type u} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (hBennett : bennettTailFoundation.{u})
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ)
+    (hX : iIndepFun X μ)
+    (hCentered : ∀ i, (∫ ω, X i ω ∂μ) = 0)
+    (hVarianceValue : ∀ i, v i = ∫ ω, (X i ω) ^ 2 ∂μ)
+    (hVariance : ∀ i, 0 ≤ v i)
+    (hσ : σ2 = ∑ i, v i)
+    (hBound : ∀ i, ∀ᵐ ω ∂μ, |X i ω| ≤ K)
+    (hK : 0 ≤ K) (hσ0 : 0 ≤ σ2) :
+    bennettTailStatement (μ := μ) X v K σ2 := by
+  have hMarkov : exponentialMarkovContractType.{u} := by
+    intro Ω _ μ _ S hS lam t hlam hExp hExpNeg
+    exact NumStability.HDP.Contract.hdp_02_hlem_hexponential_hmarkov
+      hS hlam hExp hExpNeg
+  exact hBennett (ι := ι) (Ω := Ω) (μ := μ) X v K σ2 hX hCentered
+    hVarianceValue hVariance hσ hBound hK hσ0 hMarkov
+
 /-- Bernstein's bounded-MGF conclusion, with the measure-theoretic analytic
 engine left explicit so integrability and the exponential remainder estimate
 are part of the contract rather than hidden assumptions. -/
@@ -597,6 +666,22 @@ theorem hdp_02_hthm_h2_d8_d4
         2 * Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
   exact Scalar.Bernstein.boundedBernsteinTheorem X v K σ2 hEngine hX hBound
     hMean hVariance hσ hExp hSumExp hSumMeas hσ0 hK hDegenerate hOptimize
+
+theorem hdp_02_hthm_h2_d9_d2
+    {ι : Type u} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (hBennett : Scalar.Bernstein.bennettTailFoundation.{u})
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ)
+    (hX : iIndepFun X μ)
+    (hCentered : ∀ i, (∫ ω, X i ω ∂μ) = 0)
+    (hVarianceValue : ∀ i, v i = ∫ ω, (X i ω) ^ 2 ∂μ)
+    (hVariance : ∀ i, 0 ≤ v i)
+    (hσ : σ2 = ∑ i, v i)
+    (hBound : ∀ i, ∀ᵐ ω ∂μ, |X i ω| ≤ K)
+    (hK : 0 ≤ K) (hσ0 : 0 ≤ σ2) :
+    Scalar.Bernstein.bennettTailStatement (μ := μ) X v K σ2 :=
+  Scalar.Bernstein.bennettTailTheorem hBennett X v K σ2 hX hCentered
+    hVarianceValue hVariance hσ hBound hK hσ0
 
 theorem hdp_02_hlem_hbernstein_hmgf_hpipeline
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
