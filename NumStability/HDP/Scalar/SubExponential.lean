@@ -1856,7 +1856,7 @@ theorem hdp_02_hdef_h2_d7_d5_iff_onePoint
           Integrable (fun ω => Real.exp (|X ω| / s.toReal)) μ ∧
           (∫ ω, Real.exp (|X ω| / s.toReal) ∂μ) ≤ 2} := by
       refine ⟨?_, ENNReal.ofReal_ne_top, ?_, ?_⟩
-      · simp [t, ne_of_gt hKpos]
+      · exact (ENNReal.ofReal_pos.mpr hKpos).ne'
       · simpa [t, ENNReal.toReal_ofReal hKpos.le] using hInt
       · simpa [t, ENNReal.toReal_ofReal hKpos.le] using hbound
     have hle : NumStability.HDP.Scalar.SubExponential.psiOneGauge μ X ≤ t :=
