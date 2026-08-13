@@ -1257,9 +1257,9 @@ namespace NumStability.HDP.Contract
 interface from equation (1.1). -/
 noncomputable def hdp_01_hdef_hl2_hgeometry
     {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) :
-    NumStability.HDP.Scalar.Preliminaries.LpNormSpaceModelData μ 2 :=
-  NumStability.HDP.Scalar.Preliminaries.lpNormSpaceModel μ 2
+    (μ : Measure Ω) (X Y : Ω → ℝ) :
+    NumStability.HDP.Scalar.Preliminaries.L2GeometryModelData μ X Y :=
+  NumStability.HDP.Scalar.Preliminaries.l2GeometryModel μ X Y
 
 def hdp_01_hdef_hindicator
     {Ω : Type*} [MeasurableSpace Ω]
