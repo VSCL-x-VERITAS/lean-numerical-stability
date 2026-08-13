@@ -105,7 +105,7 @@ strength, while the aggregate integrability hypotheses make the real-valued
 Markov statement executable without hidden finiteness assumptions. -/
 theorem bernsteinChernoffEnvelope
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {μ : Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
     (X : ι → Ω → ℝ) (b : ι → ℝ)
     (C c B σ2 : ℝ)
     (hX : iIndepFun X μ)
@@ -202,34 +202,6 @@ theorem bernsteinMgfPipeline
       _ ≤ Real.exp (-κ * min (t ^ 2 / σ2) (t / B)) := by
         exact Real.exp_le_exp.mpr (by linarith)
 
-namespace Contract
-
-theorem hdp_02_hlem_hbernstein_hmgf_hpipeline
-    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    (X : ι → Ω → ℝ) (b : ι → ℝ)
-    (C c B σ2 κ : ℝ)
-    (hX : iIndepFun X μ)
-    (hMgf : ∀ (lam : ℝ), |lam| ≤ c / B →
-      ∀ i, (∫ ω, Real.exp (lam * X i ω) ∂μ) ≤
-        Real.exp (C * lam ^ 2 * (b i) ^ 2))
-    (hExp : ∀ (lam : ℝ), |lam| ≤ c / B →
-      ∀ i, Integrable (fun ω => Real.exp (lam * X i ω)) μ)
-    (hSumExp : ∀ (lam : ℝ), |lam| ≤ c / B →
-      Integrable (fun ω => Real.exp (lam * ∑ i, X i ω)) μ)
-    (hSumMeas : Measurable (fun ω => ∑ i, X i ω))
-    (hσ : σ2 = ∑ i, (b i) ^ 2)
-    (hOptimize : ∀ t : ℝ, 0 < t →
-      ∃ lam : ℝ, 0 < lam ∧ |lam| ≤ c / B ∧
-        κ * min (t ^ 2 / σ2) (t / B) + C * lam ^ 2 * σ2 ≤ lam * t) :
-    ∀ t : ℝ, 0 ≤ t →
-      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
-        Real.exp (-κ * min (t ^ 2 / σ2) (t / B)) :=
-  NumStability.HDP.Scalar.Bernstein.bernsteinMgfPipeline X b C c B σ2 κ
-    hX hMgf hExp hSumExp hSumMeas hσ hOptimize
-
-end Contract
-
 /-!
 ## Corrected single-index McDiarmid interface
 
@@ -278,6 +250,10 @@ theorem correctedMcDiarmid
 
 end NumStability.HDP.Scalar.Bernstein
 
+open MeasureTheory
+open ProbabilityTheory
+open scoped BigOperators
+
 namespace NumStability.HDP.Contract
 
 def hdp_02_hdef_hbounded_hdifferences {ι : Type*} [Fintype ι] [DecidableEq ι]
@@ -304,6 +280,30 @@ theorem hdp_02_hex_h2_d8_d5
       Real.exp (((lam ^ 2 / 2) / (1 - |lam| * K / 3)) * σ2) :=
   Scalar.Bernstein.boundedBernsteinMgfBound hEngine μ X K lam σ2
     hBound hMean hσ hK hlam
+
+theorem hdp_02_hlem_hbernstein_hmgf_hpipeline
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [MeasureTheory.IsProbabilityMeasure μ]
+    (X : ι → Ω → ℝ) (b : ι → ℝ)
+    (C c B σ2 κ : ℝ)
+    (hX : iIndepFun X μ)
+    (hMgf : ∀ (lam : ℝ), |lam| ≤ c / B →
+      ∀ i, (∫ ω, Real.exp (lam * X i ω) ∂μ) ≤
+        Real.exp (C * lam ^ 2 * (b i) ^ 2))
+    (hExp : ∀ (lam : ℝ), |lam| ≤ c / B →
+      ∀ i, Integrable (fun ω => Real.exp (lam * X i ω)) μ)
+    (hSumExp : ∀ (lam : ℝ), |lam| ≤ c / B →
+      Integrable (fun ω => Real.exp (lam * ∑ i, X i ω)) μ)
+    (hSumMeas : Measurable (fun ω => ∑ i, X i ω))
+    (hσ : σ2 = ∑ i, (b i) ^ 2)
+    (hOptimize : ∀ t : ℝ, 0 < t →
+      ∃ lam : ℝ, 0 < lam ∧ |lam| ≤ c / B ∧
+        κ * min (t ^ 2 / σ2) (t / B) + C * lam ^ 2 * σ2 ≤ lam * t) :
+    ∀ t : ℝ, 0 ≤ t →
+      μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
+        Real.exp (-κ * min (t ^ 2 / σ2) (t / B)) :=
+  Scalar.Bernstein.bernsteinMgfPipeline X b C c B σ2 κ
+    hX hMgf hExp hSumExp hSumMeas hσ hOptimize
 
 theorem hdp_02_hthm_h2_d9_d1
     {ι : Type*} [Fintype ι] [DecidableEq ι]
