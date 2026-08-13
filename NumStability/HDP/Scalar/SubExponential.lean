@@ -1442,8 +1442,27 @@ lemma remark279_exp_mgf_not_integrable {lam : ℝ} (hl : 1 ≤ lam) :
       exact Real.one_le_exp (mul_nonneg (sub_nonneg.mpr hl) (le_of_lt hx))
   exact not_integrableOn_Ioi_rpow 0 (by simpa using hconst)
 
+def _root_.NumStability.HDP.Contract.hdp_02_hrem_h2_d7_d9__contract_type : Prop :=
+  ∃ (μ : Measure ℝ) (X : ℝ → ℝ),
+    IsProbabilityMeasure μ ∧
+    μ = (1 / 2 : ENNReal) • Measure.dirac (-1) +
+      (1 / 2 : ENNReal) • Measure.dirac 1 ∧
+    X = (fun x : ℝ => x) ∧
+    (∫ x, X x ∂μ) = 0 ∧
+    (∫ x, (X x) ^ 2 ∂μ) = 1 ∧
+    (fun lam : ℝ =>
+      (∫ x, Real.exp (lam * X x) ∂μ) - 1 -
+        lam * (∫ x, X x ∂μ) -
+        lam ^ 2 / 2 * (∫ x, (X x) ^ 2 ∂μ)) =o[𝓝 (0 : ℝ)]
+      (fun lam : ℝ => lam ^ 2) ∧
+    (∀ lam : ℝ, lam < 1 →
+      Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1) ∧
+        (∫ x, Real.exp (lam * x) ∂(expMeasure 1)) = (1 - lam)⁻¹) ∧
+    (∀ lam : ℝ, 1 ≤ lam →
+      ¬ Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1))
+
 theorem remark279_contract :
-    NumStability.HDP.Contract.hdp_02_hrem_h2_d7_d9__contract_type := by
+    _root_.NumStability.HDP.Contract.hdp_02_hrem_h2_d7_d9__contract_type := by
   refine ⟨remark279Law, (fun x : ℝ => x), remark279Law_probability, ?_⟩
   constructor
   · rfl
@@ -1791,29 +1810,6 @@ theorem psiTwoOrliczMember_iff_psiTwoMember
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
-
-/-! The exact source-facing proposition for Remark 2.7.9 is local because the
-remark is not an outbound contract of Split 1. -/
-def hdp_02_hrem_h2_d7_d9__contract_type : Prop :=
-  ∃ (μ : Measure ℝ) (X : ℝ → ℝ),
-    IsProbabilityMeasure μ ∧
-    μ = (1 / 2 : ENNReal) • Measure.dirac (-1) +
-      (1 / 2 : ENNReal) • Measure.dirac 1 ∧
-    X = (fun x : ℝ => x) ∧
-    (∫ x, X x ∂μ) = 0 ∧
-    (∫ x, (X x) ^ 2 ∂μ) = 1 ∧
-    (fun lam : ℝ =>
-      (∫ x, Real.exp (lam * X x) ∂μ) - 1 -
-        lam * (∫ x, X x ∂μ) -
-        lam ^ 2 / 2 * (∫ x, (X x) ^ 2 ∂μ)) =o[𝓝 (0 : ℝ)]
-      (fun lam : ℝ => lam ^ 2) ∧
-    (∀ lam : ℝ, lam < 1 →
-      Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1) ∧
-        (∫ x, Real.exp (lam * x) ∂(expMeasure 1)) = (1 - lam)⁻¹) ∧
-    (∀ lam : ℝ, 1 ≤ lam →
-      ¬ Integrable (fun x : ℝ => Real.exp (lam * x)) (expMeasure 1))
-
-end NumStability.HDP.Contract
 
 /-! Stable Chapter 2 definition for a sub-exponential random variable and its
 source-facing `ψ₁` gauge. The gauge uses the finite positive scales at which
