@@ -540,16 +540,33 @@ theorem hdp_02_hex_h2_d8_d6
 theorem hdp_02_hthm_h2_d8_d4
     {ι : Type*} {Ω : Type u} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
-    (X : ι → Ω → ℝ) (K σ2 : ℝ)
-    (hTail : ∀ t : ℝ, 0 ≤ t →
+    (X : ι → Ω → ℝ) (v : ι → ℝ) (K σ2 : ℝ)
+    (hEngine : Scalar.Bernstein.boundedBernsteinMgfStatement.{u})
+    (hX : iIndepFun X μ)
+    (hBound : ∀ i, ∀ᵐ ω ∂μ, |X i ω| ≤ K)
+    (hMean : ∀ i, (∫ ω, X i ω ∂μ) = 0)
+    (hVariance : ∀ i, 0 ≤ v i)
+    (hσ : σ2 = ∑ i, v i)
+    (hExp : ∀ (lam : ℝ), |lam| < 3 / K →
+      ∀ i, Integrable (fun ω => Real.exp (lam * X i ω)) μ)
+    (hSumExp : ∀ (lam : ℝ), |lam| < 3 / K →
+      Integrable (fun ω => Real.exp (lam * ∑ i, X i ω)) μ)
+    (hSumMeas : Measurable (fun ω => ∑ i, X i ω))
+    (hσ0 : 0 ≤ σ2) (hK : 0 < K)
+    (hDegenerate : σ2 = 0 → ∀ t : ℝ, 0 ≤ t →
       μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Ici t) ≤
           Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) ∧
       μ.real ((fun ω => ∑ i, X i ω) ⁻¹' Set.Iic (-t)) ≤
-          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3))) :
+          Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)))
+    (hOptimize : ∀ t : ℝ, 0 < t → 0 < σ2 →
+      ∃ lam : ℝ, lam = t / (σ2 + K * t / 3) ∧
+        0 < lam ∧ |lam| < 3 / K) :
     ∀ t : ℝ, 0 ≤ t →
       μ.real ((fun ω => |∑ i, X i ω|) ⁻¹' Set.Ici t) ≤
-        2 * Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) :=
-  Scalar.Bernstein.boundedBernsteinTwoSided X K σ2 hTail
+        2 * Real.exp (-(t ^ 2 / 2) / (σ2 + K * t / 3)) := by
+  apply Scalar.Bernstein.boundedBernsteinTwoSided X K σ2
+  exact Scalar.Bernstein.boundedBernsteinTail X v K σ2 hEngine hX hBound
+    hMean hVariance hσ hExp hSumExp hSumMeas hσ0 hK hDegenerate hOptimize
 
 theorem hdp_02_hlem_hbernstein_hmgf_hpipeline
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
