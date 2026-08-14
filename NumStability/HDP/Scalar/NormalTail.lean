@@ -4,6 +4,8 @@ import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Data.Real.Basic
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 import Mathlib.Probability.Distributions.Gaussian.Real
+import NumStability.HDP.Contracts.C_01_hdef_hcdf_htail
+import NumStability.HDP.Contracts.C_01_hdef_hexpectation_hvariance
 
 /-!
 # Scalar tail and comparison interfaces
@@ -13,9 +15,52 @@ removes the deliberate contextual ambiguity of the book's informal symbols.
 -/
 
 open Filter
+open MeasureTheory
 open scoped Topology
 
 namespace NumStability.HDP.Scalar.NormalTail
+
+/-! The opening convention of Chapter 2.1: concentration is measured around
+the expectation and is recorded as an upper tail of the absolute centered
+variable.  The Chapter 1 CDF and expectation interfaces are used here rather
+than introducing a second probability or mean notation. -/
+
+noncomputable def concentrationTailProbability
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X : Ω → ℝ) (hX : MeasureTheory.Integrable X μ) (t : ℝ) : ENNReal :=
+  (NumStability.HDP.Contract.hdp_01_hdef_hcdf_htail μ
+      (fun ω ↦ |X ω -
+        (NumStability.HDP.Contract.hdp_01_hdef_hexpectation_hvariance μ X hX).mean|)).upperTail t
+
+noncomputable def concentrationTailClosedProbability
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X : Ω → ℝ) (hX : MeasureTheory.Integrable X μ) (t : ℝ) : ENNReal :=
+  (NumStability.HDP.Contract.hdp_01_hdef_hcdf_htail μ
+      (fun ω ↦ |X ω -
+        (NumStability.HDP.Contract.hdp_01_hdef_hexpectation_hvariance μ X hX).mean|)).distribution
+    (Set.Ici t)
+
+theorem concentrationTailProbability_le_closed
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X : Ω → ℝ) (hX : MeasureTheory.Integrable X μ) (t : ℝ) :
+    concentrationTailProbability μ X hX t ≤
+      concentrationTailClosedProbability μ X hX t := by
+  unfold concentrationTailProbability concentrationTailClosedProbability
+  exact measure_mono (Set.Ioi_subset_Ici le_rfl)
+
+theorem concentrationTailClosed_le_probability
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X : Ω → ℝ) (hX : MeasureTheory.Integrable X μ) {s t : ℝ} (hst : s < t) :
+    concentrationTailClosedProbability μ X hX t ≤
+      concentrationTailProbability μ X hX s := by
+  unfold concentrationTailClosedProbability concentrationTailProbability
+  apply measure_mono
+  intro x hx
+  exact lt_of_lt_of_le hst hx
 
 /-- The unnormalized standard Gaussian density kernel. -/
 noncomputable def gaussianKernel (x : ℝ) : ℝ :=
@@ -427,5 +472,12 @@ theorem hdp_02_hlem_hnormal_htail_hcalculus {t : ℝ} (ht : 0 < t) :
 def hdp_02_hdef_hcomparison_hnotation {α : Type*} :
     Filter α → (α → ℝ) → (α → ℝ) → Prop :=
   Scalar.NormalTail.comparisonTheta
+
+/-! Stable source alias for the Chapter 2 concentration-tail convention. -/
+noncomputable def hdp_02_hdef_hconcentration_htail
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X : Ω → ℝ) (hX : MeasureTheory.Integrable X μ) (t : ℝ) : ENNReal :=
+  Scalar.NormalTail.concentrationTailProbability μ X hX t
 
 end NumStability.HDP.Contract
