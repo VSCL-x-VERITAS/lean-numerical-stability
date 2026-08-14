@@ -6,14 +6,18 @@ import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Data.Finset.Max
+import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.MeasureTheory.Integral.Pi
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
+import Mathlib.MeasureTheory.Order.Lattice
+import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Probability.Independence.Basic
 import Mathlib.Probability.Moments.Covariance
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
+import NumStability.HDP.Contracts.C_01_hdef_hexpectation_hvariance
 import NumStability.HDP.Source.Packages.Split3.BrownianFoundation.Gaussian.BrownianMotion
 
 /-!
@@ -28,6 +32,76 @@ open scoped BigOperators
 namespace NumStability.HDP.Process.GaussianComparison
 
 variable {ι : Type*} [Fintype ι]
+
+/-! ### Finite-marginal random-process interface -/
+
+/-
+The book's footnote convention for a general index set is deliberately
+finite-dimensional: the expected supremum is the supremum of the expected
+maximum over nonempty finite subsets.  Keeping the finite maximum and its
+tail event explicit avoids introducing an unmeasurable pointwise supremum.
+-/
+
+/-- The nonempty finite index sets used by the finite-marginal convention. -/
+abbrev NonemptyFiniteIndex (T : Type*) := {s : Finset T // s.Nonempty}
+
+/-- The restriction of a process to a finite index set. -/
+def finiteProcessRestriction {T Ω : Type*}
+    (X : T → Ω → ℝ) (s : NonemptyFiniteIndex T) : s.1 → Ω → ℝ :=
+  fun t ω ↦ X t.1 ω
+
+/-- The pointwise maximum of a process over a finite index set. -/
+noncomputable def finiteProcessMaximum {T Ω : Type*}
+    (X : T → Ω → ℝ) (s : NonemptyFiniteIndex T) : Ω → ℝ := by
+  classical
+  exact fun ω ↦ (s.1.sup (fun t ↦ (X t ω : WithBot ℝ))).unbotD 0
+
+/-- The finite-index tail event used by the process-supremum convention. -/
+def finiteProcessSupEvent {T Ω : Type*}
+    (X : T → Ω → ℝ) (s : NonemptyFiniteIndex T) (τ : ℝ) : Set Ω :=
+  {ω | τ ≤ finiteProcessMaximum X s ω}
+
+/-- Expected finite maximum, using the Chapter 1 expectation contract. -/
+noncomputable def finiteProcessExpectedMaximum {T Ω : Type*}
+    [MeasurableSpace Ω] (μ : MeasureTheory.Measure Ω)
+    [MeasureTheory.IsProbabilityMeasure μ] (X : T → Ω → ℝ)
+    (s : NonemptyFiniteIndex T)
+    (hmax : MeasureTheory.Integrable (finiteProcessMaximum X s) μ) : ℝ :=
+  (NumStability.HDP.Contract.hdp_01_hdef_hexpectation_hvariance μ
+      (finiteProcessMaximum X s) hmax).mean
+
+/--
+The finite-marginal process-supremum data used throughout Chapter 7.
+
+The `expectedSupremum` field is a supremum over finite subsets, rather than a
+pointwise supremum random variable.  This is the measurability convention
+stated in footnote 3 on printed page 161.
+-/
+structure ProcessSupremumData {T Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) (X : T → Ω → ℝ)
+    (hmax : ∀ s : NonemptyFiniteIndex T,
+      MeasureTheory.Integrable (finiteProcessMaximum X s) μ) where
+  finiteRestriction : ∀ s : NonemptyFiniteIndex T, s.1 → Ω → ℝ
+  finiteMaximum : ∀ s : NonemptyFiniteIndex T, Ω → ℝ
+  finiteTailEvent : ∀ s : NonemptyFiniteIndex T, ℝ → Set Ω
+  finiteExpectedMaximum : ∀ s : NonemptyFiniteIndex T, ℝ
+  expectedSupremum : ℝ
+
+/-- Semantic construction of the finite-marginal process-supremum interface. -/
+noncomputable def processSupremumData {T Ω : Type*} [MeasurableSpace Ω]
+    (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
+    (X : T → Ω → ℝ)
+    (hmax : ∀ s : NonemptyFiniteIndex T,
+      MeasureTheory.Integrable (finiteProcessMaximum X s) μ) :
+    ProcessSupremumData μ X hmax := by
+  classical
+  exact {
+    finiteRestriction := finiteProcessRestriction X
+    finiteMaximum := finiteProcessMaximum X
+    finiteTailEvent := finiteProcessSupEvent X
+    finiteExpectedMaximum := fun s ↦ finiteProcessExpectedMaximum μ X s (hmax s)
+    expectedSupremum := sSup (Set.range (fun s : NonemptyFiniteIndex T ↦
+      finiteProcessExpectedMaximum μ X s (hmax s))) }
 
 /-! ### Covariance of Gaussian interpolation -/
 
@@ -1911,5 +1985,19 @@ theorem hdp_07_hex_h7_d2_d2 {Ω : Type*} [MeasurableSpace Ω]
 theorem hdp_07_hexample_h7_d1_d4 :
     Process.GaussianComparison.BrownianCharacterizationCorrection :=
   Process.GaussianComparison.brownianCharacterizationCorrection
+
+/-! The process-supremum interface is definition-like, so the stable alias
+forwards the real semantic construction rather than introducing a theorem
+wrapper or an axiom-shaped placeholder. -/
+
+/-- Stable source alias for `HDP-07-IFACE-PROCESS-SUP`. -/
+noncomputable def hdp_07_hiface_hprocess_hsup {T Ω : Type*}
+    [MeasurableSpace Ω] (μ : MeasureTheory.Measure Ω)
+    [MeasureTheory.IsProbabilityMeasure μ] (X : T → Ω → ℝ)
+    (hmax : ∀ s : Process.GaussianComparison.NonemptyFiniteIndex T,
+      MeasureTheory.Integrable
+        (Process.GaussianComparison.finiteProcessMaximum X s) μ) :
+    Process.GaussianComparison.ProcessSupremumData μ X hmax :=
+  Process.GaussianComparison.processSupremumData μ X hmax
 
 end NumStability.HDP.Contract
