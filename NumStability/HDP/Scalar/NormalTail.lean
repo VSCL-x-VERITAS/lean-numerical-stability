@@ -1,9 +1,12 @@
 import Mathlib.Analysis.Asymptotics.Theta
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+import Mathlib.Analysis.SpecialFunctions.Stirling
+import Mathlib.Data.Nat.Choose.Central
 import Mathlib.Data.Real.Basic
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 import Mathlib.Probability.Distributions.Gaussian.Real
+import NumStability.HDP.Contracts.C_01_hdef_hbernoulli_hbinomial
 import NumStability.HDP.Contracts.C_01_hdef_hcdf_htail
 import NumStability.HDP.Contracts.C_01_hdef_hexpectation_hvariance
 
@@ -15,8 +18,8 @@ removes the deliberate contextual ambiguity of the book's informal symbols.
 -/
 
 open Filter
-open MeasureTheory
-open scoped Topology
+open MeasureTheory Asymptotics
+open scoped Topology BigOperators ENNReal NNReal
 
 namespace NumStability.HDP.Scalar.NormalTail
 
@@ -40,7 +43,123 @@ noncomputable def concentrationTailClosedProbability
   (NumStability.HDP.Contract.hdp_01_hdef_hcdf_htail μ
       (fun ω ↦ |X ω -
         (NumStability.HDP.Contract.hdp_01_hdef_hexpectation_hvariance μ X hX).mean|)).distribution
-    (Set.Ici t)
+      (Set.Ici t)
+
+/-! ### Fair-coin central mass -/
+
+/-- The central mass of the fair-coin binomial law along the even subsequence. -/
+noncomputable def fairCoinCentralMass (n : ℕ) : ENNReal :=
+  (NumStability.HDP.Contract.hdp_01_hdef_hbernoulli_hbinomial
+      (1 / 2 : ℝ≥0) (by norm_num) (2 * n)).binomial n
+
+/-- The exact central-binomial formula for the fair-coin mass. -/
+noncomputable def fairCoinCentralMassFormula (n : ℕ) : ENNReal :=
+  (1 / 2 : ENNReal) ^ n * (1 / 2 : ENNReal) ^ n *
+    (Nat.choose (2 * n) n)
+
+/-- The real-valued form used for the Stirling asymptotic. -/
+noncomputable def fairCoinCentralMassReal (n : ℕ) : ℝ :=
+  (Nat.centralBinom n : ℝ) / (4 : ℝ) ^ n
+
+/-- The binomial PMF evaluates to the exact central-mass formula. -/
+theorem fairCoinCentralMass_formula (n : ℕ) :
+    fairCoinCentralMass n = fairCoinCentralMassFormula n := by
+  simp only [fairCoinCentralMass, fairCoinCentralMassFormula,
+    NumStability.HDP.Contract.hdp_01_hdef_hbernoulli_hbinomial,
+    NumStability.HDP.Scalar.LimitTheorems.bernoulliBinomialModel,
+    NumStability.HDP.Scalar.LimitTheorems.binomialNatPMF,
+    PMF.map_apply, PMF.binomial_apply]
+  let i : Fin (2 * n + 1) := ⟨n, by omega⟩
+  rw [tsum_eq_single i]
+  · have hsub : 2 * n - n = n := by omega
+    simp [i, hsub]
+  · intro b hb
+    by_cases hbn : n = (b : ℕ)
+    · have : b = i := by
+        apply Fin.ext
+        exact hbn.symm
+      exact (hb this).elim
+    · simp [hbn]
+
+noncomputable def fairCoinStirlingModel (n : ℕ) : ℝ :=
+  Real.sqrt (2 * n * Real.pi) * (n / Real.exp 1) ^ n
+
+theorem fairCoinStirling_two_mul_div_sq (n : ℕ) (hn : 0 < n) :
+    fairCoinStirlingModel (2 * n) / fairCoinStirlingModel n ^ 2 =
+      (4 : ℝ) ^ n / Real.sqrt (Real.pi * n) := by
+  unfold fairCoinStirlingModel
+  norm_num [Nat.cast_mul]
+  have hnR : (n : ℝ) ≠ 0 := by exact_mod_cast hn.ne'
+  have ha : (n : ℝ) / Real.exp 1 ≠ 0 :=
+    div_ne_zero hnR (Real.exp_ne_zero 1)
+  have hsqrt2 : Real.sqrt 2 * Real.sqrt 2 = 2 := by
+    rw [Real.mul_self_sqrt] <;> norm_num
+  have hsqrtn : Real.sqrt (n : ℝ) * Real.sqrt n = n := by
+    rw [Real.mul_self_sqrt] <;> positivity
+  have hsqrtpi : Real.sqrt Real.pi * Real.sqrt Real.pi = Real.pi := by
+    rw [Real.mul_self_sqrt] <;> positivity
+  have hpow :
+      (2 * (n : ℝ) / Real.exp 1) ^ (2 * n) =
+        (4 : ℝ) ^ n * ((n : ℝ) / Real.exp 1) ^ (2 * n) := by
+    rw [show 2 * (n : ℝ) / Real.exp 1 =
+      2 * ((n : ℝ) / Real.exp 1) by ring]
+    calc
+      (2 * ((n : ℝ) / Real.exp 1)) ^ (2 * n) =
+          ((2 * ((n : ℝ) / Real.exp 1)) ^ 2) ^ n := by rw [pow_mul]
+      _ = (4 * (((n : ℝ) / Real.exp 1) ^ 2)) ^ n := by
+        congr 1
+        ring
+      _ = (4 : ℝ) ^ n * ((((n : ℝ) / Real.exp 1) ^ 2) ^ n) := by
+        rw [mul_pow]
+      _ = (4 : ℝ) ^ n * ((n : ℝ) / Real.exp 1) ^ (2 * n) := by
+        rw [pow_mul]
+  rw [hpow]
+  field_simp [ha, hsqrt2, hsqrtn, hsqrtpi]
+  ring
+
+/-- Stirling's formula gives the central mass its `n⁻¹ᐟ²` scale. -/
+theorem fairCoinCentralMassReal_isEquivalent :
+    (fun n : ℕ => fairCoinCentralMassReal n) ~[atTop]
+      (fun n : ℕ => 1 / Real.sqrt (Real.pi * n)) := by
+  have hfac :
+      (fun n : ℕ => (n.factorial : ℝ)) ~[atTop]
+        fairCoinStirlingModel := by
+    exact Stirling.factorial_isEquivalent_stirling
+  have hfac2 :
+      (fun n : ℕ => ((2 * n).factorial : ℝ)) ~[atTop]
+        (fun n : ℕ => fairCoinStirlingModel (2 * n)) := by
+    simpa [Function.comp_def] using
+      hfac.comp_tendsto
+        (tendsto_id.const_mul_atTop' (by positivity : 0 < (2 : ℕ)))
+  have hratio :
+      (fun n : ℕ => ((2 * n).factorial : ℝ) / (n.factorial : ℝ) ^ 2) ~[atTop]
+        (fun n : ℕ => fairCoinStirlingModel (2 * n) /
+          fairCoinStirlingModel n ^ 2) :=
+    hfac2.div (hfac.pow 2)
+  have hchoose :
+      (fun n : ℕ => (Nat.centralBinom n : ℝ)) ~[atTop]
+        (fun n : ℕ => fairCoinStirlingModel (2 * n) /
+          fairCoinStirlingModel n ^ 2) := by
+    apply hratio.congr_left
+    filter_upwards with n
+    rw [Nat.centralBinom_eq_two_mul_choose]
+    simpa [two_mul, pow_two] using
+      (Nat.cast_add_choose ℝ (a := n) (b := n)).symm
+  have hdiv := hchoose.div (Asymptotics.IsEquivalent.refl :
+    (fun n : ℕ => (4 : ℝ) ^ n) ~[atTop] (fun n => (4 : ℝ) ^ n))
+  apply hdiv.congr_right
+  filter_upwards [eventually_atTop.2 ⟨1, fun _ hn => hn⟩] with n hn
+  change (fairCoinStirlingModel (2 * n) / fairCoinStirlingModel n ^ 2) /
+    (4 : ℝ) ^ n = 1 / Real.sqrt (Real.pi * n)
+  rw [fairCoinStirling_two_mul_div_sq n (show 0 < n from hn)]
+  field_simp
+
+/-- Exact central mass together with its Stirling-scale asymptotic. -/
+theorem coinCentralMass :
+    (∀ n : ℕ, fairCoinCentralMass n = fairCoinCentralMassFormula n) ∧
+      (fun n : ℕ => fairCoinCentralMassReal n) ~[atTop]
+        (fun n : ℕ => 1 / Real.sqrt (Real.pi * n)) :=
+  ⟨fairCoinCentralMass_formula, fairCoinCentralMassReal_isEquivalent⟩
 
 theorem concentrationTailProbability_le_closed
     {Ω : Type*} [MeasurableSpace Ω]
@@ -479,5 +598,14 @@ noncomputable def hdp_02_hdef_hconcentration_htail
     (μ : MeasureTheory.Measure Ω) [MeasureTheory.IsProbabilityMeasure μ]
     (X : Ω → ℝ) (hX : MeasureTheory.Integrable X μ) (t : ℝ) : ENNReal :=
   Scalar.NormalTail.concentrationTailProbability μ X hX t
+
+/-- Stable source alias for the fair-coin central-mass exercise. -/
+theorem hdp_02_hex_hcoin_hcentral_hmass :
+    (∀ n : ℕ,
+      Scalar.NormalTail.fairCoinCentralMass n =
+        Scalar.NormalTail.fairCoinCentralMassFormula n) ∧
+      (fun n : ℕ => Scalar.NormalTail.fairCoinCentralMassReal n) ~[Filter.atTop]
+        (fun n : ℕ => 1 / Real.sqrt (Real.pi * n)) :=
+  Scalar.NormalTail.coinCentralMass
 
 end NumStability.HDP.Contract
