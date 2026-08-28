@@ -667,19 +667,22 @@ The adjudicator resolved pointwise versus almost-everywhere nonnegativity by
 applying the source theorem to `max(X,0)`, which preserves the positive
 threshold event and produces the target lower integral.
 
-## Typed source-policy blocker
+## Resolved source-policy choice and reopened work
 
 `HDP-01-DEF-EXPECTATION-VARIANCE` has two complete rejected audits: one for
 the finite-moment interface and one for the literal measurable-variable
 formula. The latest decision SHA-256 is
 `680fc2e2c0d3b8afa8fcc2948a0f30f478641585947b27c0ca375c5f20eb5286`.
 Unlike the MGF integrand, a general real random variable is signed, so the
-source's silence does not select a finite, extended/partial, or Mathlib-totalized
-expectation convention. The row is `HARD_BLOCKED` with
-`blocker_kind=material-user-choice`; it is not counted as formalized.
+source's silence did not itself select a finite, extended/partial, or
+Mathlib-totalized expectation convention. On 2026-08-28 the operator selected
+the module-owned finite-Lebesgue-integral convention: ordinary real-valued
+expectation requires integrability, and variance uses the square-integrable
+domain. The former `material-user-choice` blocker is therefore resolved. The
+row is `READY`, not formalized, until the finite-domain contract receives a
+fresh policy-bound audit.
 
-`HDP-01-THM-JENSEN` is independently blocked by the same class of missing
-analytic convention. The compiling declaration
+`HDP-01-THM-JENSEN` shared the same missing analytic convention. The compiling declaration
 `NumStability.HDP.Contract.hdp_01_hthm_hjensen_spec` states the correct formula
 for finite real expectations, but requires both `Integrable X μ` and
 `Integrable (φ ∘ X) μ`. Audit `HDP-01-THM-JENSEN` rejected this as
@@ -692,10 +695,11 @@ for finite real expectations, but requires both `Integrable X μ` and
 - implications: Lean→source `no`, source→Lean `yes`.
 
 The adjudicator confirmed that these hypotheses make both Bochner integrals
-ordinary finite expectations but reduce applicability relative to the printed
-"any random variable" sentence. A book-policy choice between a finite-integral
-domain and an extended-expectation formulation is required before a revised
-contract can be credited.
+ordinary finite expectations but reduce applicability under the former literal
+unrestricted reading. The selected module policy now treats those exact
+hypotheses as the definability domain of the displayed ordinary expectations.
+The row is reopened as `READY`: the old verdict is retained as history but
+cannot be reused, and a fresh audit must decide the policy-bound contract.
 
 ## Audited narrative skip
 

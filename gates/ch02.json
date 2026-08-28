@@ -19,7 +19,7 @@
     "organization_completeness": {
       "unclassified_modules": 309,
       "duplicate_wrappers": 0,
-      "placeholder_findings": 1,
+      "placeholder_findings": 0,
       "canonical_placement_pending": 0
     },
     "semantic_equivalence": {

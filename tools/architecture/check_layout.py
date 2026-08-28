@@ -38,7 +38,7 @@ FULL_LOCATOR_RE = re.compile(
     r"^(?:Theorem|Lemma|Equation|Corollary|Problem|Algorithm|Example|Table)(\d+)(.*)$"
 )
 PLACEHOLDER_RE = re.compile(
-    r"\b(?:sorry|admit)\b|^\s*(?:axiom|constant)\b",
+    r"\b(?:sorry|admit)\b|^\s*axiom\b",
     re.MULTILINE,
 )
 PROCESS_WORDS = (
@@ -262,7 +262,7 @@ def placeholder_failures(modules: list[SourceModule]) -> list[str]:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         if PLACEHOLDER_RE.search(remove_lean_comments(text)):
             findings.append(path.relative_to(ROOT).as_posix())
-    return ["proof placeholders or axiom/constant commands: " + ", ".join(findings)] if findings else []
+    return ["proof placeholders or axiom commands: " + ", ".join(findings)] if findings else []
 
 
 def current_debt(

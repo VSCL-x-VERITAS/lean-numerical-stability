@@ -11,7 +11,7 @@ Current measured counters:
 |---|---:|---|
 | unclassified production modules | 309 | current `tools/architecture/check_layout.py` result shared with Chapter 1 |
 | duplicate wrappers | 0 | current inspected Chapter 1/2 wrapper baseline |
-| placeholder findings | 1 | current layout scan identifies `NumStability/HDP/Concentration/MetricMeasure.lean` |
+| placeholder findings | 0 | corrected repository scan: ordinary structure fields named `constant` are no longer misclassified as Lean commands |
 | canonical placement pending | 0 | no recorded pending Chapter 2 relocation after the current scalar/contract split |
 
 These nonzero values are repository-wide debt, not a Chapter 2 mathematical

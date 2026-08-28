@@ -10,7 +10,7 @@ Current measured counters:
 |---|---:|---|
 | unclassified production modules | 309 | current `tools/architecture/check_layout.py` output after classifying the Chapter 1 leaves |
 | duplicate wrappers | 0 | one semantic producer per inspected Chapter 1 alias |
-| placeholder findings | 1 | current `tools/architecture/check_layout.py` output identifies `NumStability/HDP/Concentration/MetricMeasure.lean` |
+| placeholder findings | 0 | corrected repository scan: ordinary structure fields named `constant` are no longer misclassified as Lean commands |
 | canonical placement pending | 0 | current `rg` scan finds no `hdp_01_*` declaration in either reusable scalar producer |
 
 The current baseline covered 2,326 production modules and 3,290,496

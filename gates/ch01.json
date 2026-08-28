@@ -8,7 +8,7 @@
     "organization_completeness": {
       "unclassified_modules": 309,
       "duplicate_wrappers": 0,
-      "placeholder_findings": 1,
+      "placeholder_findings": 0,
       "canonical_placement_pending": 0
     },
     "semantic_equivalence": {
@@ -33,20 +33,16 @@
       "id": "HDP-01-DEF-EXPECTATION-VARIANCE",
       "source_label": "Section 1.1 expectation and variance definitions",
       "row_kind": "definition",
-      "status": "HARD_BLOCKED",
+      "status": "READY",
       "source_proof": "none",
       "candidate_declarations": [
         "NumStability.HDP.Contract.hdp_01_hdef_hexpectation_hvariance",
         "NumStability.HDP.Contract.hdp_01_hdef_hexpectation_hvariance_spec"
       ],
-      "attempted_routes": "Rendered PDF page 1; located the stable contract leaf and compiled NumStability/HDP/Scalar/Preliminaries.lean; architecture baseline inspected producer/consumer placement. The finite-moment theorem-level audit was rejected as undetermined (decision SHA-256 c282b4f6ec34100545924c8c47ab1251cefaba1acf8645960ffeccbebf53763b). A revised theorem with the literal displayed formulas, a probability measure, and only measurability also compiled and completed a fresh source/blind/direct/round-trip/adjudication audit; it was rejected as undetermined (decision SHA-256 680fc2e2c0d3b8afa8fcc2948a0f30f478641585947b27c0ca375c5f20eb5286).",
-      "current_target": "Select the exceptional-case convention required to state expectation and variance over the full printed domain.",
-      "next_foundation": "After the book policy selects a convention, state the smallest matching expectation/variance contract and run a fresh hash-bound audit.",
-      "open_reason": "The source is silent on nonintegrable expectation and variance while the available Mathlib Bochner integral is total and real-valued.",
-      "blocker_kind": "material-user-choice",
-      "obstruction": "Neither the finite-moment domain nor Mathlib's totalized real-valued integral can be attributed to the selected source passage; two independently adjudicated theorem shapes therefore leave both implication directions unclear.",
-      "blocking_evidence": "Complete audit HDP-01-DEF-EXPECTATION-VARIANCE, decision SHA-256 680fc2e2c0d3b8afa8fcc2948a0f30f478641585947b27c0ca375c5f20eb5286, accepted=false, adjudicated=true, classification=undetermined; Chapter limitation B-VHDP-C01-L002.",
-      "resume_condition": "An authorized book-profile/user choice selects a finite-integral domain, an extended/partial expectation model, or explicit adoption of Mathlib totalization; the resulting changed statement must receive a fresh audit."
+      "attempted_routes": "Rendered PDF page 1; located the stable contract leaf and compiled NumStability/HDP/Scalar/Preliminaries.lean; architecture baseline inspected producer/consumer placement. The finite-moment theorem-level audit was rejected as undetermined (decision SHA-256 c282b4f6ec34100545924c8c47ab1251cefaba1acf8645960ffeccbebf53763b). A revised theorem with the literal displayed formulas, a probability measure, and only measurability also compiled and completed a fresh source/blind/direct/round-trip/adjudication audit; it was rejected as undetermined (decision SHA-256 680fc2e2c0d3b8afa8fcc2948a0f30f478641585947b27c0ca375c5f20eb5286). On 2026-08-28 the operator selected the module-owned finite-Lebesgue-integral definability convention; the former material-user-choice obstruction is resolved.",
+      "current_target": "Restate expectation and variance under the selected finite-integral and square-integrable domains.",
+      "next_foundation": "Use Integrable X for ordinary expectation and MemLp X 2 for variance, then run a fresh hash-bound audit against the policy-bound source contract.",
+      "open_reason": "The convention is now selected, but the changed finite-domain contract and fresh semantic audit remain actionable."
     },
     {
       "id": "HDP-01-DEF-MGF",
@@ -312,30 +308,16 @@
       "id": "HDP-01-THM-JENSEN",
       "source_label": "Section 1.2 Jensen's inequality",
       "row_kind": "theorem",
-      "status": "HARD_BLOCKED",
+      "status": "READY",
       "source_proof": "none",
       "candidate_declarations": [
         "NumStability.HDP.Contract.hdp_01_hthm_hjensen",
         "NumStability.HDP.Contract.hdp_01_hthm_hjensen_spec"
       ],
-      "attempted_routes": "Rendered PDF page 2; inspected jensenIntegral and its source alias; added hdp_01_hthm_hjensen_spec to the canonical contract leaf with the exact inequality, whole-real convexity, a probability measure, and explicit integrability of X and phi(X); rebuilt the leaf, aggregate contracts, and HDP entry point successfully. Complete adjudicated audit HDP-01-THM-JENSEN rejected this finite-integral theorem as not-faithful-weaker: both judges and the adjudicator found that the two integrability premises reduce applicability relative to the printed 'any random variable' wording.",
-      "lean_declarations": [
-        "NumStability.HDP.Contract.hdp_01_hthm_hjensen_spec"
-      ],
-      "contract_hash": "03a40db76475306cfedf9b6da9dc946cf7607897d35fb1378a42137fdd251f45",
-      "blind_pass": "UNCERTAIN",
-      "direct_pass": "FAIL",
-      "round_trip_pass": "FAIL",
-      "classification": "not-faithful-weaker",
-      "lean_implies_source": "no",
-      "source_implies_lean": "yes",
-      "current_target": "Select the expectation/integrability convention intended by the unrestricted Jensen sentence.",
-      "next_foundation": "After the book policy selects a finite or extended expectation domain, state the smallest matching Jensen contract and run a fresh hash-bound audit.",
-      "open_reason": "The source says any random variable but does not select finite-integral hypotheses or an extended-value convention for either expectation.",
-      "blocker_kind": "material-user-choice",
-      "obstruction": "The compiling finite-real theorem requires Integrable X and Integrable (phi composed with X); its adjudicated audit establishes reduced applicability, while omitting those hypotheses would inherit the unresolved exceptional-domain semantics of expectation.",
-      "blocking_evidence": "Complete audit HDP-01-THM-JENSEN, decision SHA-256 4d827116f81cb626dd465cd4beaf760d0318b3a2af05f2605c7594c8bb961a1c, accepted=false, adjudicated=true, classification=not-faithful-weaker; Chapter limitation B-VHDP-C01-L003.",
-      "resume_condition": "An authorized book-profile/user choice selects finite integrability assumptions or an extended expectation formulation for Jensen; the resulting changed statement must receive a fresh audit."
+      "attempted_routes": "Rendered PDF page 2; inspected jensenIntegral and its source alias; added hdp_01_hthm_hjensen_spec to the canonical contract leaf with the exact inequality, whole-real convexity, a probability measure, and explicit integrability of X and phi(X); rebuilt the leaf, aggregate contracts, and HDP entry point successfully. Complete adjudicated audit HDP-01-THM-JENSEN rejected this finite-integral theorem as not-faithful-weaker under the then-unresolved literal-domain reading. On 2026-08-28 the operator selected the module-owned finite-Lebesgue-integral definability convention, under which both integrability premises are the declared meaning conditions rather than proof conveniences; the former material-user-choice obstruction is resolved.",
+      "current_target": "Re-audit the compiling finite-domain Jensen contract under the selected definability convention.",
+      "next_foundation": "Bind a fresh contract that records Integrable X and Integrable (phi composed with X) as the policy-selected meaning domain, then run blind/direct/round-trip checks.",
+      "open_reason": "The theorem already compiles, but the prior audit predates the selected convention and cannot be reused."
     },
     {
       "id": "HDP-01-EQ-1.3",
