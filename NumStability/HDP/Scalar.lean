@@ -1,7 +1,7 @@
 import NumStability.HDP.Scalar.CentralLimit
-import NumStability.HDP.Scalar.PoissonLimit
 import NumStability.HDP.Scalar.IndependentSums
 import NumStability.HDP.Scalar.LimitTheorems
+import NumStability.HDP.Scalar.PoissonLimit
 import NumStability.HDP.Scalar.Preliminaries
 import NumStability.HDP.Scalar.SubExponential
 import NumStability.HDP.Scalar.SubGaussian
