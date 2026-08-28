@@ -114,6 +114,75 @@ theorem iidSampleMeanVariance
       field_simp
       simp [nsmul_eq_mul]
 
+/-! ## Expected absolute deviation of an iid sample mean -/
+
+/-- On a probability space, the first absolute moment is bounded by the square
+root of the second moment. -/
+theorem expectedAbs_le_sqrt_secondMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {Y : Ω → ℝ} (hY : MemLp Y 2 μ) :
+    ∫ ω, |Y ω| ∂μ ≤ Real.sqrt (∫ ω, (Y ω) ^ 2 ∂μ) := by
+  have hf : MemLp (fun ω => |Y ω|) (ENNReal.ofReal (2 : ℝ)) μ := by
+    simpa [Real.norm_eq_abs] using hY.norm
+  have hg : MemLp (fun _ω : Ω => (1 : ℝ))
+      (ENNReal.ofReal (2 : ℝ)) μ := memLp_const (1 : ℝ)
+  have hcs := integral_mul_le_Lp_mul_Lq_of_nonneg
+    (μ := μ) (f := fun ω => |Y ω|) (g := fun _ => 1)
+    (by
+      rw [Real.holderConjugate_iff]
+      norm_num : (2 : ℝ).HolderConjugate 2)
+    (ae_of_all _ fun _ => abs_nonneg _)
+    (ae_of_all _ fun _ => by norm_num) hf hg
+  have hcs' :
+      ∫ ω, |Y ω| ∂μ ≤
+        (∫ ω, |Y ω| ^ (2 : ℝ) ∂μ) ^ ((1 : ℝ) / 2) *
+          (∫ _ω : Ω, (1 : ℝ) ^ (2 : ℝ) ∂μ) ^ ((1 : ℝ) / 2) := by
+    simpa using hcs
+  norm_num only [Real.rpow_two] at hcs'
+  have huniv : (∫ _ω : Ω, (1 : ℝ) ∂μ) = 1 := by simp
+  rw [huniv] at hcs'
+  simpa [Real.sqrt_eq_rpow, sq_abs] using hcs'
+
+/-- The exact finite-sample estimate underlying Exercise 1.3.3. -/
+theorem iidSampleMeanExpectedAbsDeviation
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    (N : ℕ) (hN : 0 < N)
+    {X : Fin N → Ω → ℝ}
+    (hX : ∀ i, MemLp (X i) 2 μ)
+    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
+    (hIdent : ∀ i, IdentDistrib (X i) (X ⟨0, hN⟩) μ μ) :
+    ∫ ω, |(N : ℝ)⁻¹ * ∑ i, X i ω -
+        ∫ ω, X ⟨0, hN⟩ ω ∂μ| ∂μ ≤
+      Real.sqrt ((N : ℝ)⁻¹ * Var[X ⟨0, hN⟩; μ]) := by
+  let M : Ω → ℝ := fun ω => (N : ℝ)⁻¹ * ∑ i, X i ω
+  have hM : MemLp M 2 μ := by
+    dsimp [M]
+    exact (memLp_finset_sum Finset.univ (fun i _ => hX i)).const_mul (N : ℝ)⁻¹
+  have hMean : (∫ ω, M ω ∂μ) = ∫ ω, X ⟨0, hN⟩ ω ∂μ := by
+    dsimp [M]
+    rw [integral_const_mul, integral_finset_sum]
+    · simp_rw [fun i => (hIdent i).integral_eq]
+      rw [Finset.sum_const, Finset.card_fin]
+      field_simp
+      simp [nsmul_eq_mul]
+    · intro i _
+      exact (hX i).integrable (by norm_num)
+  have hCentered :
+      MemLp (fun ω => M ω - ∫ ω, X ⟨0, hN⟩ ω ∂μ) 2 μ :=
+    hM.sub (memLp_const _)
+  have hbound := expectedAbs_le_sqrt_secondMoment hCentered
+  have hsecond :
+      (∫ ω, (M ω - ∫ ω, X ⟨0, hN⟩ ω ∂μ) ^ 2 ∂μ) = Var[M; μ] := by
+    rw [variance_eq_integral hM.aemeasurable, hMean]
+  rw [hsecond] at hbound
+  have hvariance := iidSampleMeanVariance N hN hX hIndep hIdent
+  change Var[M; μ] = _ at hvariance
+  rw [hvariance] at hbound
+  change (∫ ω, |M ω - ∫ ω, X ⟨0, hN⟩ ω ∂μ| ∂μ) ≤ _
+  exact hbound
+
 /-! ## The standard normal law -/
 
 /--
@@ -463,33 +532,3 @@ def bernoulliBinomialModel (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) :
     sum_law := bernoulliSumPMF_eq_binomialNatPMF p hp N }
 
 end NumStability.HDP.Scalar.LimitTheorems
-
-namespace NumStability.HDP.Contract
-
-/-- Stable source-facing alias for the local Poisson law interface. -/
-noncomputable def hdp_01_hdef_hpoisson (rate : ℝ≥0) : Measure ℕ :=
-  NumStability.HDP.Scalar.LimitTheorems.poissonLaw rate
-
-theorem hdp_01_hlem_hindependent_hvariance_hsum
-    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ι → Ω → ℝ} (hX : ∀ i, MemLp (X i) 2 μ)
-    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X)) :
-    Var[∑ i, X i; μ] = ∑ i, Var[X i; μ] :=
-  NumStability.HDP.Scalar.LimitTheorems.independentVarianceSum hX hIndep
-
-/-- Stable source-facing alias for the iid sample-mean variance identity. -/
-theorem hdp_01_heq_h1_d5
-    {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsFiniteMeasure μ]
-    (N : ℕ) (hN : 0 < N)
-    {X : Fin N → Ω → ℝ}
-    (hX : ∀ i, MemLp (X i) 2 μ)
-    (hIndep : Pairwise ((· ⟂ᵢ[μ] ·) on X))
-    (hIdent : ∀ i, IdentDistrib (X i) (X ⟨0, hN⟩) μ μ) :
-    Var[fun ω => (N : ℝ)⁻¹ * ∑ i, X i ω; μ] =
-      (N : ℝ)⁻¹ * Var[X ⟨0, hN⟩; μ] :=
-  NumStability.HDP.Scalar.LimitTheorems.iidSampleMeanVariance
-    N hN hX hIndep hIdent
-
-end NumStability.HDP.Contract

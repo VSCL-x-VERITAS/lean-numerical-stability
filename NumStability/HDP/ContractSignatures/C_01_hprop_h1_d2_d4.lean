@@ -17,14 +17,12 @@ namespace NumStability.HDP.Contract
 
 def hdp_01_hprop_h1_d2_d4__contract_type : Prop :=
   ∀ {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} {X : Ω → ℝ}
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
     (hX : Measurable X)
     (hNonneg : ∀ᵐ ω ∂μ, 0 ≤ X ω)
-    (hInt : Integrable X μ)
     {t : ℝ} (ht : 0 < t),
-    (μ.real (X ⁻¹' Set.Ici t) ≤
-      (∫ ω, X ω ∂μ) / t) ∧
-      (μ (X ⁻¹' Set.Ici t) ≤
-        (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) / ENNReal.ofReal t)
+    μ (X ⁻¹' Set.Ici t) ≤
+      (∫⁻ ω, ENNReal.ofReal (X ω) ∂μ) / ENNReal.ofReal t
 
 end NumStability.HDP.Contract
