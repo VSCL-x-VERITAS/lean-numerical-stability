@@ -6,6 +6,7 @@ import NumStability.HDP.Scalar.GaussianSquareTail
 import NumStability.HDP.Scalar.GaussianTails
 import NumStability.HDP.Scalar.IndependentSums
 import NumStability.HDP.Scalar.LimitTheorems
+import NumStability.HDP.Scalar.MGFLocalTaylor
 import NumStability.HDP.Scalar.NonSubGaussian
 import NumStability.HDP.Scalar.PoissonLimit
 import NumStability.HDP.Scalar.Preliminaries
