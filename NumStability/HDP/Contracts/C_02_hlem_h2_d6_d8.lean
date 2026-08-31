@@ -1,13 +1,31 @@
 import NumStability.HDP.ContractSignatures.C_02_hlem_h2_d6_d8
-import NumStability.HDP.Scalar.SubGaussian
+import NumStability.HDP.Scalar.SubGaussianCentering
 
 /-! Stable Chapter 2 contract module for the sub-Gaussian centering lemma. -/
 
 namespace NumStability.HDP.Contract
 
+open MeasureTheory
+
+/-! Exact source-facing Chapter 2 alias for Lemma 2.6.8.  The older
+`hdp_02_hlem_h2_d6_d8` declaration remains in `Scalar.SubGaussian` as a
+compatibility theorem for callers using an arbitrary property witness. -/
+theorem hdp_02_hlem_h2_d6_d8_exact :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ {Ω : Type*} [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : Ω → ℝ},
+        NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ X →
+          NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ
+              (fun ω => X ω - ∫ x, X x ∂μ) ∧
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ
+              (fun ω => X ω - ∫ x, X x ∂μ) ≤
+            ENNReal.ofReal C *
+              NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ X :=
+  NumStability.HDP.Scalar.SubGaussian.centeredSubGaussianPsiTwoNorm_uniform
+
 theorem hdp_02_hlem_h2_d6_d8__contract
     : hdp_02_hlem_h2_d6_d8__contract_type := by
-  intro Ω instΩ μ instμ X i K hK hProp
-  exact NumStability.HDP.Contract.hdp_02_hlem_h2_d6_d8 i hK hProp
+  exact hdp_02_hlem_h2_d6_d8_exact
 
 end NumStability.HDP.Contract

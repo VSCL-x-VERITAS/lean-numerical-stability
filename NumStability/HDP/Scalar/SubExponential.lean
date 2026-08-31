@@ -1780,6 +1780,590 @@ theorem psiTwoOrliczMember_iff_psiTwoMember
       NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ := by
   rw [orliczMember, psiTwoOrliczGauge_eq_psiTwoGauge hX]
 
+/-! ### The sub-exponential norm `‖·‖_{ψ₁}`
+
+Definition 2.7.5 and display (2.21) define the sub-exponential norm as the
+smallest `K` in property (d) of Proposition 2.7.1:
+
+  `‖X‖_{ψ₁} = inf {t > 0 : 𝔼 exp (|X| / t) ≤ 2}`.
+
+`PsiOneAdmissible` is the admissibility predicate of that infimum, phrased so
+that `PsiOneAdmissible μ X (ENNReal.ofReal K)` and
+`SubExponentialOnePointMGF μ X K` agree for `0 < K` (see
+`psiOneAdmissible_ofReal_iff`).  `PsiOneGauge` is the gauge itself, and it
+coincides with the Orlicz gauge of the Orlicz function `ψ₁ x = exp x - 1`
+(`psiOneOrliczGauge_eq_psiOneGauge`), which is the Section 2.7.1 view. -/
+
+def PsiOneAdmissible {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : Prop :=
+  Measurable X ∧ t ≠ 0 ∧ t ≠ ∞ ∧
+    Integrable (fun ω => Real.exp (|X ω| / t.toReal)) μ ∧
+      (∫ ω, Real.exp (|X ω| / t.toReal) ∂μ) ≤ 2
+
+noncomputable def PsiOneGauge {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
+  sInf {t : ℝ≥0∞ | PsiOneAdmissible μ X t}
+
+/-- The admissibility predicate of `‖·‖_{ψ₁}` is exactly property (d) of
+Proposition 2.7.1 at the corresponding positive real scale. -/
+theorem psiOneAdmissible_ofReal_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {K : ℝ} (hK : 0 < K) :
+    PsiOneAdmissible μ X (ENNReal.ofReal K) ↔
+      SubExponentialOnePointMGF μ X K := by
+  have htoReal : (ENNReal.ofReal K).toReal = K :=
+    ENNReal.toReal_ofReal hK.le
+  unfold PsiOneAdmissible SubExponentialOnePointMGF
+  rw [htoReal]
+  constructor
+  · rintro ⟨hMeas, _, _, hInt, hBound⟩
+    exact ⟨hMeas, hK, hInt, hBound⟩
+  · rintro ⟨hMeas, _, hInt, hBound⟩
+    exact ⟨hMeas, (ENNReal.ofReal_ne_zero_iff).2 hK, ENNReal.ofReal_ne_top,
+      hInt, hBound⟩
+
+/-- `‖X‖_{ψ₁}` is finite exactly when `X` satisfies property (d) of
+Proposition 2.7.1 for some positive parameter, i.e. exactly when `X` is
+sub-exponential. -/
+theorem psiOneGauge_finite_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} :
+    PsiOneGauge μ X < ∞ ↔
+      ∃ K : ℝ, 0 < K ∧ SubExponentialOnePointMGF μ X K := by
+  constructor
+  · intro hGauge
+    by_cases hNonempty : Set.Nonempty {t : ℝ≥0∞ | PsiOneAdmissible μ X t}
+    · rcases hNonempty with ⟨t, hMeas, ht0, htTop, hInt, hBound⟩
+      have htPos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+      exact ⟨t.toReal, htPos, hMeas, htPos, hInt, hBound⟩
+    · have hEmpty : {t : ℝ≥0∞ | PsiOneAdmissible μ X t} = ∅ :=
+        Set.not_nonempty_iff_eq_empty.mp hNonempty
+      rw [PsiOneGauge, hEmpty] at hGauge
+      simp at hGauge
+  · rintro ⟨K, hK, hPoint⟩
+    refine lt_of_le_of_lt (sInf_le ?_)
+      (show ENNReal.ofReal K < ∞ from ENNReal.ofReal_lt_top)
+    exact (psiOneAdmissible_ofReal_iff hK).2 hPoint
+
+/-- Example 2.7.13's companion for `ψ₁`: the Orlicz function `exp x - 1`. -/
+noncomputable def psiOneOrliczFunction : OrliczFunction :=
+  { toFun := fun x => Real.exp x - 1
+    nonnegative := by
+      intro x hx
+      linarith [Real.one_le_exp hx]
+    convexOn_nonneg := by
+      refine ⟨convex_Ici (0 : ℝ), ?_⟩
+      intro x _ y _ a b ha hb hab
+      change Real.exp (a * x + b * y) - 1 ≤
+        a * (Real.exp x - 1) + b * (Real.exp y - 1)
+      have hexp := convexOn_exp.2 (show x ∈ Set.univ by trivial)
+        (show y ∈ Set.univ by trivial) ha hb hab
+      have hstep : Real.exp (a * x + b * y) ≤
+          a * Real.exp x + b * Real.exp y := by
+        simpa [smul_eq_mul] using hexp
+      have hone : a * (Real.exp x - 1) + b * (Real.exp y - 1) =
+          a * Real.exp x + b * Real.exp y - 1 := by
+        have : a + b = 1 := hab
+        nlinarith [this]
+      linarith [hstep, hone.ge, hone.le]
+    monotoneOn_nonneg := by
+      intro x _ y _ hxy
+      dsimp
+      exact sub_le_sub_right (Real.exp_le_exp.mpr hxy) 1
+    map_zero := by norm_num
+    tendsto_atTop := by
+      have hexp : Tendsto Real.exp atTop atTop := Real.tendsto_exp_atTop
+      simpa using hexp.atTop_add (tendsto_const_nhds :
+        Tendsto (fun _ : ℝ => (-1 : ℝ)) atTop (𝓝 (-1))) }
+
+lemma psiOneOrliczFunction_integral_add_one
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} {t : ℝ≥0∞}
+    (ht0 : t ≠ 0) (htTop : t ≠ ∞) (hX : Measurable X) :
+    orliczIntegral psiOneOrliczFunction μ X t + 1 =
+      ∫⁻ ω, ENNReal.ofReal (Real.exp (|X ω| / t.toReal)) ∂μ := by
+  have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+  let f : Ω → ℝ := fun ω => Real.exp (|X ω| / t.toReal)
+  let g : Ω → ℝ≥0∞ := fun ω => ENNReal.ofReal (f ω - 1)
+  have hmeasg : Measurable g := by
+    dsimp [g, f]
+    fun_prop
+  have hnonneg : ∀ ω, 0 ≤ f ω - 1 := by
+    intro ω
+    dsimp [f]
+    have harg : 0 ≤ |X ω| / t.toReal := div_nonneg (abs_nonneg _) htpos.le
+    linarith [Real.one_le_exp harg]
+  have hpoint : ∀ ω, ENNReal.ofReal (f ω) = g ω + 1 := by
+    intro ω
+    dsimp [g]
+    calc
+      ENNReal.ofReal (f ω) = ENNReal.ofReal ((f ω - 1) + 1) := by
+        congr 1
+        ring
+      _ = ENNReal.ofReal (f ω - 1) + ENNReal.ofReal 1 :=
+        ENNReal.ofReal_add (hnonneg ω) (by norm_num)
+      _ = ENNReal.ofReal (f ω - 1) + 1 := by norm_num
+  calc
+    orliczIntegral psiOneOrliczFunction μ X t + 1 =
+        (∫⁻ ω, g ω ∂μ) + 1 := by
+          congr 1
+    _ = ∫⁻ ω, (g ω + 1) ∂μ := by
+          symm
+          rw [lintegral_add_left hmeasg]
+          simp
+    _ = ∫⁻ ω, ENNReal.ofReal (f ω) ∂μ := by
+          apply lintegral_congr
+          intro ω
+          exact (hpoint ω).symm
+
+/-- Example 2.7.13's companion for `ψ₁`: the Luxemburg gauge of
+`ψ₁ x = exp x - 1` is the source sub-exponential norm `‖·‖_{ψ₁}`. -/
+theorem psiOneOrliczGauge_eq_psiOneGauge
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    orliczGauge psiOneOrliczFunction μ X = PsiOneGauge μ X := by
+  unfold orliczGauge PsiOneGauge
+  apply congrArg sInf
+  ext t
+  constructor
+  · intro ht
+    rcases ht with ⟨ht0, htTop, hbound⟩
+    have hbound' :
+        ∫⁻ ω, ENNReal.ofReal (Real.exp (|X ω| / t.toReal)) ∂μ ≤ 2 := by
+      calc
+        (∫⁻ ω, ENNReal.ofReal (Real.exp (|X ω| / t.toReal)) ∂μ) =
+            orliczIntegral psiOneOrliczFunction μ X t + 1 :=
+              (psiOneOrliczFunction_integral_add_one ht0 htTop hX).symm
+        _ ≤ 1 + 1 := by
+          simpa only [add_comm] using (add_le_add_right hbound (1 : ENNReal))
+        _ = 2 := by norm_num
+    have hInt : Integrable (fun ω => Real.exp (|X ω| / t.toReal)) μ := by
+      have hmeas : Measurable (fun ω =>
+          Real.exp (|X ω| / t.toReal)) := by fun_prop
+      have hfinite : HasFiniteIntegral (fun ω =>
+          Real.exp (|X ω| / t.toReal)) μ := by
+        rw [hasFiniteIntegral_iff_enorm]
+        simpa only [← ofReal_norm_eq_enorm, Real.norm_eq_abs,
+          abs_of_pos (Real.exp_pos _)] using
+          (lt_of_le_of_lt hbound' ENNReal.coe_lt_top)
+      exact ⟨hmeas.aestronglyMeasurable, hfinite⟩
+    refine ⟨hX, ht0, htTop, hInt, ?_⟩
+    have hEq := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt
+      (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))
+    have hOf : ENNReal.ofReal
+        (∫ ω, Real.exp (|X ω| / t.toReal) ∂μ) ≤ (2 : ENNReal) := by
+      rw [hEq]
+      exact hbound'
+    have hreal := (ENNReal.ofReal_le_iff_le_toReal (b := (2 : ENNReal))
+      (by norm_num)).mp hOf
+    simpa using hreal
+  · intro ht
+    rcases ht with ⟨_, ht0, htTop, hInt, hbound⟩
+    refine ⟨ht0, htTop, ?_⟩
+    have hEq := MeasureTheory.ofReal_integral_eq_lintegral_ofReal hInt
+      (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))
+    have h := psiOneOrliczFunction_integral_add_one (μ := μ) (X := X) (t := t)
+      ht0 htTop hX
+    have hbound' :
+        (∫⁻ ω, ENNReal.ofReal (Real.exp (|X ω| / t.toReal)) ∂μ) ≤
+          (2 : ENNReal) := by
+      rw [← hEq]
+      simpa using ENNReal.ofReal_le_ofReal hbound
+    apply ENNReal.le_of_add_le_add_right (a := (1 : ENNReal)) (by norm_num)
+    calc
+      orliczIntegral psiOneOrliczFunction μ X t + 1 =
+          (∫⁻ ω, ENNReal.ofReal (Real.exp (|X ω| / t.toReal)) ∂μ) := h
+      _ ≤ 2 := hbound'
+      _ = 1 + 1 := by norm_num
+
+theorem psiOneOrliczMember_iff_psiOneMember
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    orliczMember psiOneOrliczFunction μ X ↔ PsiOneGauge μ X < ∞ := by
+  rw [orliczMember, psiOneOrliczGauge_eq_psiOneGauge hX]
+
+/-! ### From the `ψ₁` gauge to the sub-exponential properties
+
+`PsiOneGauge` is an infimum, so a bound `‖X‖_{ψ₁} ≤ K` need not be attained at
+`K` itself.  The usable hypothesis is the strict one, `‖X‖_{ψ₁} < K`, which does
+produce an admissible scale below `K`; property (d) is then monotone upwards in
+the scale. -/
+
+/-- Property (d) of Proposition 2.7.1 is monotone in its parameter: enlarging
+the scale only weakens `𝔼 exp (|X| / K) ≤ 2`. -/
+theorem subExponentialOnePointMGF_mono
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {t K : ℝ}
+    (hPoint : SubExponentialOnePointMGF μ X t) (htK : t ≤ K) :
+    SubExponentialOnePointMGF μ X K := by
+  obtain ⟨hMeas, htpos, hInt, hBound⟩ := hPoint
+  have hKpos : 0 < K := lt_of_lt_of_le htpos htK
+  have hpt : ∀ ω, Real.exp (|X ω| / K) ≤ Real.exp (|X ω| / t) := by
+    intro ω
+    exact Real.exp_le_exp.2 (div_le_div_of_nonneg_left (abs_nonneg _) htpos htK)
+  have hIntK : Integrable (fun ω => Real.exp (|X ω| / K)) μ := by
+    refine hInt.mono' (by fun_prop) ?_
+    refine Filter.Eventually.of_forall (fun ω => ?_)
+    rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+    exact hpt ω
+  refine ⟨hMeas, hKpos, hIntK, ?_⟩
+  calc
+    (∫ ω, Real.exp (|X ω| / K) ∂μ) ≤ ∫ ω, Real.exp (|X ω| / t) ∂μ :=
+      integral_mono hIntK hInt hpt
+    _ ≤ 2 := hBound
+
+/-- A strict `ψ₁`-gauge bound yields property (d) of Proposition 2.7.1 at that
+scale.  This is the entry point from the source's `‖X‖_{ψ₁}` to every
+quantitative sub-exponential estimate in the chapter. -/
+theorem psiOneGauge_lt_imp_onePointMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {K : ℝ} (hK : 0 < K)
+    (hGauge : PsiOneGauge μ X < ENNReal.ofReal K) :
+    SubExponentialOnePointMGF μ X K := by
+  rw [PsiOneGauge, sInf_lt_iff] at hGauge
+  obtain ⟨t, ht, htK⟩ := hGauge
+  obtain ⟨hMeas, ht0, htTop, hInt, hBound⟩ := ht
+  have htpos : 0 < t.toReal := ENNReal.toReal_pos ht0 htTop
+  have htlt : t.toReal < K := by
+    have := (ENNReal.toReal_lt_toReal htTop (by simp)).2 htK
+    simpa [ENNReal.toReal_ofReal hK.le] using this
+  exact subExponentialOnePointMGF_mono ⟨hMeas, htpos, hInt, hBound⟩ htlt.le
+
+/-! The `ψ₁` gauge is a genuine norm on measurable random variables modulo
+almost-everywhere equality.  The zero characterization is useful at the
+degenerate boundary of family-wise bounds whose scale is
+`max_i ‖X_i‖_{ψ₁}`. -/
+
+theorem psiOneGauge_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] :
+    PsiOneGauge μ (fun _ : Ω => (0 : ℝ)) = 0 := by
+  apply le_antisymm
+  · apply le_of_forall_gt_imp_ge_of_dense
+    intro r hr
+    by_cases hrTop : r = ∞
+    · simp [hrTop]
+    have hr0 : r ≠ 0 := ne_of_gt hr
+    have hAd : PsiOneAdmissible μ (fun _ : Ω => (0 : ℝ)) r := by
+      refine ⟨measurable_const, hr0, hrTop, ?_, ?_⟩
+      · simpa using
+          (integrable_const (1 : ℝ) : Integrable (fun _ : Ω => (1 : ℝ)) μ)
+      · simpa using (show (1 : ℝ) ≤ 2 by norm_num)
+    exact sInf_le hAd
+  · exact bot_le
+
+lemma psiOneAdmissible_ae_congr
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} (hX : Measurable X) (hY : Measurable Y)
+    (hXY : X =ᵐ[μ] Y) {t : ℝ≥0∞} :
+    PsiOneAdmissible μ X t ↔ PsiOneAdmissible μ Y t := by
+  have hfun : (fun ω => Real.exp (|X ω| / t.toReal)) =ᵐ[μ]
+      (fun ω => Real.exp (|Y ω| / t.toReal)) := by
+    filter_upwards [hXY] with ω hω
+    simp [hω]
+  constructor
+  · intro h
+    rcases h with ⟨_, ht0, htTop, hInt, hBound⟩
+    refine ⟨hY, ht0, htTop, hInt.congr hfun, ?_⟩
+    rw [integral_congr_ae hfun] at hBound
+    exact hBound
+  · intro h
+    rcases h with ⟨_, ht0, htTop, hInt, hBound⟩
+    refine ⟨hX, ht0, htTop, hInt.congr hfun.symm, ?_⟩
+    rw [integral_congr_ae hfun.symm] at hBound
+    exact hBound
+
+theorem psiOneGauge_ae_congr
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} (hX : Measurable X) (hY : Measurable Y)
+    (hXY : X =ᵐ[μ] Y) :
+    PsiOneGauge μ X = PsiOneGauge μ Y := by
+  unfold PsiOneGauge
+  congr 1
+  ext t
+  exact psiOneAdmissible_ae_congr hX hY hXY
+
+theorem psiOneGauge_eq_zero_iff_ae_eq_zero
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
+    (hX : Measurable X) :
+    PsiOneGauge μ X = 0 ↔ X =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := by
+  constructor
+  · intro hGauge
+    have hTail : ∀ K : ℝ, 0 < K → SubExponentialTailBound μ X K := by
+      intro K hK
+      apply subExponentialOnePointToTail
+      apply psiOneGauge_lt_imp_onePointMGF hK
+      rw [hGauge]
+      exact ENNReal.ofReal_pos.mpr hK
+    have hInt : Integrable (fun ω => |X ω|) μ := by
+      have hMoment := subExponentialTailToMoment (hTail 1 (by norm_num))
+      have h := hMoment.2.2.2 1 (by norm_num : (1 : ℝ) ≤ 1)
+      simpa using h.1
+    have hBound : ∀ K : ℝ, 0 < K →
+        (∫ ω, |X ω| ∂μ) ≤ 8 * Real.exp 1 * K := by
+      intro K hK
+      have hMoment := subExponentialTailToMoment (hTail K hK)
+      have h := hMoment.2.2.2 1 (by norm_num : (1 : ℝ) ≤ 1)
+      simpa using h.2
+    have hIntegralZero : (∫ ω, |X ω| ∂μ) = 0 := by
+      apply le_antisymm
+      · apply le_of_forall_gt_imp_ge_of_dense
+        intro ε hε
+        have hK : 0 < ε / (8 * Real.exp 1) := by positivity
+        calc
+          (∫ ω, |X ω| ∂μ) ≤
+              8 * Real.exp 1 * (ε / (8 * Real.exp 1)) :=
+            hBound (ε / (8 * Real.exp 1)) hK
+          _ = ε := by field_simp
+      · exact integral_nonneg_of_ae
+          (Filter.Eventually.of_forall (fun ω => abs_nonneg (X ω)))
+    have hAbs : (fun ω => |X ω|) =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) :=
+      (integral_eq_zero_iff_of_nonneg
+        (fun ω => abs_nonneg (X ω)) hInt).mp hIntegralZero
+    filter_upwards [hAbs] with ω hω
+    exact abs_eq_zero.mp hω
+  · intro hZero
+    rw [psiOneGauge_ae_congr hX measurable_const hZero]
+    exact psiOneGauge_zero
+
+/-- Proposition 2.7.1 with the absolute constant exposed.  This is the
+constant-explicit form of `subExponentialCharacterization`, needed whenever one
+constant must serve a whole family of random variables at once (as in the sums
+of Section 2.8, where the constant may not depend on the index). -/
+theorem subExponentialPropertyTransfer
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i j : SubExponentialPropertyKind) {Ki : ℝ} (hKi : 0 < Ki)
+    (hProp : SubExponentialProperty μ X i Ki) :
+    ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ 512 * (Real.exp 1) ^ 3 * Ki ∧
+      SubExponentialProperty μ X j Kj := by
+  obtain ⟨T, hT, hTbound, hTail⟩ := subExponentialToTail i hKi hProp
+  obtain ⟨Kj, hKj, hKjbound, hResult⟩ := subExponentialFromTail j hT hTail
+  refine ⟨Kj, hKj, ?_, hResult⟩
+  have hcoef : (0 : ℝ) ≤ 64 * (Real.exp 1) ^ 2 := by positivity
+  calc
+    Kj ≤ 64 * (Real.exp 1) ^ 2 * T := hKjbound
+    _ ≤ 64 * (Real.exp 1) ^ 2 * (8 * Real.exp 1 * Ki) :=
+        mul_le_mul_of_nonneg_left hTbound hcoef
+    _ = 512 * (Real.exp 1) ^ 3 * Ki := by ring
+
+/-! ### Lemma 2.7.6: sub-exponential is sub-gaussian squared -/
+
+/-- The two gauges' admissibility predicates correspond under `s ↦ s²`:
+`𝔼 exp (X²/s²) ≤ 2` is literally `𝔼 exp (|X²|/(s²)) ≤ 2`. -/
+theorem psiTwoAdmissible_iff_psiOneAdmissible_sq
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X) (s : ℝ≥0∞) :
+    NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ X s ↔
+      PsiOneAdmissible μ (fun ω => X ω ^ 2) (s ^ 2) := by
+  have hsq : Measurable (fun ω => X ω ^ 2) := by fun_prop
+  have hzero : s ^ 2 ≠ 0 ↔ s ≠ 0 := by
+    constructor
+    · intro h hs; exact h (by rw [hs]; norm_num)
+    · intro h; exact pow_ne_zero 2 h
+  have htop : s ^ 2 ≠ ∞ ↔ s ≠ ∞ := by
+    constructor
+    · intro h hs; exact h (by rw [hs]; simp)
+    · intro h
+      exact ENNReal.pow_ne_top h
+  have hfun : (fun ω => Real.exp (|X ω ^ 2| / (s ^ 2).toReal)) =
+      (fun ω => Real.exp (X ω ^ 2 / s.toReal ^ 2)) := by
+    funext ω
+    rw [abs_of_nonneg (sq_nonneg (X ω)), ENNReal.toReal_pow]
+  unfold NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible PsiOneAdmissible
+  rw [hfun]
+  constructor
+  · rintro ⟨_, hs0, hsTop, hInt, hBound⟩
+    exact ⟨hsq, hzero.2 hs0, htop.2 hsTop, hInt, hBound⟩
+  · rintro ⟨_, hs0, hsTop, hInt, hBound⟩
+    exact ⟨hX, hzero.1 hs0, htop.1 hsTop, hInt, hBound⟩
+
+/-- Lemma 2.7.6 (Sub-exponential is sub-gaussian squared).  For a measurable
+`X`, the sub-exponential norm of `X²` equals the square of the sub-gaussian
+norm of `X`:  `‖X²‖_{ψ₁} = ‖X‖²_{ψ₂}`.  In particular `X` is sub-gaussian
+exactly when `X²` is sub-exponential (`psiOneGauge_sq_lt_top_iff`). -/
+theorem psiOneGauge_sq_eq_psiTwoGauge_sq
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X) :
+    PsiOneGauge μ (fun ω => X ω ^ 2) =
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ^ 2 := by
+  set e : ℝ≥0∞ ≃o ℝ≥0∞ := ENNReal.orderIsoRpow 2 (by norm_num) with he_def
+  have he : ∀ x : ℝ≥0∞, e x = x ^ 2 := by
+    intro x
+    rw [he_def]
+    rw [ENNReal.orderIsoRpow_apply]
+    rw [show ((2 : ℝ)) = ((2 : ℕ) : ℝ) by norm_num, ENNReal.rpow_natCast]
+  have hset : {t : ℝ≥0∞ | PsiOneAdmissible μ (fun ω => X ω ^ 2) t} =
+      e '' {s : ℝ≥0∞ | NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ X s} := by
+    ext t
+    constructor
+    · intro ht
+      refine ⟨e.symm t, ?_, e.apply_symm_apply t⟩
+      have hval : (e.symm t) ^ 2 = t := by
+        rw [← he (e.symm t), e.apply_symm_apply]
+      exact (psiTwoAdmissible_iff_psiOneAdmissible_sq hX (e.symm t)).2
+        (by rw [hval]; exact ht)
+    · rintro ⟨s, hs, rfl⟩
+      rw [he s]
+      exact (psiTwoAdmissible_iff_psiOneAdmissible_sq hX s).1 hs
+  unfold PsiOneGauge NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
+  rw [hset, ← he]
+  rw [OrderIso.map_sInf e, sInf_image]
+
+/-- Lemma 2.7.6, membership form: `X` is sub-gaussian iff `X²` is
+sub-exponential. -/
+theorem psiOneGauge_sq_lt_top_iff
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X) :
+    PsiOneGauge μ (fun ω => X ω ^ 2) < ∞ ↔
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ := by
+  rw [psiOneGauge_sq_eq_psiTwoGauge_sq hX]
+  constructor
+  · intro h
+    by_contra hcon
+    rw [not_lt, top_le_iff] at hcon
+    rw [hcon] at h
+    simp at h
+  · intro h
+    exact ENNReal.pow_lt_top h
+
+/-! ### Lemma 2.7.7: a product of sub-gaussians is sub-exponential -/
+
+/-- The pointwise Young step of Lemma 2.7.7 (printed page 34): with
+`a = exp (X²/2s²)` and `b = exp (Y²/2u²)`, `ab ≤ (a² + b²)/2` gives
+`exp (|XY| / (su)) ≤ (exp (X²/s²) + exp (Y²/u²)) / 2`. -/
+theorem exp_abs_mul_div_le_half_add
+    {x y s u : ℝ} (hs : 0 < s) (hu : 0 < u) :
+    Real.exp (|x * y| / (s * u)) ≤
+      (Real.exp (x ^ 2 / s ^ 2) + Real.exp (y ^ 2 / u ^ 2)) / 2 := by
+  have hyoung : |x * y| / (s * u) ≤ x ^ 2 / s ^ 2 / 2 + y ^ 2 / u ^ 2 / 2 := by
+    have hkey : |x| / s * (|y| / u) ≤
+        ((|x| / s) ^ 2 + (|y| / u) ^ 2) / 2 := by
+      nlinarith [sq_nonneg (|x| / s - |y| / u)]
+    have hx2 : (|x| / s) ^ 2 = x ^ 2 / s ^ 2 := by
+      rw [div_pow, sq_abs]
+    have hy2 : (|y| / u) ^ 2 = y ^ 2 / u ^ 2 := by
+      rw [div_pow, sq_abs]
+    rw [hx2, hy2] at hkey
+    have hsplit : |x * y| / (s * u) = |x| / s * (|y| / u) := by
+      rw [abs_mul]
+      field_simp
+    rw [hsplit]
+    linarith
+  have hmono := Real.exp_le_exp.2 hyoung
+  refine hmono.trans ?_
+  rw [Real.exp_add]
+  have ha : Real.exp (x ^ 2 / s ^ 2 / 2) ^ 2 = Real.exp (x ^ 2 / s ^ 2) := by
+    rw [← Real.exp_nat_mul]
+    congr 1
+    ring
+  have hb : Real.exp (y ^ 2 / u ^ 2 / 2) ^ 2 = Real.exp (y ^ 2 / u ^ 2) := by
+    rw [← Real.exp_nat_mul]
+    congr 1
+    ring
+  nlinarith [sq_nonneg (Real.exp (x ^ 2 / s ^ 2 / 2) - Real.exp (y ^ 2 / u ^ 2 / 2)),
+    ha, hb]
+
+/-- Lemma 2.7.7, admissibility form: if `s` is `ψ₂`-admissible for `X` and `u`
+is `ψ₂`-admissible for `Y`, then `s * u` is `ψ₁`-admissible for `X * Y`. -/
+theorem psiTwoAdmissible_mul
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ} {s u : ℝ≥0∞}
+    (hX : NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ X s)
+    (hY : NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ Y u) :
+    PsiOneAdmissible μ (fun ω => X ω * Y ω) (s * u) := by
+  obtain ⟨hXm, hs0, hsTop, hXint, hXb⟩ := hX
+  obtain ⟨hYm, hu0, huTop, hYint, hYb⟩ := hY
+  have hspos : 0 < s.toReal := ENNReal.toReal_pos hs0 hsTop
+  have hupos : 0 < u.toReal := ENNReal.toReal_pos hu0 huTop
+  have htoReal : (s * u).toReal = s.toReal * u.toReal := ENNReal.toReal_mul
+  have hpt : ∀ ω, Real.exp (|X ω * Y ω| / (s * u).toReal) ≤
+      (Real.exp (X ω ^ 2 / s.toReal ^ 2) +
+        Real.exp (Y ω ^ 2 / u.toReal ^ 2)) / 2 := by
+    intro ω
+    rw [htoReal]
+    exact exp_abs_mul_div_le_half_add hspos hupos
+  have hdom : Integrable
+      (fun ω => (Real.exp (X ω ^ 2 / s.toReal ^ 2) +
+        Real.exp (Y ω ^ 2 / u.toReal ^ 2)) / 2) μ :=
+    ((hXint.add hYint).div_const 2)
+  have hInt : Integrable
+      (fun ω => Real.exp (|X ω * Y ω| / (s * u).toReal)) μ := by
+    refine hdom.mono' (by fun_prop) ?_
+    refine Filter.Eventually.of_forall (fun ω => ?_)
+    rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+    exact hpt ω
+  refine ⟨by fun_prop, mul_ne_zero hs0 hu0,
+    ENNReal.mul_ne_top hsTop huTop, hInt, ?_⟩
+  have hsum : (∫ ω, (Real.exp (X ω ^ 2 / s.toReal ^ 2) +
+      Real.exp (Y ω ^ 2 / u.toReal ^ 2)) / 2 ∂μ) ≤ 2 := by
+    rw [integral_div, integral_add hXint hYint]
+    linarith [hXb, hYb]
+  exact (integral_mono hInt hdom hpt).trans hsum
+
+/-- Lemma 2.7.7 (Product of sub-gaussians is sub-exponential).  If `X` and `Y`
+are sub-gaussian then `XY` is sub-exponential and
+`‖XY‖_{ψ₁} ≤ ‖X‖_{ψ₂} ‖Y‖_{ψ₂}`.
+
+Sub-gaussianity of both factors is the printed hypothesis (printed page 33), and
+it is what makes the two `ψ₂`-admissible sets nonempty, so the infimum algebra
+below has no degenerate branch. -/
+theorem psiOneGauge_mul_le
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ}
+    (hX : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞)
+    (hY : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y < ∞) :
+    PsiOneGauge μ (fun ω => X ω * Y ω) ≤
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X *
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y := by
+  classical
+  set A := {t : ℝ≥0∞ | NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ X t}
+    with hAdef
+  set B := {t : ℝ≥0∞ | NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ Y t}
+    with hBdef
+  have hGX : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X = sInf A := rfl
+  have hGY : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y = sInf B := rfl
+  -- A finite gauge forces the admissible set to be nonempty.
+  have hAne : A.Nonempty := by
+    rcases Set.eq_empty_or_nonempty A with hEmpty | hNe
+    · rw [hGX, hEmpty] at hX; simp at hX
+    · exact hNe
+  have hBne : B.Nonempty := by
+    rcases Set.eq_empty_or_nonempty B with hEmpty | hNe
+    · rw [hGY, hEmpty] at hY; simp at hY
+    · exact hNe
+  have hGYne : sInf B ≠ ∞ := by rw [← hGY]; exact hY.ne
+  -- For a fixed admissible scale `s` for `X`, push the infimum over `B` inside.
+  have hstep : ∀ s : A,
+      PsiOneGauge μ (fun ω => X ω * Y ω) ≤ (s : ℝ≥0∞) * sInf B := by
+    intro s
+    have hs : NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ X (s : ℝ≥0∞) :=
+      s.2
+    obtain ⟨-, hs0, hsTop, -, -⟩ := hs
+    rw [sInf_eq_iInf' B, ENNReal.mul_iInf_of_ne hs0 hsTop]
+    refine le_iInf ?_
+    intro u
+    exact sInf_le (psiTwoAdmissible_mul s.2 u.2)
+  -- Now push the infimum over `A` inside; `sInf B = 0` is covered because `A`
+  -- is nonempty, and `sInf B = ∞` cannot happen.
+  rw [hGX, hGY, sInf_eq_iInf' A,
+    ENNReal.iInf_mul' (fun h => absurd h hGYne) (fun _ => hAne.to_subtype)]
+  exact le_iInf hstep
+
+/-- Lemma 2.7.7, membership form: a product of two sub-gaussian variables is
+sub-exponential. -/
+theorem psiOneGauge_mul_lt_top
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ}
+    (hX : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞)
+    (hY : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y < ∞) :
+    PsiOneGauge μ (fun ω => X ω * Y ω) < ∞ :=
+  lt_of_le_of_lt (psiOneGauge_mul_le hX hY) (ENNReal.mul_lt_top hX hY)
+
 end NumStability.HDP.Scalar.SubExponential
 
 namespace NumStability.HDP.Contract
@@ -1872,5 +2456,67 @@ theorem hdp_02_hexample_h2_d7_d13
         NumStability.HDP.Scalar.SubExponential.psiTwoOrliczFunction μ X ↔
       NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ := by
   exact NumStability.HDP.Scalar.SubExponential.psiTwoOrliczMember_iff_psiTwoMember hX
+
+/-! Stable Chapter 2 alias for Definition 2.7.5 (sub-exponential random
+variables and the sub-exponential norm).  The gauge is the canonical producer;
+this alias records that finiteness of the gauge is exactly property (d) of
+Proposition 2.7.1 for some positive parameter. -/
+theorem hdp_02_hdef_h2_d7_d5
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} :
+    NumStability.HDP.Scalar.SubExponential.PsiOneGauge μ X < ∞ ↔
+      ∃ K : ℝ, 0 < K ∧
+        NumStability.HDP.Scalar.SubExponential.SubExponentialOnePointMGF μ X K :=
+  NumStability.HDP.Scalar.SubExponential.psiOneGauge_finite_iff
+
+/-! Stable Chapter 2 alias for display (2.21): the sub-exponential norm is the
+infimum of the scales `t > 0` at which `𝔼 exp (|X| / t) ≤ 2`. -/
+theorem hdp_02_heq_h2_d21
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) :
+    NumStability.HDP.Scalar.SubExponential.PsiOneGauge μ X =
+      sInf {t : ℝ≥0∞ |
+        NumStability.HDP.Scalar.SubExponential.PsiOneAdmissible μ X t} :=
+  rfl
+
+/-! Stable Chapter 2 alias for Lemma 2.7.6 (sub-exponential is sub-gaussian
+squared): `‖X²‖_{ψ₁} = ‖X‖²_{ψ₂}`, together with the iff form. -/
+theorem hdp_02_hlem_h2_d7_d6
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} (hX : Measurable X) :
+    (NumStability.HDP.Scalar.SubExponential.PsiOneGauge μ (fun ω => X ω ^ 2) < ∞ ↔
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞) ∧
+      NumStability.HDP.Scalar.SubExponential.PsiOneGauge μ (fun ω => X ω ^ 2) =
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X ^ 2 :=
+  ⟨NumStability.HDP.Scalar.SubExponential.psiOneGauge_sq_lt_top_iff hX,
+    NumStability.HDP.Scalar.SubExponential.psiOneGauge_sq_eq_psiTwoGauge_sq hX⟩
+
+/-! Stable Chapter 2 alias for the `ψ₁` half of Example 2.7.13: the Luxemburg
+gauge of the Orlicz function `exp x - 1` is the sub-exponential norm. -/
+theorem hdp_02_hexample_h2_d7_d13_hpsi1
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X) :
+    NumStability.HDP.Scalar.SubExponential.orliczGauge
+        NumStability.HDP.Scalar.SubExponential.psiOneOrliczFunction μ X =
+      NumStability.HDP.Scalar.SubExponential.PsiOneGauge μ X :=
+  NumStability.HDP.Scalar.SubExponential.psiOneOrliczGauge_eq_psiOneGauge hX
+
+/-! Stable Chapter 2 alias for Lemma 2.7.7 (product of sub-gaussians is
+sub-exponential): if `X` and `Y` are sub-gaussian then `XY` is sub-exponential
+and `‖XY‖_{ψ₁} ≤ ‖X‖_{ψ₂} ‖Y‖_{ψ₂}`. -/
+theorem hdp_02_hlem_h2_d7_d7
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X Y : Ω → ℝ}
+    (hX : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞)
+    (hY : NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y < ∞) :
+    NumStability.HDP.Scalar.SubExponential.PsiOneGauge
+        μ (fun ω => X ω * Y ω) < ∞ ∧
+      NumStability.HDP.Scalar.SubExponential.PsiOneGauge
+          μ (fun ω => X ω * Y ω) ≤
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X *
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Y :=
+  ⟨NumStability.HDP.Scalar.SubExponential.psiOneGauge_mul_lt_top hX hY,
+    NumStability.HDP.Scalar.SubExponential.psiOneGauge_mul_le hX hY⟩
 
 end NumStability.HDP.Contract

@@ -1,3 +1,4 @@
+import NumStabilityTest.HDP.Chapter01.Markov
 import NumStabilityTest.Import.Algorithms
 import NumStabilityTest.Import.Algorithms.Arithmetic.DotProduct.NoGuard
 import NumStabilityTest.Import.Algorithms.Arithmetic.DotProduct.NoGuard.Core

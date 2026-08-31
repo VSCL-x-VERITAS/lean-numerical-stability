@@ -14,19 +14,16 @@ open MeasureTheory
 namespace NumStability.HDP.Contract
 
 def hdp_02_hlem_h2_d6_d8__contract_type : Prop :=
-  ∀ {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : Ω → ℝ}
-    (i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind)
-    {K : ℝ} (hK : 0 < K)
-    (hProp : NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K),
-    ∃ C : ℝ, 1 ≤ C ∧
-      Integrable X μ ∧
-      ∃ K' : ℝ, 0 < K' ∧ K' ≤ C * K ∧
-        NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ
-            (fun ω => X ω - ∫ x, X x ∂μ) .squarePoint K' ∧
-        NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
+  ∃ C : ℝ, 1 ≤ C ∧
+    ∀ {Ω : Type*} [MeasurableSpace Ω]
+      {μ : Measure Ω} [IsProbabilityMeasure μ]
+      {X : Ω → ℝ},
+      NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ X →
+        NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ
+            (fun ω => X ω - ∫ x, X x ∂μ) ∧
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ
             (fun ω => X ω - ∫ x, X x ∂μ) ≤
-          ENNReal.ofReal (C * K)
+          ENNReal.ofReal C *
+            NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ X
 
 end NumStability.HDP.Contract

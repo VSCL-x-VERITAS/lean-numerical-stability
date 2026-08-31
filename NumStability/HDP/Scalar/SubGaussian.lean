@@ -1896,6 +1896,12 @@ def SubGaussianSquarePointWithThreshold {Ω : Type*} [MeasurableSpace Ω]
     Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
       (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ A
 
+noncomputable def subGaussianTailThresholdScale (A B : ℝ) : ℝ :=
+  if A ≤ B then 1 else (Real.sqrt (Real.log B / Real.log A))⁻¹
+
+noncomputable def subGaussianSquarePointThresholdScale (A B : ℝ) : ℝ :=
+  if A ≤ B then 1 else (Real.sqrt ((B - 1) / (A - 1)))⁻¹
+
 def subGaussianTailThreshold_rescale
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -1903,10 +1909,11 @@ def subGaussianTailThreshold_rescale
     (hTail : ∀ t : ℝ, 0 ≤ t →
       μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2)) :
     ∃ K' : ℝ, 0 < K' ∧
+      K' ≤ subGaussianTailThresholdScale A B * K ∧
       ∀ t : ℝ, 0 ≤ t →
         μ.real {ω | |X ω| ≥ t} ≤ B * Real.exp (-t ^ 2 / K' ^ 2) := by
   by_cases hAB : A ≤ B
-  · refine ⟨K, hK, fun t ht => ?_⟩
+  · refine ⟨K, hK, by simp [subGaussianTailThresholdScale, hAB], fun t ht => ?_⟩
     calc
       μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2) := hTail t ht
       _ ≤ B * Real.exp (-t ^ 2 / K ^ 2) := by
@@ -1920,6 +1927,8 @@ def subGaussianTailThreshold_rescale
     have hc1 : c < 1 := (div_lt_one hLogA).2 hLogBA
     let K' : ℝ := K / Real.sqrt c
     have hK' : 0 < K' := div_pos hK (Real.sqrt_pos.2 hc)
+    have hK'bound : K' ≤ subGaussianTailThresholdScale A B * K := by
+      simp [subGaussianTailThresholdScale, hAB, K', c, div_eq_inv_mul]
     have hSqSqrt : (Real.sqrt c) ^ 2 = c := Real.sq_sqrt hc.le
     have hKsq : K' ^ 2 = K ^ 2 / c := by
       dsimp [K']
@@ -1942,7 +1951,7 @@ def subGaussianTailThreshold_rescale
           exact ENNReal.toReal_mono (measure_ne_top μ Set.univ)
             (measure_mono (Set.subset_univ _))
         _ = 1 := probReal_univ
-    refine ⟨K', hK', fun t ht => ?_⟩
+    refine ⟨K', hK', hK'bound, fun t ht => ?_⟩
     let u : ℝ := t ^ 2 / K ^ 2
     by_cases hu : u ≤ Real.log A
     · have hcu : c * u ≤ Real.log B := by
@@ -1995,10 +2004,12 @@ def subGaussianSquarePointThreshold_rescale
     (hInt : Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ)
     (hBound : (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ A) :
     ∃ K' : ℝ, 0 < K' ∧
+      K' ≤ subGaussianSquarePointThresholdScale A B * K ∧
       Integrable (fun ω => Real.exp (X ω ^ 2 / K' ^ 2)) μ ∧
         (∫ ω, Real.exp (X ω ^ 2 / K' ^ 2) ∂μ) ≤ B := by
   by_cases hAB : A ≤ B
-  · refine ⟨K, hK, hInt, hBound.trans hAB⟩
+  · refine ⟨K, hK, by simp [subGaussianSquarePointThresholdScale, hAB],
+      hInt, hBound.trans hAB⟩
   · have hBA : B < A := lt_of_not_ge hAB
     have hA1 : 0 < A - 1 := by linarith
     have hB1 : 0 < B - 1 := by linarith
@@ -2007,6 +2018,8 @@ def subGaussianSquarePointThreshold_rescale
     have hc1 : c < 1 := (div_lt_one hA1).2 (by linarith)
     let K' : ℝ := K / Real.sqrt c
     have hK' : 0 < K' := div_pos hK (Real.sqrt_pos.2 hc)
+    have hK'bound : K' ≤ subGaussianSquarePointThresholdScale A B * K := by
+      simp [subGaussianSquarePointThresholdScale, hAB, K', c, div_eq_inv_mul]
     have hSqSqrt : (Real.sqrt c) ^ 2 = c := Real.sq_sqrt hc.le
     have hKsq : K' ^ 2 = K ^ 2 / c := by
       dsimp [K']
@@ -2056,7 +2069,7 @@ def subGaussianSquarePointThreshold_rescale
               dsimp [c]
               field_simp [ne_of_gt hA1]
               ring
-    exact ⟨K', hK', hTargetInt, hTargetBound⟩
+    exact ⟨K', hK', hK'bound, hTargetInt, hTargetBound⟩
 
 /-! Remark 2.5.3: the fixed threshold `2` in the tail and point square-MGF
 clauses may be replaced by any fixed `A > 1`, with only an `A`-dependent
@@ -2073,23 +2086,58 @@ theorem subGaussianThresholdRemark
   · constructor
     · rintro ⟨K, hK, hTail⟩
       rcases subGaussianTailThreshold_rescale (A := 2) (B := A)
-          (by norm_num) hA hK hTail.2.2 with ⟨K', hK', hTail'⟩
+          (by norm_num) hA hK hTail.2.2 with ⟨K', hK', _, hTail'⟩
       exact ⟨K', hK', hTail.1, hK', hTail',⟩
     · rintro ⟨K, hK, hTail⟩
       rcases subGaussianTailThreshold_rescale (A := A) (B := 2)
-          hA (by norm_num) hK hTail.2.2 with ⟨K', hK', hTail'⟩
+          hA (by norm_num) hK hTail.2.2 with ⟨K', hK', _, hTail'⟩
       exact ⟨K', hK', hTail.1, hK', hTail',⟩
   · constructor
     · rintro ⟨K, hK, hPoint⟩
       rcases subGaussianSquarePointThreshold_rescale (A := 2) (B := A)
           hPoint.1 (by norm_num) hA hK hPoint.2.2.1 hPoint.2.2.2 with
-        ⟨K', hK', hInt', hBound'⟩
+        ⟨K', hK', _, hInt', hBound'⟩
       exact ⟨K', hK', hPoint.1, hK', hInt', hBound'⟩
     · rintro ⟨K, hK, hPoint⟩
       rcases subGaussianSquarePointThreshold_rescale (A := A) (B := 2)
           hPoint.1 hA (by norm_num) hK hPoint.2.2.1 hPoint.2.2.2 with
-        ⟨K', hK', hInt', hBound'⟩
+        ⟨K', hK', _, hInt', hBound'⟩
       exact ⟨K', hK', hPoint.1, hK', hInt', hBound'⟩
+
+theorem one_le_subGaussianTailThresholdScale
+    {A B : ℝ} (hA : 1 < A) (hB : 1 < B) :
+    1 ≤ subGaussianTailThresholdScale A B := by
+  rw [subGaussianTailThresholdScale]
+  split_ifs with hAB
+  · exact le_rfl
+  · have hBA : B < A := lt_of_not_ge hAB
+    have hLogA : 0 < Real.log A := Real.log_pos hA
+    have hLogB : 0 < Real.log B := Real.log_pos hB
+    have hLogBA : Real.log B < Real.log A := Real.log_lt_log (by linarith) hBA
+    let c : ℝ := Real.log B / Real.log A
+    have hc : 0 < c := div_pos hLogB hLogA
+    have hc1 : c < 1 := (div_lt_one hLogA).2 hLogBA
+    have hspos : 0 < Real.sqrt c := Real.sqrt_pos.2 hc
+    have hsle : Real.sqrt c ≤ 1 := by
+      nlinarith [Real.sq_sqrt hc.le]
+    simpa [c] using (one_le_inv₀ hspos).2 hsle
+
+theorem one_le_subGaussianSquarePointThresholdScale
+    {A B : ℝ} (hA : 1 < A) (hB : 1 < B) :
+    1 ≤ subGaussianSquarePointThresholdScale A B := by
+  rw [subGaussianSquarePointThresholdScale]
+  split_ifs with hAB
+  · exact le_rfl
+  · have hBA : B < A := lt_of_not_ge hAB
+    have hA1 : 0 < A - 1 := by linarith
+    have hB1 : 0 < B - 1 := by linarith
+    let c : ℝ := (B - 1) / (A - 1)
+    have hc : 0 < c := div_pos hB1 hA1
+    have hc1 : c < 1 := (div_lt_one hA1).2 (by linarith)
+    have hspos : 0 < Real.sqrt c := Real.sqrt_pos.2 hc
+    have hsle : Real.sqrt c ≤ 1 := by
+      nlinarith [Real.sq_sqrt hc.le]
+    simpa [c] using (one_le_inv₀ hspos).2 hsle
 
 def SubGaussianLinearMGF {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
@@ -2114,6 +2162,33 @@ def SubGaussianProperty {Ω : Type*} [MeasurableSpace Ω]
   | .squareWindow => SubGaussianSquareWindow μ X
   | .squarePoint => SubGaussianSquarePoint μ X
   | .linearMGF => SubGaussianLinearMGF μ X
+
+def SubGaussianPropertyWithThreshold {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) (A : ℝ) :
+    SubGaussianPropertyKind → ℝ → Prop
+  | .tail => fun K => SubGaussianTailBoundWithThreshold μ X K A
+  | .moment => SubGaussianMomentBound μ X
+  | .squareWindow => SubGaussianSquareWindow μ X
+  | .squarePoint => fun K => SubGaussianSquarePointWithThreshold μ X K A
+  | .linearMGF => SubGaussianLinearMGF μ X
+
+noncomputable def subGaussianThresholdToStandardScale (A : ℝ) : ℝ :=
+  max (subGaussianTailThresholdScale A 2)
+    (subGaussianSquarePointThresholdScale A 2)
+
+noncomputable def subGaussianStandardToThresholdScale (A : ℝ) : ℝ :=
+  max (subGaussianTailThresholdScale 2 A)
+    (subGaussianSquarePointThresholdScale 2 A)
+
+theorem one_le_subGaussianThresholdToStandardScale
+    {A : ℝ} (hA : 1 < A) : 1 ≤ subGaussianThresholdToStandardScale A :=
+  (one_le_subGaussianTailThresholdScale hA (by norm_num)).trans
+    (le_max_left _ _)
+
+theorem one_le_subGaussianStandardToThresholdScale
+    {A : ℝ} (hA : 1 < A) : 1 ≤ subGaussianStandardToThresholdScale A :=
+  (one_le_subGaussianTailThresholdScale (by norm_num) hA).trans
+    (le_max_left _ _)
 
 private theorem subGaussianMomentToSquareWindow
     {Ω : Type*} [MeasurableSpace Ω]
@@ -2312,8 +2387,9 @@ private theorem subGaussianToTail
 private theorem subGaussianFromTail
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : Ω → ℝ} (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
-    (i : SubGaussianPropertyKind) {T : ℝ} (hT : 0 < T)
+    {X : Ω → ℝ} (i : SubGaussianPropertyKind)
+    (hCenter : i = .linearMGF → Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    {T : ℝ} (hT : 0 < T)
     (hTail : SubGaussianTailBound μ X T) :
     ∃ K : ℝ, 0 < K ∧ K ≤ 128 * Real.exp 1 * T ∧
       SubGaussianProperty μ X i K := by
@@ -2356,15 +2432,114 @@ private theorem subGaussianFromTail
   | linearMGF =>
       let K₀ := 64 * Real.exp 1 * T
       let K := 2 * K₀
+      have hCentered := hCenter rfl
       have hMom := subGaussianTailToMoment hTail
       have hSq := subGaussianMomentToSquareWindow (by
         positivity) hMom
       have hLinear := subGaussianSquareWindowToLinear (by
-        positivity) hCenter hSq
+        positivity) hCentered hSq
       refine ⟨K, by dsimp [K, K₀]; positivity, ?_, ?_⟩
       · dsimp [K, K₀]
         exact le_of_eq (by ring)
       · convert hLinear using 1 <;> simp [SubGaussianProperty, K, K₀] <;> ring
+
+private theorem subGaussianConvert
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i j : SubGaussianPropertyKind)
+    (hCenter : j = .linearMGF → Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    {Ki : ℝ} (hKi : 0 < Ki) (hProp : SubGaussianProperty μ X i Ki) :
+    ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ 4096 * Real.exp 1 * Ki ∧
+      SubGaussianProperty μ X j Kj := by
+  rcases subGaussianToTail i hKi hProp with
+    ⟨T, hT, hTbound, hTail⟩
+  rcases subGaussianFromTail j hCenter hT hTail with
+    ⟨Kj, hKj, hKjbound, hResult⟩
+  refine ⟨Kj, hKj, ?_, hResult⟩
+  calc
+    Kj ≤ 128 * Real.exp 1 * T := hKjbound
+    _ ≤ 128 * Real.exp 1 * (16 * Ki) := by
+      exact mul_le_mul_of_nonneg_left hTbound (by positivity)
+    _ = 2048 * Real.exp 1 * Ki := by ring
+    _ ≤ 4096 * Real.exp 1 * Ki := by
+      have hpos : 0 < Real.exp 1 * Ki := mul_pos (Real.exp_pos 1) hKi
+      nlinarith
+
+private theorem subGaussianThresholdToStandard
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (A : ℝ) (hA : 1 < A) (i : SubGaussianPropertyKind)
+    {K : ℝ} (hK : 0 < K) (hProp : SubGaussianPropertyWithThreshold μ X A i K) :
+    ∃ K' : ℝ, 0 < K' ∧ K' ≤ subGaussianThresholdToStandardScale A * K ∧
+      SubGaussianProperty μ X i K' := by
+  cases i with
+  | tail =>
+      change SubGaussianTailBoundWithThreshold μ X K A at hProp
+      rcases subGaussianTailThreshold_rescale (A := A) (B := 2)
+          hA (by norm_num) hK hProp.2.2 with ⟨K', hK', hK'bound, hTail⟩
+      refine ⟨K', hK', ?_, ?_⟩
+      · exact hK'bound.trans (mul_le_mul_of_nonneg_right
+          (le_max_left _ _) hK.le)
+      · exact ⟨hProp.1, hK', hTail⟩
+  | moment =>
+      refine ⟨K, hK, ?_, hProp⟩
+      simpa using mul_le_mul_of_nonneg_right
+        (one_le_subGaussianThresholdToStandardScale hA) hK.le
+  | squareWindow =>
+      refine ⟨K, hK, ?_, hProp⟩
+      simpa using mul_le_mul_of_nonneg_right
+        (one_le_subGaussianThresholdToStandardScale hA) hK.le
+  | squarePoint =>
+      change SubGaussianSquarePointWithThreshold μ X K A at hProp
+      rcases subGaussianSquarePointThreshold_rescale (A := A) (B := 2)
+          hProp.1 hA (by norm_num) hK hProp.2.2.1 hProp.2.2.2 with
+        ⟨K', hK', hK'bound, hInt, hBound⟩
+      refine ⟨K', hK', ?_, ?_⟩
+      · exact hK'bound.trans (mul_le_mul_of_nonneg_right
+          (le_max_right _ _) hK.le)
+      · exact ⟨hProp.1, hK', hInt, hBound⟩
+  | linearMGF =>
+      refine ⟨K, hK, ?_, hProp⟩
+      simpa using mul_le_mul_of_nonneg_right
+        (one_le_subGaussianThresholdToStandardScale hA) hK.le
+
+private theorem subGaussianStandardToThreshold
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (A : ℝ) (hA : 1 < A) (i : SubGaussianPropertyKind)
+    {K : ℝ} (hK : 0 < K) (hProp : SubGaussianProperty μ X i K) :
+    ∃ K' : ℝ, 0 < K' ∧ K' ≤ subGaussianStandardToThresholdScale A * K ∧
+      SubGaussianPropertyWithThreshold μ X A i K' := by
+  cases i with
+  | tail =>
+      change SubGaussianTailBound μ X K at hProp
+      rcases subGaussianTailThreshold_rescale (A := 2) (B := A)
+          (by norm_num) hA hK hProp.2.2 with ⟨K', hK', hK'bound, hTail⟩
+      refine ⟨K', hK', ?_, ?_⟩
+      · exact hK'bound.trans (mul_le_mul_of_nonneg_right
+          (le_max_left _ _) hK.le)
+      · exact ⟨hProp.1, hK', hTail⟩
+  | moment =>
+      refine ⟨K, hK, ?_, hProp⟩
+      simpa using mul_le_mul_of_nonneg_right
+        (one_le_subGaussianStandardToThresholdScale hA) hK.le
+  | squareWindow =>
+      refine ⟨K, hK, ?_, hProp⟩
+      simpa using mul_le_mul_of_nonneg_right
+        (one_le_subGaussianStandardToThresholdScale hA) hK.le
+  | squarePoint =>
+      change SubGaussianSquarePoint μ X K at hProp
+      rcases subGaussianSquarePointThreshold_rescale (A := 2) (B := A)
+          hProp.1 (by norm_num) hA hK hProp.2.2.1 hProp.2.2.2 with
+        ⟨K', hK', hK'bound, hInt, hBound⟩
+      refine ⟨K', hK', ?_, ?_⟩
+      · exact hK'bound.trans (mul_le_mul_of_nonneg_right
+          (le_max_right _ _) hK.le)
+      · exact ⟨hProp.1, hK', hInt, hBound⟩
+  | linearMGF =>
+      refine ⟨K, hK, ?_, hProp⟩
+      simpa using mul_le_mul_of_nonneg_right
+        (one_le_subGaussianStandardToThresholdScale hA) hK.le
 
 /-! Stable compositional form of Proposition 2.5.2. -/
 theorem subGaussianCharacterization
@@ -2379,19 +2554,112 @@ theorem subGaussianCharacterization
   have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
   refine ⟨4096 * Real.exp 1, by nlinarith, ?_⟩
   intro i j Ki hKi hProp
-  rcases subGaussianToTail i hKi hProp with
-    ⟨T, hT, hTbound, hTail⟩
-  rcases subGaussianFromTail hCenter j hT hTail with
-    ⟨Kj, hKj, hKjbound, hResult⟩
-  refine ⟨Kj, hKj, ?_, hResult⟩
-  calc
-    Kj ≤ 128 * Real.exp 1 * T := hKjbound
-    _ ≤ 128 * Real.exp 1 * (16 * Ki) := by
-      exact mul_le_mul_of_nonneg_left hTbound (by positivity)
-    _ = 2048 * Real.exp 1 * Ki := by ring
-    _ ≤ 4096 * Real.exp 1 * Ki := by
-      have hpos : 0 < Real.exp 1 * Ki := mul_pos (Real.exp_pos 1) hKi
-      nlinarith
+  exact subGaussianConvert i j (fun _ => hCenter) hKi hProp
+
+/-! Source-faithful uniform form of Proposition 2.5.2.
+
+The first conjunct compares the four properties that do not require centering.
+The second adds the linear MGF property for centered random variables.  The
+single comparison constant is chosen before the probability space and random
+variable, making its absoluteness explicit in the type.
+-/
+theorem subGaussianCharacterization_absolute :
+    ∃ C : ℝ, 1 ≤ C ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X →
+          ∀ i j : SubGaussianPropertyKind,
+            i ≠ .linearMGF → j ≠ .linearMGF → ∀ {Ki : ℝ}, 0 < Ki →
+              SubGaussianProperty μ X i Ki →
+                ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                  SubGaussianProperty μ X j Kj) ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X → Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0 →
+          ∀ i j : SubGaussianPropertyKind, ∀ {Ki : ℝ}, 0 < Ki →
+            SubGaussianProperty μ X i Ki →
+              ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                SubGaussianProperty μ X j Kj) := by
+  have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
+  refine ⟨4096 * Real.exp 1, by nlinarith, ?_, ?_⟩
+  · intro Ω _ μ _ X _ i j _ hj Ki hKi hProp
+    exact subGaussianConvert i j (fun h => (hj h).elim) hKi hProp
+  · intro Ω _ μ _ X _ hCenter i j Ki hKi hProp
+    exact subGaussianConvert i j (fun _ => hCenter) hKi hProp
+
+/-! Full quantitative form of Remark 2.5.3 for an arbitrary fixed threshold
+`A > 1`.  The comparison constant may depend on `A`, but is chosen before the
+probability space and random variable. -/
+theorem subGaussianThresholdCharacterization_absolute (A : ℝ) (hA : 1 < A) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X →
+          ∀ i j : SubGaussianPropertyKind,
+            i ≠ .linearMGF → j ≠ .linearMGF → ∀ {Ki : ℝ}, 0 < Ki →
+              SubGaussianPropertyWithThreshold μ X A i Ki →
+                ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                  SubGaussianPropertyWithThreshold μ X A j Kj) ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X → Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0 →
+          ∀ i j : SubGaussianPropertyKind, ∀ {Ki : ℝ}, 0 < Ki →
+            SubGaussianPropertyWithThreshold μ X A i Ki →
+              ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                SubGaussianPropertyWithThreshold μ X A j Kj) := by
+  rcases subGaussianCharacterization_absolute with ⟨C₀, hC₀, hBase, hCentered⟩
+  let Cᵢ := subGaussianThresholdToStandardScale A
+  let Cₒ := subGaussianStandardToThresholdScale A
+  have hCᵢ : 1 ≤ Cᵢ := one_le_subGaussianThresholdToStandardScale hA
+  have hCₒ : 1 ≤ Cₒ := one_le_subGaussianStandardToThresholdScale hA
+  have hC₀nonneg : 0 ≤ C₀ := by linarith
+  have hCᵢnonneg : 0 ≤ Cᵢ := by linarith
+  have hCₒnonneg : 0 ≤ Cₒ := by linarith
+  have hC₀Cᵢ : 1 ≤ C₀ * Cᵢ := by
+    have := mul_le_mul hC₀ hCᵢ (by norm_num : (0 : ℝ) ≤ 1) hC₀nonneg
+    simpa using this
+  have hC : 1 ≤ Cₒ * C₀ * Cᵢ := by
+    calc
+      1 ≤ C₀ * Cᵢ := hC₀Cᵢ
+      _ = 1 * (C₀ * Cᵢ) := by ring
+      _ ≤ Cₒ * (C₀ * Cᵢ) :=
+        mul_le_mul_of_nonneg_right hCₒ (mul_nonneg hC₀nonneg hCᵢnonneg)
+      _ = Cₒ * C₀ * Cᵢ := by ring
+  refine ⟨Cₒ * C₀ * Cᵢ, hC, ?_, ?_⟩
+  · intro Ω _ μ _ X hX i j hi hj Ki hKi hProp
+    rcases subGaussianThresholdToStandard A hA i hKi hProp with
+      ⟨Kₛ, hKₛ, hKₛbound, hStandard⟩
+    rcases hBase hX i j hi hj hKₛ hStandard with
+      ⟨Kₜ, hKₜ, hKₜbound, hTarget⟩
+    rcases subGaussianStandardToThreshold A hA j hKₜ hTarget with
+      ⟨Kj, hKj, hKjbound, hResult⟩
+    refine ⟨Kj, hKj, ?_, hResult⟩
+    calc
+      Kj ≤ Cₒ * Kₜ := by simpa [Cₒ] using hKjbound
+      _ ≤ Cₒ * (C₀ * Kₛ) :=
+        mul_le_mul_of_nonneg_left hKₜbound hCₒnonneg
+      _ ≤ Cₒ * (C₀ * (Cᵢ * Ki)) := by
+        exact mul_le_mul_of_nonneg_left
+          (mul_le_mul_of_nonneg_left (by simpa [Cᵢ] using hKₛbound) hC₀nonneg)
+          hCₒnonneg
+      _ = (Cₒ * C₀ * Cᵢ) * Ki := by ring
+  · intro Ω _ μ _ X hX hCenter i j Ki hKi hProp
+    rcases subGaussianThresholdToStandard A hA i hKi hProp with
+      ⟨Kₛ, hKₛ, hKₛbound, hStandard⟩
+    rcases hCentered hX hCenter i j hKₛ hStandard with
+      ⟨Kₜ, hKₜ, hKₜbound, hTarget⟩
+    rcases subGaussianStandardToThreshold A hA j hKₜ hTarget with
+      ⟨Kj, hKj, hKjbound, hResult⟩
+    refine ⟨Kj, hKj, ?_, hResult⟩
+    calc
+      Kj ≤ Cₒ * Kₜ := by simpa [Cₒ] using hKjbound
+      _ ≤ Cₒ * (C₀ * Kₛ) :=
+        mul_le_mul_of_nonneg_left hKₜbound hCₒnonneg
+      _ ≤ Cₒ * (C₀ * (Cᵢ * Ki)) := by
+        exact mul_le_mul_of_nonneg_left
+          (mul_le_mul_of_nonneg_left (by simpa [Cᵢ] using hKₛbound) hC₀nonneg)
+          hCₒnonneg
+      _ = (Cₒ * C₀ * Cᵢ) * Ki := by ring
 
 /-! The extended `ψ₂` gauge from Definition 2.5.6. -/
 def PsiTwoAdmissible {Ω : Type*} [MeasurableSpace Ω]
@@ -2403,6 +2671,27 @@ def PsiTwoAdmissible {Ω : Type*} [MeasurableSpace Ω]
 noncomputable def PsiTwoGauge {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
   sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ X t}
+
+/-! The source-facing name for the `ψ₂` norm.  The extended value records
+non-sub-Gaussian variables by `∞`; Definition 2.5.6 uses its finite part. -/
+noncomputable def PsiTwoNorm {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
+  PsiTwoGauge μ X
+
+/-! A random variable is sub-Gaussian when it is measurable and satisfies
+property (iv) of Proposition 2.5.2 at some positive scale.  The equivalence of
+properties (i)--(iv) below makes the chosen representative immaterial. -/
+def IsSubGaussian {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
+  Measurable X ∧ ∃ K : ℝ, 0 < K ∧ SubGaussianSquarePoint μ X K
+
+/-! Equation (2.13), stated on the source's measurable sub-Gaussian domain. -/
+theorem psiTwoNorm_eq_sInf
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ}
+    (_hX : Measurable X) (_hSub : IsSubGaussian μ X) :
+    PsiTwoNorm μ X = sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ X t} := by
+  rfl
 
 theorem psiTwoGauge_finite_iff
     {Ω : Type*} [MeasurableSpace Ω]
@@ -2433,6 +2722,88 @@ theorem psiTwoGauge_finite_iff
       sInf_le htAdmissible
     exact lt_of_le_of_lt hInf ENNReal.ofReal_lt_top
 
+/-- Any positive square-point witness is an explicit upper bound for the
+`ψ₂` gauge, rather than merely a proof that the gauge is finite. -/
+theorem psiTwoGauge_le_of_squarePoint
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : Ω → ℝ} {K : ℝ}
+    (hPoint : SubGaussianSquarePoint μ X K) :
+    PsiTwoGauge μ X ≤ ENNReal.ofReal K := by
+  have hAdmissible : PsiTwoAdmissible μ X (ENNReal.ofReal K) := by
+    refine ⟨hPoint.1, (ENNReal.ofReal_ne_zero_iff).2 hPoint.2.1,
+      ENNReal.ofReal_ne_top, ?_, ?_⟩
+    · simpa [ENNReal.toReal_ofReal hPoint.2.1.le] using hPoint.2.2.1
+    · simpa [ENNReal.toReal_ofReal hPoint.2.1.le] using hPoint.2.2.2
+  exact sInf_le hAdmissible
+
+/-! Definition 2.5.6 is independent of which of properties (i)--(iv) is used
+to recognize the sub-Gaussian class. -/
+theorem isSubGaussian_iff_property
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
+    (i : SubGaussianPropertyKind) (hi : i ≠ .linearMGF) :
+    IsSubGaussian μ X ↔
+      ∃ K : ℝ, 0 < K ∧ SubGaussianProperty μ X i K := by
+  constructor
+  · rintro ⟨_, K, hK, hPoint⟩
+    have hPoint' : SubGaussianProperty μ X .squarePoint K := by
+      simpa [SubGaussianProperty] using hPoint
+    rcases subGaussianConvert .squarePoint i (fun h => (hi h).elim) hK hPoint' with
+      ⟨Ki, hKi, _, hProp⟩
+    exact ⟨Ki, hKi, hProp⟩
+  · rintro ⟨K, hK, hProp⟩
+    rcases subGaussianConvert i .squarePoint (fun h => by cases h) hK hProp with
+      ⟨Kpoint, hKpoint, _, hPoint⟩
+    have hPoint' : SubGaussianSquarePoint μ X Kpoint := by
+      simpa [SubGaussianProperty] using hPoint
+    exact ⟨hPoint'.1, Kpoint, hKpoint, hPoint'⟩
+
+theorem isSubGaussian_iff_psiTwoNorm_finite
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ} :
+    IsSubGaussian μ X ↔ PsiTwoNorm μ X < ∞ := by
+  constructor
+  · rintro ⟨_, hPoint⟩
+    simpa [PsiTwoNorm] using
+      (psiTwoGauge_finite_iff (μ := μ) (X := X)).2 hPoint
+  · intro hNorm
+    have hGauge : PsiTwoGauge μ X < ∞ := by
+      simpa [PsiTwoNorm] using hNorm
+    rcases (psiTwoGauge_finite_iff (μ := μ) (X := X)).1 hGauge with
+      ⟨K, hK, hPoint⟩
+    exact ⟨hPoint.1, K, hK, hPoint⟩
+
+/-! An explicit universal version of the property-to-gauge half of the
+five-way characterization.  Keeping the numerical constant outside any
+instance-dependent existential is useful for source statements whose
+"absolute constant" quantifier must precede all random-variable data. -/
+theorem psiTwoGauge_le_of_property
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (i : SubGaussianPropertyKind) {K : ℝ}
+    (hK : 0 < K) (hProp : SubGaussianProperty μ X i K) :
+    PsiTwoGauge μ X ≤ ENNReal.ofReal ((4096 * Real.exp 1) * K) := by
+  rcases subGaussianToTail i hK hProp with
+    ⟨T, hT, hTbound, hTail⟩
+  rcases subGaussianFromTail .squarePoint (fun h => by cases h) hT hTail with
+    ⟨Kpoint, hKpoint, hKpointBound, hPoint⟩
+  have hAdmissible : PsiTwoAdmissible μ X (ENNReal.ofReal Kpoint) := by
+    refine ⟨hPoint.1, (ENNReal.ofReal_ne_zero_iff).2 hKpoint,
+      ENNReal.ofReal_ne_top, ?_, ?_⟩
+    · simpa [ENNReal.toReal_ofReal hKpoint.le] using hPoint.2.2.1
+    · simpa [ENNReal.toReal_ofReal hKpoint.le] using hPoint.2.2.2
+  have hGauge : PsiTwoGauge μ X ≤ ENNReal.ofReal Kpoint :=
+    sInf_le hAdmissible
+  have hScaled : 128 * Real.exp 1 * T ≤
+      (4096 * Real.exp 1) * K := by
+    have hmul := mul_le_mul_of_nonneg_left hTbound
+      (by positivity : 0 ≤ 128 * Real.exp 1)
+    calc
+      128 * Real.exp 1 * T ≤ 128 * Real.exp 1 * (16 * K) := hmul
+      _ ≤ (4096 * Real.exp 1) * K := by
+        nlinarith [mul_pos (Real.exp_pos 1) hK]
+  exact hGauge.trans (ENNReal.ofReal_mono (hKpointBound.trans hScaled))
+
 /-! A gauge-facing form of the five-way characterization.  Every one of the
     parameterized sub-Gaussian properties controls the exact `ψ₂` gauge up to
     one universal constant, and finite gauge is equivalent to each property
@@ -2455,38 +2826,13 @@ theorem psiTwoGaugeCharacterizations
     nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1)]
   refine ⟨C, hC, ?_, ?_⟩
   · intro i K hK hProp
-    rcases subGaussianToTail i hK hProp with
-      ⟨T, hT, hTbound, hTail⟩
-    rcases subGaussianFromTail hCenter .squarePoint hT hTail with
-      ⟨Kpoint, hKpoint, hKpointBound, hPoint⟩
-    have hAdmissible : PsiTwoAdmissible μ X (ENNReal.ofReal Kpoint) := by
-      have hKpoint0 : ENNReal.ofReal Kpoint ≠ 0 :=
-        (ENNReal.ofReal_ne_zero_iff).2 hKpoint
-      refine ⟨hPoint.1, hKpoint0, ENNReal.ofReal_ne_top, ?_, ?_⟩
-      · simpa [ENNReal.toReal_ofReal hKpoint.le] using hPoint.2.2.1
-      · simpa [ENNReal.toReal_ofReal hKpoint.le] using hPoint.2.2.2
-    have hGauge : PsiTwoGauge μ X ≤ ENNReal.ofReal Kpoint :=
-      sInf_le hAdmissible
-    have hScaled : 128 * Real.exp 1 * T ≤
-        (4096 * Real.exp 1) * K := by
-      have hmul := mul_le_mul_of_nonneg_left hTbound
-        (by positivity : 0 ≤ 128 * Real.exp 1)
-      calc
-        128 * Real.exp 1 * T ≤ 128 * Real.exp 1 * (16 * K) := hmul
-        _ ≤ (4096 * Real.exp 1) * K := by
-          nlinarith [mul_pos (Real.exp_pos 1) hK]
-    have hKpointC : Kpoint ≤ C * K := by
-      calc
-        Kpoint ≤ 128 * Real.exp 1 * T := hKpointBound
-        _ ≤ (4096 * Real.exp 1) * K := hScaled
-        _ = C * K := by rfl
-    exact hGauge.trans (ENNReal.ofReal_mono hKpointC)
+    simpa [C] using psiTwoGauge_le_of_property i hK hProp
   · intro i
     constructor
     · rintro ⟨K, hK, hProp⟩
       rcases subGaussianToTail i hK hProp with
         ⟨T, hT, hTbound, hTail⟩
-      rcases subGaussianFromTail hCenter .squarePoint hT hTail with
+      rcases subGaussianFromTail .squarePoint (fun h => by cases h) hT hTail with
         ⟨Kpoint, hKpoint, _, hPoint⟩
       exact (psiTwoGauge_finite_iff (μ := μ) (X := X)).2
         ⟨Kpoint, hKpoint, hPoint⟩
@@ -2495,7 +2841,7 @@ theorem psiTwoGaugeCharacterizations
         ⟨Kpoint, hKpoint, hPoint⟩
       rcases subGaussianToTail .squarePoint hKpoint hPoint with
         ⟨T, hT, _, hTail⟩
-      rcases subGaussianFromTail hCenter i hT hTail with
+      rcases subGaussianFromTail i (fun _ => hCenter) hT hTail with
         ⟨K, hK, _, hProp⟩
       exact ⟨K, hK, hProp⟩
 
@@ -2611,7 +2957,7 @@ theorem centeredSubGaussian
         _ ≤ 2 * Real.exp (-(t / 2) ^ 2 / T ^ 2) := hsource
         _ ≤ 2 * Real.exp (-t ^ 2 / Kc ^ 2) := hsource'
     
-  rcases subGaussianFromTail hCenter .squarePoint hKc hTailCenter with
+  rcases subGaussianFromTail .squarePoint (fun h => by cases h) hKc hTailCenter with
     ⟨K', hK', hK'c, hPoint⟩
   have hGaugeK' :
       PsiTwoGauge μ (fun ω => X ω - m) ≤ ENNReal.ofReal K' := by
@@ -3189,6 +3535,709 @@ theorem psiTwoGauge_eq_zero_iff_ae_eq_zero
     rw [psiTwoGauge_ae_congr hX measurable_const hZero]
     exact psiTwoGauge_zero
 
+/-- At every positive finite exact `ψ₂` gauge, the defining exponential-square
+bound is attained.  Fatou's lemma closes the infimum over larger admissible
+scales. -/
+theorem psiTwoGauge_squarePoint_of_pos
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hX : Measurable X) (hFinite : PsiTwoGauge μ X < ∞)
+    (hGaugePos : 0 < PsiTwoGauge μ X) :
+    SubGaussianSquarePoint μ X (PsiTwoGauge μ X).toReal := by
+  have hGaugeTop : PsiTwoGauge μ X ≠ ∞ := ne_of_lt hFinite
+  have hGaugeZero : PsiTwoGauge μ X ≠ 0 := ne_of_gt hGaugePos
+  have hGaugeRealPos : 0 < (PsiTwoGauge μ X).toReal :=
+    ENNReal.toReal_pos hGaugeZero hGaugeTop
+  let K : ℕ → ℝ := fun n =>
+    (PsiTwoGauge μ X).toReal + 1 / ((n : ℝ) + 1)
+  have hKPos : ∀ n, 0 < K n := by
+    intro n
+    dsimp [K]
+    positivity
+  have hGaugeLt : ∀ n, PsiTwoGauge μ X < ENNReal.ofReal (K n) := by
+    intro n
+    rw [← ENNReal.ofReal_toReal hGaugeTop]
+    exact (ENNReal.ofReal_lt_ofReal_iff (hKPos n)).2 (by
+      dsimp [K]
+      have heps : 0 < 1 / ((n : ℝ) + 1) := by positivity
+      linarith)
+  have hAd : ∀ n, PsiTwoAdmissible μ X (ENNReal.ofReal (K n)) := by
+    intro n
+    have hlt := hGaugeLt n
+    unfold PsiTwoGauge at hlt
+    rcases (sInf_lt_iff.mp hlt) with ⟨s, hs, hsK⟩
+    exact psiTwoAdmissible_mono hs hsK.le
+      ((ENNReal.ofReal_ne_zero_iff).2 (hKPos n)) ENNReal.ofReal_ne_top
+  have hPoint : ∀ n, SubGaussianSquarePoint μ X (K n) := by
+    intro n
+    have h := hAd n
+    refine ⟨h.1, hKPos n, ?_, ?_⟩
+    · simpa [ENNReal.toReal_ofReal (hKPos n).le] using h.2.2.2.1
+    · simpa [ENNReal.toReal_ofReal (hKPos n).le] using h.2.2.2.2
+  let f : ℕ → Ω → ℝ≥0∞ := fun n ω =>
+    ENNReal.ofReal (Real.exp (X ω ^ 2 / (K n) ^ 2))
+  let F : Ω → ℝ≥0∞ := fun ω =>
+    ENNReal.ofReal
+      (Real.exp (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2))
+  have hK_tendsto : Tendsto K atTop
+      (nhds (PsiTwoGauge μ X).toReal) := by
+    dsimp [K]
+    simpa using tendsto_const_nhds.add
+      (tendsto_one_div_add_atTop_nhds_zero_nat :
+        Tendsto (fun n : ℕ => 1 / ((n : ℝ) + 1)) atTop (nhds 0))
+  have hfMeas : ∀ n, Measurable (f n) := by
+    intro n
+    dsimp [f]
+    fun_prop
+  have hfTendsto : ∀ ω, Tendsto (fun n => f n ω) atTop (nhds (F ω)) := by
+    intro ω
+    have hrealcont : ContinuousAt
+        (fun k : ℝ => Real.exp (X ω ^ 2 / k ^ 2))
+        (PsiTwoGauge μ X).toReal := by
+      fun_prop (disch := positivity)
+    have hcont : ContinuousAt
+        (fun k : ℝ => ENNReal.ofReal (Real.exp (X ω ^ 2 / k ^ 2)))
+        (PsiTwoGauge μ X).toReal := by
+      simpa only [Function.comp_apply] using
+        ENNReal.continuous_ofReal.continuousAt.comp hrealcont
+    exact hcont.tendsto.comp hK_tendsto
+  have hFatou : (∫⁻ ω, F ω ∂μ) ≤
+      liminf (fun n => ∫⁻ ω, f n ω ∂μ) atTop := by
+    have h := lintegral_liminf_le (μ := μ) hfMeas
+    simpa only [(hfTendsto _).liminf_eq] using h
+  have hLinBound : ∀ n, (∫⁻ ω, f n ω ∂μ) ≤ ENNReal.ofReal 2 := by
+    intro n
+    rw [← ofReal_integral_eq_lintegral_ofReal (hPoint n).2.2.1
+      (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))]
+    exact ENNReal.ofReal_le_ofReal (hPoint n).2.2.2
+  have hFBound : (∫⁻ ω, F ω ∂μ) ≤ ENNReal.ofReal 2 :=
+    hFatou.trans (Filter.liminf_le_of_frequently_le'
+      (Filter.Frequently.of_forall hLinBound))
+  have hTargetInt : Integrable
+      (fun ω => Real.exp
+        (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2)) μ := by
+    refine ⟨?_, ?_⟩
+    · fun_prop
+    · rw [hasFiniteIntegral_iff_enorm]
+      have hEq : (fun ω =>
+          ‖Real.exp (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2)‖ₑ) = F := by
+        funext ω
+        simpa [F] using (ofReal_norm_eq_enorm
+          (Real.exp
+            (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2))).symm
+      rw [hEq]
+      exact hFBound.trans_lt ENNReal.ofReal_lt_top
+  refine ⟨hX, hGaugeRealPos, hTargetInt, ?_⟩
+  rw [integral_eq_lintegral_of_nonneg_ae
+    (Filter.Eventually.of_forall (fun ω => (Real.exp_pos _).le))
+    hTargetInt.aestronglyMeasurable]
+  change (∫⁻ ω, F ω ∂μ).toReal ≤ 2
+  exact ENNReal.toReal_le_of_le_ofReal (by positivity) hFBound
+
+/-! Section 2.5 body display following Equation (2.16).  Unlike
+`SubGaussianSquarePoint`, this statement retains the source's zero-gauge
+variable and totalizes its displayed quotient in the standard Lean way. -/
+theorem psiTwoGauge_squareMoment
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hX : Measurable X) (hFinite : PsiTwoGauge μ X < ∞) :
+    Integrable
+        (fun ω => Real.exp
+          (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2)) μ ∧
+      (∫ ω, Real.exp
+        (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2) ∂μ) ≤ 2 := by
+  by_cases hGaugeZero : PsiTwoGauge μ X = 0
+  · have hXZero : X =ᵐ[μ] (fun _ω : Ω => (0 : ℝ)) :=
+      (psiTwoGauge_eq_zero_iff_ae_eq_zero hX).mp hGaugeZero
+    have hFun : (fun ω => Real.exp
+        (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2)) =ᵐ[μ]
+        (fun _ω : Ω => (1 : ℝ)) := by
+      filter_upwards [hXZero] with ω hω
+      simp [hω, hGaugeZero]
+    have hInt : Integrable (fun ω => Real.exp
+        (X ω ^ 2 / (PsiTwoGauge μ X).toReal ^ 2)) μ :=
+      (integrable_const (1 : ℝ)).congr hFun.symm
+    refine ⟨hInt, ?_⟩
+    rw [integral_congr_ae hFun]
+    simp
+  · have hGaugePos : 0 < PsiTwoGauge μ X :=
+      bot_lt_iff_ne_bot.mpr hGaugeZero
+    have hPoint := psiTwoGauge_squarePoint_of_pos hX hFinite hGaugePos
+    exact ⟨hPoint.2.2.1, hPoint.2.2.2⟩
+
+/-! Equation (2.14): the exact `ψ₂` gauge gives a sub-Gaussian tail with
+one universal numerical constant.  The factor two in the scale corresponds to
+the source exponent constant `c = 1 / 4`; it also makes the infimum-based
+definition usable without assuming that the infimum is attained. -/
+theorem psiTwoGaugeToTail
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hX : Measurable X) (hFinite : PsiTwoGauge μ X < ∞)
+    {t : ℝ} (ht : 0 ≤ t) :
+    μ.real {ω | |X ω| ≥ t} ≤
+      2 * Real.exp
+        (-t ^ 2 / (2 * (PsiTwoGauge μ X).toReal) ^ 2) := by
+  by_cases hGaugeZero : PsiTwoGauge μ X = 0
+  · by_cases htZero : t = 0
+    · subst t
+      have hset : {ω | |X ω| ≥ (0 : ℝ)} = Set.univ := by
+        ext ω
+        simp [abs_nonneg]
+      rw [hset]
+      simp [hGaugeZero]
+    · have hXZero : X =ᵐ[μ] (fun _ω : Ω => (0 : ℝ)) :=
+        (psiTwoGauge_eq_zero_iff_ae_eq_zero hX).mp hGaugeZero
+      have hEvent : {ω | |X ω| ≥ t} =ᵐ[μ] (∅ : Set Ω) := by
+        filter_upwards [hXZero] with ω hω
+        change (t ≤ |X ω|) = False
+        rw [hω, abs_zero]
+        exact propext (iff_false_intro
+          (not_le_of_gt (lt_of_le_of_ne ht (Ne.symm htZero))))
+      rw [Measure.real_def, measure_congr hEvent]
+      simp only [measure_empty, ENNReal.toReal_zero]
+      positivity
+  · let u : ℝ≥0∞ := 2 * PsiTwoGauge μ X
+    have hu0 : u ≠ 0 := by
+      dsimp [u]
+      exact mul_ne_zero (by norm_num) hGaugeZero
+    have huTop : u ≠ ∞ := by
+      dsimp [u]
+      exact ENNReal.mul_ne_top (by norm_num) (ne_of_lt hFinite)
+    have hGaugeLt : PsiTwoGauge μ X < u := by
+      dsimp [u]
+      simpa [mul_comm] using ENNReal.mul_lt_mul_right hGaugeZero
+        (ne_of_lt hFinite) (by norm_num : (1 : ℝ≥0∞) < 2)
+    have huAdmissible : PsiTwoAdmissible μ X u := by
+      unfold PsiTwoGauge at hGaugeLt
+      rcases (sInf_lt_iff.mp hGaugeLt) with ⟨s, hs, hsu⟩
+      exact psiTwoAdmissible_mono hs hsu.le hu0 huTop
+    have huPos : 0 < u.toReal := ENNReal.toReal_pos hu0 huTop
+    have hPoint : SubGaussianSquarePoint μ X u.toReal :=
+      ⟨huAdmissible.1, huPos, huAdmissible.2.2.2.1,
+        huAdmissible.2.2.2.2⟩
+    have hTail := squareMGFToTail hPoint.1 hPoint.2.1
+      ⟨hPoint.2.2.1, hPoint.2.2.2⟩ ht
+    simpa [u, ENNReal.toReal_mul] using hTail
+
+/-! Equation (2.15): finite exact `ψ₂` gauge controls every `Lᵖ` moment
+with one universal numerical constant. -/
+theorem psiTwoGaugeToLpMomentGrowth
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hX : Measurable X) (hFinite : PsiTwoGauge μ X < ∞) :
+    LpMomentGrowth μ X
+      (16 * Real.exp 1 * (PsiTwoGauge μ X).toReal) := by
+  by_cases hGaugeZero : PsiTwoGauge μ X = 0
+  · have hXZero : X =ᵐ[μ] (fun _ω : Ω => (0 : ℝ)) :=
+      (psiTwoGauge_eq_zero_iff_ae_eq_zero hX).mp hGaugeZero
+    refine ⟨hX.aemeasurable, ?_⟩
+    intro p hp
+    have hp0 : p ≠ 0 := ne_of_gt (lt_of_lt_of_le zero_lt_one hp)
+    have hPowZero : (fun ω => |X ω| ^ p) =ᵐ[μ]
+        (fun _ω : Ω => (0 : ℝ)) := by
+      filter_upwards [hXZero] with ω hω
+      simp [hω, hp0]
+    have hInt : Integrable (fun ω => |X ω| ^ p) μ := by
+      exact (integrable_zero Ω ℝ μ).congr hPowZero.symm
+    refine ⟨hInt, ?_⟩
+    rw [integral_congr_ae hPowZero]
+    simp [hGaugeZero, hp0]
+  · have hGaugeRealPos : 0 < (PsiTwoGauge μ X).toReal :=
+      ENNReal.toReal_pos hGaugeZero (ne_of_lt hFinite)
+    have hTail : ∀ t : ℝ, 0 ≤ t →
+        μ.real {ω | |X ω| ≥ t} ≤
+          2 * Real.exp
+            (-t ^ 2 / (2 * (PsiTwoGauge μ X).toReal) ^ 2) := by
+      intro t ht
+      exact psiTwoGaugeToTail hX hFinite ht
+    have hGrowth := tailToLpMomentGrowth hX (by positivity)
+      (K := 2 * (PsiTwoGauge μ X).toReal) hTail
+    convert hGrowth using 1 <;> ring
+
+/-! Equation (2.16): a centered finite-gauge variable has a global linear MGF
+bound with one explicit universal coefficient. -/
+theorem psiTwoGaugeToMGF
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hX : Measurable X) (hFinite : PsiTwoGauge μ X < ∞)
+    (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0)
+    (lam : ℝ) :
+    Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
+      (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
+        Real.exp
+          ((128 * Real.exp 1) ^ 2 * lam ^ 2 *
+            (PsiTwoGauge μ X).toReal ^ 2) := by
+  by_cases hGaugeZero : PsiTwoGauge μ X = 0
+  · have hXZero : X =ᵐ[μ] (fun _ω : Ω => (0 : ℝ)) :=
+      (psiTwoGauge_eq_zero_iff_ae_eq_zero hX).mp hGaugeZero
+    have hFun : (fun ω => Real.exp (lam * X ω)) =ᵐ[μ]
+        (fun _ω : Ω => (1 : ℝ)) := by
+      filter_upwards [hXZero] with ω hω
+      simp [hω]
+    have hInt : Integrable (fun ω => Real.exp (lam * X ω)) μ :=
+      (integrable_const (1 : ℝ)).congr hFun.symm
+    refine ⟨hInt, ?_⟩
+    rw [integral_congr_ae hFun]
+    simp [hGaugeZero]
+  · have hGaugePos : 0 < PsiTwoGauge μ X :=
+      bot_lt_iff_ne_bot.mpr hGaugeZero
+    have hPoint := psiTwoGauge_squarePoint_of_pos hX hFinite hGaugePos
+    have hTail := subGaussianSquarePointToTail hPoint
+    rcases subGaussianFromTail .linearMGF (fun _ => hCenter)
+        hPoint.2.1 hTail with ⟨K, hK, hKBound, hLinear⟩
+    have hLam := hLinear.2.2.2.2 lam
+    refine ⟨hLam.1, hLam.2.trans ?_⟩
+    apply Real.exp_le_exp.mpr
+    have hSq : K ^ 2 ≤
+        (128 * Real.exp 1 * (PsiTwoGauge μ X).toReal) ^ 2 :=
+      (sq_le_sq₀ hK.le (by positivity)).2 hKBound
+    calc
+      K ^ 2 * lam ^ 2 ≤
+          (128 * Real.exp 1 * (PsiTwoGauge μ X).toReal) ^ 2 *
+            lam ^ 2 := mul_le_mul_of_nonneg_right hSq (sq_nonneg lam)
+      _ = (128 * Real.exp 1) ^ 2 * lam ^ 2 *
+          (PsiTwoGauge μ X).toReal ^ 2 := by ring
+
+/-! Proposition 2.6.1 in its intrinsic `ψ₂`-norm form.  The absolute
+constant is quantified before every family and probability space.  The proof
+uses the exact-gauge MGF estimate above, independence, and a separate
+zero-energy branch, so no externally chosen scale appears in the statement. -/
+theorem independentCenteredSubGaussianSumPsiTwo :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : ι → Ω → ℝ},
+        (∀ i, IsSubGaussian μ (X i)) →
+        (∀ i, Integrable (X i) μ ∧ (∫ ω, X i ω ∂μ) = 0) →
+        iIndepFun X μ →
+          IsSubGaussian μ (fun ω => ∑ i, X i ω) ∧
+            (PsiTwoNorm μ (fun ω => ∑ i, X i ω)).toReal ^ 2 ≤
+              C * ∑ i, (PsiTwoNorm μ (X i)).toReal ^ 2 := by
+  let A : ℝ := 128 * Real.exp 1
+  let B : ℝ := 4096 * Real.exp 1
+  let C : ℝ := (B * A) ^ 2
+  have hAone : 1 ≤ A := by
+    dsimp [A]
+    nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1)]
+  have hBone : 1 ≤ B := by
+    dsimp [B]
+    nlinarith [Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1)]
+  have hBAone : 1 ≤ B * A := by
+    have hprod : 0 ≤ (B - 1) * (A - 1) :=
+      mul_nonneg (sub_nonneg.mpr hBone) (sub_nonneg.mpr hAone)
+    nlinarith
+  have hCone : 1 ≤ C := by
+    dsimp [C]
+    nlinarith [sq_nonneg (B * A)]
+  refine ⟨C, hCone, ?_⟩
+  intro ι Ω instι instΩ μ instμ X hSub hCenter hIndep
+  let S : Ω → ℝ := fun ω => ∑ i, X i ω
+  let E : ℝ := ∑ i, (PsiTwoGauge μ (X i)).toReal ^ 2
+  have hXMeas : ∀ i, Measurable (X i) := fun i => (hSub i).1
+  have hXFinite : ∀ i, PsiTwoGauge μ (X i) < ∞ := by
+    intro i
+    exact (psiTwoGauge_finite_iff (μ := μ) (X := X i)).2 (hSub i).2
+  have hEnonneg : 0 ≤ E := by
+    dsimp [E]
+    exact Finset.sum_nonneg fun i _ => sq_nonneg _
+  have hSMeas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ fun i _ => hXMeas i
+  have hSInt : Integrable S μ := by
+    dsimp [S]
+    simpa only [Finset.sum_apply] using
+      (integrable_finset_sum (μ := μ) Finset.univ
+        (fun i _ => (hCenter i).1))
+  have hSMean : (∫ ω, S ω ∂μ) = 0 := by
+    dsimp [S]
+    rw [integral_finset_sum]
+    · exact Finset.sum_eq_zero fun i _ => (hCenter i).2
+    · exact fun i _ => (hCenter i).1
+  by_cases hEzero : E = 0
+  · have hGaugeZero : ∀ i, PsiTwoGauge μ (X i) = 0 := by
+      intro i
+      have hSqZero : (PsiTwoGauge μ (X i)).toReal ^ 2 = 0 :=
+        (Finset.sum_eq_zero_iff_of_nonneg
+          (fun j _ => sq_nonneg (PsiTwoGauge μ (X j)).toReal)).mp hEzero i
+            (Finset.mem_univ i)
+      have hRealZero : (PsiTwoGauge μ (X i)).toReal = 0 := by
+        nlinarith [sq_nonneg (PsiTwoGauge μ (X i)).toReal]
+      exact ((ENNReal.toReal_eq_zero_iff _).mp hRealZero).resolve_right
+        (ne_of_lt (hXFinite i))
+    have hXZero : ∀ i, X i =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := by
+      intro i
+      exact (psiTwoGauge_eq_zero_iff_ae_eq_zero (hXMeas i)).mp (hGaugeZero i)
+    have hAllZero : ∀ᵐ ω ∂μ, ∀ i ∈ (Finset.univ : Finset ι), X i ω = 0 := by
+      rw [Filter.eventually_all_finset]
+      intro i _
+      exact hXZero i
+    have hSZero : S =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := by
+      filter_upwards [hAllZero] with ω hω
+      simp [S, hω]
+    have hSGaugeZero : PsiTwoGauge μ S = 0 :=
+      (psiTwoGauge_eq_zero_iff_ae_eq_zero hSMeas).2 hSZero
+    have hSSub : IsSubGaussian μ S := by
+      refine ⟨hSMeas, ?_⟩
+      exact (psiTwoGauge_finite_iff (μ := μ) (X := S)).1 (by
+        rw [hSGaugeZero]
+        simp)
+    refine ⟨by simpa [S] using hSSub, ?_⟩
+    simp [PsiTwoNorm, S, hSGaugeZero, E, hEzero]
+  · have hEpos : 0 < E := lt_of_le_of_ne hEnonneg (Ne.symm hEzero)
+    have hSExp (lam : ℝ) :
+        Integrable (fun ω => Real.exp (lam * S ω)) μ := by
+      have h := hIndep.integrable_exp_mul_sum hXMeas (s := Finset.univ)
+        (fun i _ => by
+          simpa using (psiTwoGaugeToMGF (hXMeas i) (hXFinite i)
+            (hCenter i) lam).1)
+      simpa [S] using h
+    have hSMGF (lam : ℝ) :
+        (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
+          Real.exp (A ^ 2 * lam ^ 2 * E) := by
+      have hFactor (i : ι) :
+          (∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ) ≤
+            Real.exp (A ^ 2 * lam ^ 2 *
+              (PsiTwoGauge μ (X i)).toReal ^ 2) := by
+        simpa [A] using (psiTwoGaugeToMGF (hXMeas i) (hXFinite i)
+          (hCenter i) lam).2
+      have hProd :
+          (∏ i, ∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ) ≤
+            ∏ i, Real.exp (A ^ 2 * lam ^ 2 *
+              (PsiTwoGauge μ (X i)).toReal ^ 2) := by
+        apply Finset.prod_le_prod
+        · intro i _
+          exact integral_nonneg fun ω => Real.exp_nonneg _
+        · intro i _
+          exact hFactor i
+      have hFactorization :=
+        NumStability.HDP.Scalar.IndependentSums.Hoeffding.mgfIndependentSum
+          (μ := μ) (X := X) lam (fun _ => (1 : ℝ)) hIndep
+          (fun i => by
+            simpa using (psiTwoGaugeToMGF (hXMeas i) (hXFinite i)
+              (hCenter i) lam).1)
+      calc
+        (∫ ω, Real.exp (lam * S ω) ∂μ) =
+            ∏ i, ∫ ω, Real.exp (lam * (1 * X i ω)) ∂μ := by
+              simpa [S] using hFactorization
+        _ ≤ ∏ i, Real.exp (A ^ 2 * lam ^ 2 *
+            (PsiTwoGauge μ (X i)).toReal ^ 2) := hProd
+        _ = Real.exp (A ^ 2 * lam ^ 2 * E) := by
+          rw [← Real.exp_sum]
+          congr 1
+          dsimp [E]
+          rw [Finset.mul_sum]
+    have hKpos : 0 < A * Real.sqrt E :=
+      mul_pos (lt_of_lt_of_le zero_lt_one hAone) (Real.sqrt_pos.2 hEpos)
+    have hSLinear : SubGaussianLinearMGF μ S (A * Real.sqrt E) := by
+      refine ⟨hSMeas, hKpos, hSInt, hSMean, ?_⟩
+      intro lam
+      refine ⟨hSExp lam, ?_⟩
+      have hEsqrt : (Real.sqrt E) ^ 2 = E := Real.sq_sqrt hEpos.le
+      convert hSMGF lam using 1
+      rw [mul_pow, hEsqrt]
+      ring
+    have hGaugeBound :
+        PsiTwoGauge μ S ≤ ENNReal.ofReal (B * (A * Real.sqrt E)) := by
+      simpa [B] using
+        (psiTwoGauge_le_of_property .linearMGF hKpos hSLinear)
+    have hSFinite : PsiTwoGauge μ S < ∞ :=
+      hGaugeBound.trans_lt ENNReal.ofReal_lt_top
+    have hGaugeRealBound :
+        (PsiTwoGauge μ S).toReal ≤ B * (A * Real.sqrt E) := by
+      exact ENNReal.toReal_le_of_le_ofReal (by positivity) hGaugeBound
+    have hSqBound :
+        (PsiTwoGauge μ S).toReal ^ 2 ≤
+          (B * (A * Real.sqrt E)) ^ 2 :=
+      (sq_le_sq₀ ENNReal.toReal_nonneg (by positivity)).2 hGaugeRealBound
+    have hSSub : IsSubGaussian μ S := by
+      refine ⟨hSMeas, ?_⟩
+      exact (psiTwoGauge_finite_iff (μ := μ) (X := S)).1 hSFinite
+    refine ⟨by simpa [S] using hSSub, ?_⟩
+    have hEsqrt : (Real.sqrt E) ^ 2 = E := Real.sq_sqrt hEpos.le
+    change (PsiTwoGauge μ S).toReal ^ 2 ≤ C * E
+    calc
+      (PsiTwoGauge μ S).toReal ^ 2 ≤
+          (B * (A * Real.sqrt E)) ^ 2 := hSqBound
+      _ = C * E := by
+        dsimp [C]
+        rw [show B * (A * Real.sqrt E) = (B * A) * Real.sqrt E by ring,
+          mul_pow, hEsqrt]
+
+/-! Theorem 2.6.2 in its intrinsic `ψ₂`-norm form.  One positive absolute
+constant is quantified before every probability space and family.  The
+zero-energy and zero-sum-gauge branches retain the source's universal domain
+while making the displayed real quotient total in Lean. -/
+theorem independentCenteredSubGaussianTailPsiTwo :
+    ∃ c : ℝ, 0 < c ∧
+      ∀ {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : ι → Ω → ℝ},
+        (∀ i, IsSubGaussian μ (X i)) →
+        (∀ i, Integrable (X i) μ ∧ (∫ ω, X i ω ∂μ) = 0) →
+        iIndepFun X μ →
+        ∀ {t : ℝ}, 0 ≤ t →
+          μ.real {ω | |∑ i, X i ω| ≥ t} ≤
+            2 * Real.exp
+              (-(c * t ^ 2 /
+                ∑ i, (PsiTwoNorm μ (X i)).toReal ^ 2)) := by
+  rcases independentCenteredSubGaussianSumPsiTwo with ⟨C, hC, hSum⟩
+  have hCpos : 0 < C := lt_of_lt_of_le zero_lt_one hC
+  let c : ℝ := 1 / (4 * C)
+  have hc : 0 < c := by
+    dsimp [c]
+    positivity
+  refine ⟨c, hc, ?_⟩
+  intro ι Ω instι instΩ μ instμ X hSub hCenter hIndep t ht
+  let S : Ω → ℝ := fun ω => ∑ i, X i ω
+  let E : ℝ := ∑ i, (PsiTwoNorm μ (X i)).toReal ^ 2
+  obtain ⟨hSSub, hSBound⟩ := hSum hSub hCenter hIndep
+  have hSSub' : IsSubGaussian μ S := by
+    simpa [S] using hSSub
+  have hSFinite : PsiTwoGauge μ S < ∞ := by
+    have hNormFinite := (isSubGaussian_iff_psiTwoNorm_finite
+      (μ := μ) (X := S)).1 hSSub'
+    simpa [PsiTwoNorm] using hNormFinite
+  have hSBound' : (PsiTwoGauge μ S).toReal ^ 2 ≤ C * E := by
+    simpa [PsiTwoNorm, S, E] using hSBound
+  have hEnonneg : 0 ≤ E := by
+    dsimp [E]
+    exact Finset.sum_nonneg fun i _ => sq_nonneg _
+  have hProb (s : Set Ω) : μ.real s ≤ 1 := by
+    rw [Measure.real_def]
+    exact ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+  by_cases hEzero : E = 0
+  · calc
+      μ.real {ω | |∑ i, X i ω| ≥ t} ≤ 1 := hProb _
+      _ ≤ 2 * Real.exp
+          (-(c * t ^ 2 /
+            ∑ i, (PsiTwoNorm μ (X i)).toReal ^ 2)) := by
+        simp [E, hEzero]
+  · have hEpos : 0 < E := lt_of_le_of_ne hEnonneg (Ne.symm hEzero)
+    by_cases hGaugeZero : PsiTwoGauge μ S = 0
+    · by_cases htZero : t = 0
+      · subst t
+        calc
+          μ.real {ω | |∑ i, X i ω| ≥ 0} ≤ 1 := hProb _
+          _ ≤ 2 * Real.exp
+              (-(c * 0 ^ 2 /
+                ∑ i, (PsiTwoNorm μ (X i)).toReal ^ 2)) := by norm_num
+      · have hSZero : S =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) :=
+          (psiTwoGauge_eq_zero_iff_ae_eq_zero hSSub'.1).mp hGaugeZero
+        have hEvent : {ω | |S ω| ≥ t} =ᵐ[μ] (∅ : Set Ω) := by
+          filter_upwards [hSZero] with ω hω
+          change (t ≤ |S ω|) = False
+          rw [hω, abs_zero]
+          exact propext (iff_false_intro
+            (not_le_of_gt (lt_of_le_of_ne ht (Ne.symm htZero))))
+        have hZeroProb : μ.real {ω | |S ω| ≥ t} = 0 := by
+          rw [Measure.real_def, measure_congr hEvent]
+          simp
+        change μ.real {ω | |S ω| ≥ t} ≤
+          2 * Real.exp (-(c * t ^ 2 / E))
+        rw [hZeroProb]
+        positivity
+    · have hGaugeRealPos : 0 < (PsiTwoGauge μ S).toReal :=
+        ENNReal.toReal_pos hGaugeZero (ne_of_lt hSFinite)
+      have hTail := psiTwoGaugeToTail hSSub'.1 hSFinite ht
+      have hDenom :
+          (2 * (PsiTwoGauge μ S).toReal) ^ 2 ≤ 4 * C * E := by
+        nlinarith [hSBound']
+      have hRatio :
+          c * t ^ 2 / E ≤
+            t ^ 2 / (2 * (PsiTwoGauge μ S).toReal) ^ 2 := by
+        calc
+          c * t ^ 2 / E = t ^ 2 / (4 * C * E) := by
+            dsimp [c]
+            field_simp [ne_of_gt hCpos, ne_of_gt hEpos]
+          _ ≤ t ^ 2 / (2 * (PsiTwoGauge μ S).toReal) ^ 2 := by
+            exact div_le_div_of_nonneg_left (sq_nonneg t) (by positivity) hDenom
+      change μ.real {ω | |S ω| ≥ t} ≤
+        2 * Real.exp (-(c * t ^ 2 / E))
+      calc
+        μ.real {ω | |S ω| ≥ t} ≤
+            2 * Real.exp
+              (-t ^ 2 / (2 * (PsiTwoGauge μ S).toReal) ^ 2) := hTail
+        _ ≤ 2 * Real.exp (-(c * t ^ 2 / E)) := by
+          apply mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) (by norm_num)
+          calc
+            -t ^ 2 / (2 * (PsiTwoGauge μ S).toReal) ^ 2 =
+                -(t ^ 2 / (2 * (PsiTwoGauge μ S).toReal) ^ 2) := by ring
+            _ ≤ -(c * t ^ 2 / E) := neg_le_neg hRatio
+
+/-! The largest intrinsic `ψ₂` norm in a nonempty finite family, in the
+real-valued form used by Theorem 2.6.3. -/
+noncomputable def psiTwoNormMax
+    {ι Ω : Type*} [Fintype ι] [Nonempty ι] [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : ι → Ω → ℝ) : ℝ :=
+  Finset.univ.sup' Finset.univ_nonempty
+    (fun i => (PsiTwoNorm μ (X i)).toReal)
+
+theorem psiTwoNorm_toReal_le_max
+    {ι Ω : Type*} [Fintype ι] [Nonempty ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : ι → Ω → ℝ} (i : ι) :
+    (PsiTwoNorm μ (X i)).toReal ≤ psiTwoNormMax μ X := by
+  exact Finset.le_sup' (fun j => (PsiTwoNorm μ (X j)).toReal)
+    (Finset.mem_univ i)
+
+theorem psiTwoNormMax_nonneg
+    {ι Ω : Type*} [Fintype ι] [Nonempty ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} {X : ι → Ω → ℝ} :
+    0 ≤ psiTwoNormMax μ X := by
+  let i : ι := Classical.choice inferInstance
+  exact le_trans ENNReal.toReal_nonneg (psiTwoNorm_toReal_le_max (μ := μ) (X := X) i)
+
+/-! Theorem 2.6.3 in its intrinsic weighted `ψ₂`-norm form.  The nonempty
+index hypothesis matches the source's implicit positive integer `N`, and the
+zero weighted-scale branches retain every coefficient vector and threshold. -/
+theorem independentWeightedCenteredSubGaussianTailPsiTwo :
+    ∃ c : ℝ, 0 < c ∧
+      ∀ {ι Ω : Type*} [Fintype ι] [Nonempty ι] [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : ι → Ω → ℝ},
+        (∀ i, IsSubGaussian μ (X i)) →
+        (∀ i, Integrable (X i) μ ∧ (∫ ω, X i ω ∂μ) = 0) →
+        iIndepFun X μ →
+        ∀ (a : ι → ℝ) {t : ℝ}, 0 ≤ t →
+          μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+            2 * Real.exp
+              (-(c * t ^ 2 /
+                ((psiTwoNormMax μ X) ^ 2 * ∑ i, a i ^ 2))) := by
+  rcases independentCenteredSubGaussianTailPsiTwo with ⟨c, hc, hTail⟩
+  refine ⟨c, hc, ?_⟩
+  intro ι Ω instι instNonempty instΩ μ instμ X hSub hCenter hIndep a t ht
+  let Y : ι → Ω → ℝ := fun i ω => a i * X i ω
+  let S : Ω → ℝ := fun ω => ∑ i, Y i ω
+  let K : ℝ := psiTwoNormMax μ X
+  let A : ℝ := ∑ i, a i ^ 2
+  let E : ℝ := ∑ i, (PsiTwoNorm μ (Y i)).toReal ^ 2
+  let D : ℝ := K ^ 2 * A
+  have hYSub : ∀ i, IsSubGaussian μ (Y i) := by
+    intro i
+    apply (isSubGaussian_iff_psiTwoNorm_finite (μ := μ) (X := Y i)).2
+    by_cases hai : a i = 0
+    · simp [Y, hai, PsiTwoNorm, psiTwoGauge_zero]
+    · have hXFinite :=
+        (isSubGaussian_iff_psiTwoNorm_finite (μ := μ) (X := X i)).1 (hSub i)
+      rw [PsiTwoNorm, show Y i = (fun ω => a i * X i ω) by rfl,
+        psiTwoGauge_smul_of_ne_zero hai]
+      exact ENNReal.mul_lt_top ENNReal.ofReal_lt_top (by
+        simpa [PsiTwoNorm] using hXFinite)
+  have hYCenter : ∀ i, Integrable (Y i) μ ∧ (∫ ω, Y i ω ∂μ) = 0 := by
+    intro i
+    refine ⟨by simpa [Y] using (hCenter i).1.const_mul (a i), ?_⟩
+    simp [Y, integral_const_mul, (hCenter i).2]
+  have hIndepY : iIndepFun Y μ := by
+    have h := hIndep.comp (fun i x => a i * x) (fun i => by fun_prop)
+    simpa [Y, Function.comp_def] using h
+  have hYNorm (i : ι) :
+      (PsiTwoNorm μ (Y i)).toReal =
+        |a i| * (PsiTwoNorm μ (X i)).toReal := by
+    by_cases hai : a i = 0
+    · simp [Y, hai, PsiTwoNorm, psiTwoGauge_zero]
+    · rw [PsiTwoNorm, show Y i = (fun ω => a i * X i ω) by rfl,
+        psiTwoGauge_smul_of_ne_zero hai, ENNReal.toReal_mul,
+        ENNReal.toReal_ofReal (abs_nonneg (a i))]
+      rfl
+  have hKnonneg : 0 ≤ K := by
+    simpa [K] using (psiTwoNormMax_nonneg (μ := μ) (X := X))
+  have hEnonneg : 0 ≤ E := by
+    dsimp [E]
+    exact Finset.sum_nonneg fun i _ => sq_nonneg _
+  have hAnonneg : 0 ≤ A := by
+    dsimp [A]
+    exact Finset.sum_nonneg fun i _ => sq_nonneg _
+  have hDnonneg : 0 ≤ D := mul_nonneg (sq_nonneg K) hAnonneg
+  have hED : E ≤ D := by
+    dsimp [E, D, A]
+    calc
+      ∑ i, (PsiTwoNorm μ (Y i)).toReal ^ 2 ≤
+          ∑ i, K ^ 2 * a i ^ 2 := by
+        apply Finset.sum_le_sum
+        intro i _
+        have hi : (PsiTwoNorm μ (X i)).toReal ≤ K := by
+          simpa [K] using (psiTwoNorm_toReal_le_max (μ := μ) (X := X) i)
+        have hsq : (PsiTwoNorm μ (X i)).toReal ^ 2 ≤ K ^ 2 := by
+          nlinarith [ENNReal.toReal_nonneg (a := PsiTwoNorm μ (X i))]
+        calc
+          (PsiTwoNorm μ (Y i)).toReal ^ 2 =
+              a i ^ 2 * (PsiTwoNorm μ (X i)).toReal ^ 2 := by
+            rw [hYNorm, mul_pow, sq_abs]
+          _ ≤ a i ^ 2 * K ^ 2 :=
+            mul_le_mul_of_nonneg_left hsq (sq_nonneg (a i))
+          _ = K ^ 2 * a i ^ 2 := by ring
+      _ = K ^ 2 * ∑ i, a i ^ 2 := by rw [Finset.mul_sum]
+  have hProb (s : Set Ω) : μ.real s ≤ 1 := by
+    rw [Measure.real_def]
+    exact ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+  change μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+    2 * Real.exp (-(c * t ^ 2 / D))
+  by_cases hDzero : D = 0
+  · calc
+      μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤ 1 := hProb _
+      _ ≤ 2 * Real.exp (-(c * t ^ 2 / D)) := by simp [hDzero]
+  · have hDpos : 0 < D := lt_of_le_of_ne hDnonneg (Ne.symm hDzero)
+    by_cases hEzero : E = 0
+    · have hYFinite : ∀ i, PsiTwoGauge μ (Y i) < ∞ := by
+        intro i
+        have := (isSubGaussian_iff_psiTwoNorm_finite
+          (μ := μ) (X := Y i)).1 (hYSub i)
+        simpa [PsiTwoNorm] using this
+      have hGaugeZero : ∀ i, PsiTwoGauge μ (Y i) = 0 := by
+        intro i
+        have hSqZero : (PsiTwoNorm μ (Y i)).toReal ^ 2 = 0 :=
+          (Finset.sum_eq_zero_iff_of_nonneg
+            (fun j _ => sq_nonneg (PsiTwoNorm μ (Y j)).toReal)).mp hEzero i
+              (Finset.mem_univ i)
+        have hRealZero : (PsiTwoNorm μ (Y i)).toReal = 0 := by
+          nlinarith [sq_nonneg (PsiTwoNorm μ (Y i)).toReal]
+        have hNormZero : PsiTwoNorm μ (Y i) = 0 :=
+          ((ENNReal.toReal_eq_zero_iff _).mp hRealZero).resolve_right
+            (ne_of_lt (by simpa [PsiTwoNorm] using hYFinite i))
+        simpa [PsiTwoNorm] using hNormZero
+      have hYZero : ∀ i, Y i =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := by
+        intro i
+        exact (psiTwoGauge_eq_zero_iff_ae_eq_zero (hYSub i).1).mp (hGaugeZero i)
+      have hAllZero : ∀ᵐ ω ∂μ, ∀ i ∈ (Finset.univ : Finset ι), Y i ω = 0 := by
+        rw [Filter.eventually_all_finset]
+        intro i _
+        exact hYZero i
+      have hSZero : S =ᵐ[μ] (fun _ : Ω => (0 : ℝ)) := by
+        filter_upwards [hAllZero] with ω hω
+        simp [S, hω]
+      by_cases htZero : t = 0
+      · subst t
+        calc
+          μ.real {ω | |∑ i, a i * X i ω| ≥ 0} ≤ 1 := hProb _
+          _ ≤ 2 * Real.exp (-(c * 0 ^ 2 / D)) := by norm_num
+      · have hEvent : {ω | |S ω| ≥ t} =ᵐ[μ] (∅ : Set Ω) := by
+          filter_upwards [hSZero] with ω hω
+          change (t ≤ |S ω|) = False
+          rw [hω, abs_zero]
+          exact propext (iff_false_intro
+            (not_le_of_gt (lt_of_le_of_ne ht (Ne.symm htZero))))
+        have hZeroProb : μ.real {ω | |S ω| ≥ t} = 0 := by
+          rw [Measure.real_def, measure_congr hEvent]
+          simp
+        change μ.real {ω | |S ω| ≥ t} ≤ 2 * Real.exp (-(c * t ^ 2 / D))
+        rw [hZeroProb]
+        positivity
+    · have hEpos : 0 < E := lt_of_le_of_ne hEnonneg (Ne.symm hEzero)
+      have hTailY := hTail hYSub hYCenter hIndepY ht
+      have hRatio : c * t ^ 2 / D ≤ c * t ^ 2 / E := by
+        exact div_le_div_of_nonneg_left (mul_nonneg hc.le (sq_nonneg t)) hEpos hED
+      calc
+        μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+            2 * Real.exp (-(c * t ^ 2 / E)) := by
+          simpa [Y, E] using hTailY
+        _ ≤ 2 * Real.exp (-(c * t ^ 2 / D)) := by
+          apply mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) (by norm_num)
+          exact neg_le_neg hRatio
+
 /-! The exact a.e.-quotient carrier for Exercise 2.5.7.  The carrier is a
 submodule of measurable finite-gauge representatives; quotienting by its
 null submodule makes the definiteness statement literal. -/
@@ -3417,11 +4466,29 @@ theorem psiTwoNormQuotientModel
   refine ⟨psiTwoQuotientNorm μ, psiTwoQuotientNorm_nonneg μ,
     psiTwoQuotientNorm_zero μ, psiTwoQuotientNorm_eq_zero_iff μ,
     psiTwoQuotientNorm_add_le μ, psiTwoQuotientNorm_smul μ⟩
-/-! Example 2.5.8(a): Gaussian variables have finite `ψ₂` gauge. -/
-theorem gaussianPsiTwoGauge_finite :
-    PsiTwoGauge (gaussianReal 0 1) id < ∞ ∧
+
+theorem psiTwoQuotientNorm_isNorm
+    {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] :
+    (∀ x, 0 ≤ psiTwoQuotientNorm μ x) ∧
+      psiTwoQuotientNorm μ 0 = 0 ∧
+      (∀ x, psiTwoQuotientNorm μ x = 0 ↔ x = 0) ∧
+      (∀ x y,
+        psiTwoQuotientNorm μ (x + y) ≤
+          psiTwoQuotientNorm μ x + psiTwoQuotientNorm μ y) ∧
+      (∀ (c : ℝ) x,
+        psiTwoQuotientNorm μ (c • x) =
+          |c| * psiTwoQuotientNorm μ x) := by
+  exact ⟨psiTwoQuotientNorm_nonneg μ, psiTwoQuotientNorm_zero μ,
+    psiTwoQuotientNorm_eq_zero_iff μ, psiTwoQuotientNorm_add_le μ,
+    psiTwoQuotientNorm_smul μ⟩
+/-! Example 2.5.8(a): one absolute constant controls the `ψ₂` gauge of every
+centered Gaussian, with the source's linear dependence on its scale. -/
+theorem gaussianPsiTwoGauge_le_two_mul :
+    PsiTwoGauge (gaussianReal 0 1) id ≤ ENNReal.ofReal 2 ∧
       ∀ σ : ℝ, 0 ≤ σ →
-        PsiTwoGauge (gaussianReal 0 (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id < ∞ := by
+        PsiTwoGauge (gaussianReal 0 (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id ≤
+          ENNReal.ofReal (2 * σ) := by
   have hsqrt2 : 0 < Real.sqrt (2 : ℝ) := by positivity
   have hsqrt2_sq : (Real.sqrt (2 : ℝ)) ^ 2 = 2 := by
     exact Real.sq_sqrt (by norm_num)
@@ -3449,16 +4516,13 @@ theorem gaussianPsiTwoGauge_finite :
             field_simp
       _ = (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ := hstd.2
   constructor
-  · rw [psiTwoGauge_finite_iff]
-    refine ⟨2, by norm_num, ?_⟩
+  · apply psiTwoGauge_le_of_squarePoint
     refine ⟨measurable_id, by norm_num, ?_, ?_⟩
     · simpa [id_eq] using hstdInt
     · simpa [id_eq] using hstdIntegral.trans_le hsqrt2_bound
   · intro σ hσ
-    rw [psiTwoGauge_finite_iff]
     by_cases hzero : σ = 0
     · subst σ
-      refine ⟨1, by norm_num, ?_⟩
       have hvzero : (⟨(0 : ℝ) ^ 2, sq_nonneg (0 : ℝ)⟩ : ℝ≥0) = 0 := by
         apply NNReal.eq
         norm_num
@@ -3466,16 +4530,15 @@ theorem gaussianPsiTwoGauge_finite :
           (⟨(0 : ℝ) ^ 2, sq_nonneg (0 : ℝ)⟩ : ℝ≥0) = Measure.dirac 0 := by
         rw [hvzero]
         exact ProbabilityTheory.gaussianReal_zero_var 0
-      refine ⟨measurable_id, by norm_num, ?_, ?_⟩
-      · rw [hgauss]
-        simpa [id_eq] using
-          (integrable_dirac (f := fun x : ℝ => Real.exp (x ^ 2))
-            (a := (0 : ℝ)) (by simp))
-      · rw [hgauss]
-        simpa [id_eq] using
-          (show (∫ x : ℝ, Real.exp (x ^ 2) ∂Measure.dirac (0 : ℝ)) ≤ 2 by
-            rw [integral_dirac]
-            norm_num)
+      rw [hgauss]
+      calc
+        PsiTwoGauge (Measure.dirac 0) id =
+            PsiTwoGauge (Measure.dirac 0) (fun _ : ℝ => (0 : ℝ)) :=
+          psiTwoGauge_ae_congr measurable_id measurable_const (by
+            simpa [id_eq] using
+              (MeasureTheory.ae_eq_dirac (id : ℝ → ℝ)))
+        _ = 0 := psiTwoGauge_zero
+        _ ≤ ENNReal.ofReal (2 * 0) := by simp
     · have hσpos : 0 < σ := lt_of_le_of_ne hσ (Ne.symm hzero)
       let v : ℝ≥0 := ⟨σ ^ 2, sq_nonneg σ⟩
       have hLaw : HasLaw (fun x : ℝ => σ * x) (gaussianReal 0 v)
@@ -3510,8 +4573,18 @@ theorem gaussianPsiTwoGauge_finite :
           _ = (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ := by
             simpa using hstd.2
           _ ≤ 2 := hsqrt2_bound
-      refine ⟨2 * σ, mul_pos (by norm_num) hσpos, ?_⟩
+      apply psiTwoGauge_le_of_squarePoint
       exact ⟨measurable_id, by positivity, hfInt, by simpa [f] using hfBound⟩
+
+/-! Qualitative corollary retained for downstream callers that need only
+finiteness. -/
+theorem gaussianPsiTwoGauge_finite :
+    PsiTwoGauge (gaussianReal 0 1) id < ∞ ∧
+      ∀ σ : ℝ, 0 ≤ σ →
+        PsiTwoGauge (gaussianReal 0 (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id < ∞ := by
+  rcases gaussianPsiTwoGauge_le_two_mul with ⟨hstd, hscaled⟩
+  exact ⟨hstd.trans_lt ENNReal.ofReal_lt_top,
+    fun σ hσ => (hscaled σ hσ).trans_lt ENNReal.ofReal_lt_top⟩
 
 /-! Example 2.5.8(c): an essentially bounded variable has finite `ψ₂` gauge.
 
@@ -3731,26 +4804,38 @@ namespace NumStability.HDP.Contract
 
 /-! Stable Chapter 2 alias for the Gaussian `ψ₂` example. -/
 theorem hdp_02_hexample_h2_d5_d8a :
-    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
-        (ProbabilityTheory.gaussianReal 0 1) id < ∞ ∧
-      ∀ σ : ℝ, 0 ≤ σ →
+    ∃ C : ℝ, 0 < C ∧
+      NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
+          (ProbabilityTheory.gaussianReal 0 1) id ≤ ENNReal.ofReal C ∧
+        ∀ σ : ℝ, 0 ≤ σ →
         NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge
             (ProbabilityTheory.gaussianReal 0
-              (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id < ∞ :=
-  NumStability.HDP.Scalar.SubGaussian.gaussianPsiTwoGauge_finite
+              (⟨σ ^ 2, sq_nonneg σ⟩ : ℝ≥0)) id ≤
+          ENNReal.ofReal (C * σ) := by
+  refine ⟨2, by norm_num, ?_⟩
+  simpa using
+    NumStability.HDP.Scalar.SubGaussian.gaussianPsiTwoGauge_le_two_mul
 
 /-! Stable Chapter 2 alias for Proposition 2.5.2. -/
-theorem hdp_02_hprop_h2_d5_d2
-    {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : Ω → ℝ} (hCenter : Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0) :
+theorem hdp_02_hprop_h2_d5_d2 :
     ∃ C : ℝ, 1 ≤ C ∧
-      ∀ i j : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
-        ∀ {Ki : ℝ}, 0 < Ki →
-          NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i Ki →
-            ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
-              NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj :=
-  NumStability.HDP.Scalar.SubGaussian.subGaussianCharacterization hCenter
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X →
+          ∀ i j : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+            i ≠ .linearMGF → j ≠ .linearMGF → ∀ {Ki : ℝ}, 0 < Ki →
+              NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i Ki →
+                ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                  NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj) ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X → Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0 →
+          ∀ i j : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+            ∀ {Ki : ℝ}, 0 < Ki →
+              NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i Ki →
+                ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                  NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X j Kj) :=
+  NumStability.HDP.Scalar.SubGaussian.subGaussianCharacterization_absolute
 
 /-! Stable Chapter 2 alias for the gauge-facing characterization theorem. -/
 theorem hdp_02_hthm_hpsi2_hnorm_hcharacterizations
@@ -3770,8 +4855,10 @@ theorem hdp_02_hthm_hpsi2_hnorm_hcharacterizations
           NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞)) :=
   NumStability.HDP.Scalar.SubGaussian.psiTwoGaugeCharacterizations hCenter
 
-/-! Stable Chapter 2 alias for Proposition 2.6.1. -/
-theorem hdp_02_hprop_h2_d6_d1
+/-! Compatibility alias for the earlier scale-parametric MGF formulation of
+Proposition 2.6.1.  The exact source-facing alias below now exposes intrinsic
+`ψ₂` norms and one universally quantified absolute constant. -/
+theorem hdp_02_hprop_h2_d6_d1_mgfScale
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {K : ι → ℝ}
@@ -3789,8 +4876,28 @@ theorem hdp_02_hprop_h2_d6_d1
   NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianSum
     hX hIndep hEnergy
 
-/-! Stable Chapter 2 alias for Theorem 2.6.2. -/
-theorem hdp_02_hthm_h2_d6_d2
+/-! Stable Chapter 2 alias for Proposition 2.6.1. -/
+theorem hdp_02_hprop_h2_d6_d1 :
+    ∃ C : ℝ, 1 ≤ C ∧
+      ∀ {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : ι → Ω → ℝ},
+        (∀ i, NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ (X i)) →
+        (∀ i, Integrable (X i) μ ∧ (∫ ω, X i ω ∂μ) = 0) →
+        ProbabilityTheory.iIndepFun X μ →
+          NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ
+              (fun ω => ∑ i, X i ω) ∧
+            (NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ
+                (fun ω => ∑ i, X i ω)).toReal ^ 2 ≤
+              C * ∑ i,
+                (NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ
+                  (X i)).toReal ^ 2 :=
+  NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianSumPsiTwo
+
+/-! Compatibility alias for the earlier scale-parametric MGF formulation of
+Theorem 2.6.2.  The exact source-facing alias below uses intrinsic `ψ₂` norms
+and quantifies one universal positive constant before the family. -/
+theorem hdp_02_hthm_h2_d6_d2_mgfScale
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {K : ι → ℝ}
@@ -3804,8 +4911,27 @@ theorem hdp_02_hthm_h2_d6_d2
   NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianTail
     hX hIndep hEnergy ht
 
-/-! Stable Chapter 2 alias for Theorem 2.6.3. -/
-theorem hdp_02_hthm_h2_d6_d3
+/-! Stable Chapter 2 alias for Theorem 2.6.2. -/
+theorem hdp_02_hthm_h2_d6_d2 :
+    ∃ c : ℝ, 0 < c ∧
+      ∀ {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : ι → Ω → ℝ},
+        (∀ i, NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ (X i)) →
+        (∀ i, Integrable (X i) μ ∧ (∫ ω, X i ω ∂μ) = 0) →
+        ProbabilityTheory.iIndepFun X μ →
+        ∀ {t : ℝ}, 0 ≤ t →
+          μ.real {ω | |∑ i, X i ω| ≥ t} ≤
+            2 * Real.exp
+              (-(c * t ^ 2 /
+                ∑ i,
+                  (NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ
+                    (X i)).toReal ^ 2)) :=
+  NumStability.HDP.Scalar.SubGaussian.independentCenteredSubGaussianTailPsiTwo
+
+/-! Compatibility alias for the earlier common-MGF-scale formulation of
+Theorem 2.6.3. -/
+theorem hdp_02_hthm_h2_d6_d3_mgfScale
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → ℝ} {K : ℝ}
@@ -3820,6 +4946,23 @@ theorem hdp_02_hthm_h2_d6_d3
       2 * Real.exp (-t ^ 2 / (4 * K ^ 2 * ∑ i, a i ^ 2)) :=
   NumStability.HDP.Scalar.SubGaussian.independentWeightedCenteredSubGaussianTail
     hK hX hIndep hEnergy ht
+
+/-! Stable Chapter 2 alias for Theorem 2.6.3. -/
+theorem hdp_02_hthm_h2_d6_d3 :
+    ∃ c : ℝ, 0 < c ∧
+      ∀ {ι Ω : Type*} [Fintype ι] [Nonempty ι] [MeasurableSpace Ω]
+        {μ : Measure Ω} [IsProbabilityMeasure μ]
+        {X : ι → Ω → ℝ},
+        (∀ i, NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ (X i)) →
+        (∀ i, Integrable (X i) μ ∧ (∫ ω, X i ω ∂μ) = 0) →
+        ProbabilityTheory.iIndepFun X μ →
+        ∀ (a : ι → ℝ) {t : ℝ}, 0 ≤ t →
+          μ.real {ω | |∑ i, a i * X i ω| ≥ t} ≤
+            2 * Real.exp
+              (-(c * t ^ 2 /
+                ((NumStability.HDP.Scalar.SubGaussian.psiTwoNormMax μ X) ^ 2 *
+                  ∑ i, a i ^ 2))) :=
+  NumStability.HDP.Scalar.SubGaussian.independentWeightedCenteredSubGaussianTailPsiTwo
 
 /-! Stable Chapter 2 alias for Lemma 2.6.8. -/
 theorem hdp_02_hlem_h2_d6_d8
@@ -3840,41 +4983,75 @@ theorem hdp_02_hlem_h2_d6_d8
   NumStability.HDP.Scalar.SubGaussian.centeredSubGaussian i hK hProp
 
 /-! Stable Chapter 2 alias for Remark 2.5.3. -/
-theorem hdp_02_hrem_h2_d5_d3
-    {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : Ω → ℝ} (A : ℝ) (hA : 1 < A) :
-    ((∃ K : ℝ, 0 < K ∧
-        NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBoundWithThreshold μ X K 2) ↔
-      ∃ K : ℝ, 0 < K ∧
-        NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBoundWithThreshold μ X K A) ∧
-    ((∃ K : ℝ, 0 < K ∧
-        NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePointWithThreshold μ X K 2) ↔
-      ∃ K : ℝ, 0 < K ∧
-        NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePointWithThreshold μ X K A) :=
-  NumStability.HDP.Scalar.SubGaussian.subGaussianThresholdRemark A hA
+theorem hdp_02_hrem_h2_d5_d3 (A : ℝ) (hA : 1 < A) :
+    ∃ C : ℝ, 1 ≤ C ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X →
+          ∀ i j : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+            i ≠ .linearMGF → j ≠ .linearMGF → ∀ {Ki : ℝ}, 0 < Ki →
+              NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyWithThreshold
+                  μ X A i Ki →
+                ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                  NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyWithThreshold
+                    μ X A j Kj) ∧
+      (∀ {Ω : Type*} [MeasurableSpace Ω]
+          {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ},
+        Measurable X → Integrable X μ ∧ (∫ ω, X ω ∂μ) = 0 →
+          ∀ i j : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+            ∀ {Ki : ℝ}, 0 < Ki →
+              NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyWithThreshold
+                  μ X A i Ki →
+                ∃ Kj : ℝ, 0 < Kj ∧ Kj ≤ C * Ki ∧
+                  NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyWithThreshold
+                    μ X A j Kj) :=
+  NumStability.HDP.Scalar.SubGaussian.subGaussianThresholdCharacterization_absolute A hA
 
-/-! Stable Chapter 2 alias for Definition 2.5.6 and the `ψ₂` finiteness test. -/
+/-! Stable Chapter 2 rendering of Definition 2.5.6.  It names the class using
+any of the equivalent uncentered properties (i)--(iv) and identifies its
+finite `ψ₂` norm with the displayed positive-scale infimum. -/
 theorem hdp_02_hdef_h2_d5_d6
     {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ} :
-    NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ X < ∞ ↔
-      ∃ K : ℝ, 0 < K ∧
-        NumStability.HDP.Scalar.SubGaussian.SubGaussianSquarePoint μ X K :=
-  NumStability.HDP.Scalar.SubGaussian.psiTwoGauge_finite_iff
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
+    (_hX : Measurable X) :
+    (∀ i : NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind,
+      i ≠ .linearMGF →
+        (NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ X ↔
+          ∃ K : ℝ, 0 < K ∧
+            NumStability.HDP.Scalar.SubGaussian.SubGaussianProperty μ X i K)) ∧
+      (NumStability.HDP.Scalar.SubGaussian.IsSubGaussian μ X →
+        NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ X < ∞ ∧
+          NumStability.HDP.Scalar.SubGaussian.PsiTwoNorm μ X =
+            sInf {t : ℝ≥0∞ |
+              NumStability.HDP.Scalar.SubGaussian.PsiTwoAdmissible μ X t}) := by
+  constructor
+  · intro i hi
+    exact NumStability.HDP.Scalar.SubGaussian.isSubGaussian_iff_property i hi
+  · intro hSub
+    constructor
+    · exact
+        NumStability.HDP.Scalar.SubGaussian.isSubGaussian_iff_psiTwoNorm_finite.mp hSub
+    · rfl
 
 /-! Stable Chapter 2 alias for Exercise 2.5.7: the exact ψ₂ norm on the
 measurable finite-gauge quotient modulo a.e. equality. -/
 theorem hdp_02_hex_h2_d5_d7
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] :
-    ∃ norm : NumStability.HDP.Scalar.SubGaussian.psiTwoSpace μ → ℝ,
-      (∀ x, 0 ≤ norm x) ∧
-        norm 0 = 0 ∧
-        (∀ x, norm x = 0 ↔ x = 0) ∧
-        (∀ x y, norm (x + y) ≤ norm x + norm y) ∧
-        (∀ (c : ℝ) x, norm (c • x) = |c| * norm x) :=
-  NumStability.HDP.Scalar.SubGaussian.psiTwoNormQuotientModel μ
+    (∀ x, 0 ≤ NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ x) ∧
+      NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ 0 = 0 ∧
+      (∀ x,
+        NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ x = 0 ↔
+          x = 0) ∧
+      (∀ x y,
+        NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ (x + y) ≤
+          NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ x +
+            NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ y) ∧
+      (∀ (c : ℝ) x,
+        NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ (c • x) =
+          |c| *
+            NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm μ x) :=
+  NumStability.HDP.Scalar.SubGaussian.psiTwoQuotientNorm_isNorm μ
 
 /-! Stable Chapter 2 alias for the essentially bounded `ψ₂` estimate. -/
 theorem hdp_02_hexample_h2_d5_d8c

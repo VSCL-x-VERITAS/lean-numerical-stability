@@ -1,9 +1,21 @@
 import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
-import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
 import Mathlib.Combinatorics.SimpleGraph.Finite
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Tactic
+
+/-!
+# Vertex-degree laws for the binomial random graph
+
+Reusable support for HDP Section 2.4.  This module isolates the combinatorial
+and distributional facts about a single vertex's degree in the Erdős--Rényi
+model `G(n, p)`: the star edge set at a vertex, its cardinality, and the
+identification of the degree with a binomial random variable.  Keeping these
+facts here lets `Chernoff` apply a concentration bound to a vertex degree
+without re-deriving the underlying graph combinatorics.
+
+No numbered-source wrapper is imported; this is reusable mathematics.
+-/
 
 noncomputable section
 
@@ -532,4 +544,3 @@ theorem graphDegreeSum_hasLaw {n : ℕ} (p : Set.Icc (0 : ℝ) 1) (v : Fin n) :
   exact graphDegreeSum_map_apply p v k
 
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
-

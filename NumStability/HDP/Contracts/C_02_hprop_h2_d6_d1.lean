@@ -8,8 +8,7 @@ namespace NumStability.HDP.Contract
 
 theorem hdp_02_hprop_h2_d6_d1__contract
     : hdp_02_hprop_h2_d6_d1__contract_type := by
-  intro ι Ω instι instΩ μ instμ X K hX hIndep hEnergy
-  exact NumStability.HDP.Contract.hdp_02_hprop_h2_d6_d1
-    hX hIndep hEnergy
+  simpa [hdp_02_hprop_h2_d6_d1__contract_type] using
+    NumStability.HDP.Contract.hdp_02_hprop_h2_d6_d1
 
 end NumStability.HDP.Contract

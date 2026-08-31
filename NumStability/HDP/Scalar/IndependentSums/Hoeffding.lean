@@ -48,6 +48,98 @@ theorem rademacherValue_eq_affine (b : Bool) :
   · norm_num [rademacherValue, bernoulliIndicator]
   · norm_num [rademacherValue, bernoulliIndicator] <;> rfl
 
+/-- The affine map which sends the usual Bernoulli support `{0, 1}` to the
+Rademacher support `{-1, 1}`. -/
+def affineBernoulliValue (x : ℝ) : ℝ := 2 * x - 1
+
+/-- The inverse affine map from the Rademacher scale to the usual Bernoulli
+scale. -/
+def inverseAffineBernoulliValue (z : ℝ) : ℝ := (z + 1) / 2
+
+/-- The fair usual Bernoulli law, represented on the real support `{0, 1}`. -/
+noncomputable def fairBernoulliRealPMF : PMF ℝ :=
+  fairBernoulliPMF.map bernoulliIndicator
+
+/-- A real-valued law is the usual fair Bernoulli law exactly when its affine
+image under `x ↦ 2x - 1` is the symmetric Bernoulli/Rademacher law.  This is
+the arbitrary-law form of the equivalence following Definition 2.2.1. -/
+theorem affineLawIsRademacherIff (q : PMF ℝ) :
+    q.map affineBernoulliValue = rademacherPMF ↔
+      q = fairBernoulliRealPMF := by
+  constructor
+  · intro h
+    have h' := congrArg (fun law : PMF ℝ =>
+      law.map inverseAffineBernoulliValue) h
+    unfold rademacherPMF at h'
+    change (q.map affineBernoulliValue).map inverseAffineBernoulliValue =
+      (fairBernoulliPMF.map rademacherValue).map
+        inverseAffineBernoulliValue at h'
+    rw [PMF.map_comp, PMF.map_comp] at h'
+    have hinv : inverseAffineBernoulliValue ∘ affineBernoulliValue = id := by
+      funext x
+      simp only [Function.comp_apply, affineBernoulliValue,
+        inverseAffineBernoulliValue, id_eq]
+      ring
+    have hbool : inverseAffineBernoulliValue ∘ rademacherValue =
+        bernoulliIndicator := by
+      funext b
+      cases b <;> norm_num [Function.comp_apply, inverseAffineBernoulliValue,
+        rademacherValue, bernoulliIndicator]
+    rw [hinv, hbool, PMF.map_id] at h'
+    exact h'
+  · intro h
+    subst q
+    unfold fairBernoulliRealPMF rademacherPMF
+    rw [PMF.map_comp]
+    congr 1
+    funext b
+    cases b <;> norm_num [Function.comp_apply, affineBernoulliValue,
+      rademacherValue, bernoulliIndicator] <;> rfl
+
+/-- An arbitrary real probability measure is the ordinary fair Bernoulli law
+exactly when its affine image under `x ↦ 2x - 1` is the Rademacher law.  Unlike
+the PMF specialization, this theorem retains the source sentence's full law
+domain and does not assume discreteness in advance. -/
+theorem affineMeasureIsRademacherIff (mu : Measure ℝ) :
+    Measure.map affineBernoulliValue mu = rademacherPMF.toMeasure ↔
+      mu = fairBernoulliRealPMF.toMeasure := by
+  have hAffine : Measurable affineBernoulliValue := by
+    unfold affineBernoulliValue
+    fun_prop
+  have hInverse : Measurable inverseAffineBernoulliValue := by
+    unfold inverseAffineBernoulliValue
+    fun_prop
+  have hinv : inverseAffineBernoulliValue ∘ affineBernoulliValue = id := by
+    funext x
+    simp only [Function.comp_apply, affineBernoulliValue,
+      inverseAffineBernoulliValue, id_eq]
+    ring
+  have hbool : inverseAffineBernoulliValue ∘ rademacherValue =
+      bernoulliIndicator := by
+    funext b
+    cases b <;> norm_num [Function.comp_apply, inverseAffineBernoulliValue,
+      rademacherValue, bernoulliIndicator]
+  have href : Measure.map inverseAffineBernoulliValue
+      rademacherPMF.toMeasure = fairBernoulliRealPMF.toMeasure := by
+    rw [PMF.toMeasure_map inverseAffineBernoulliValue rademacherPMF hInverse]
+    congr 1
+    unfold rademacherPMF fairBernoulliRealPMF
+    rw [PMF.map_comp, hbool]
+  constructor
+  · intro h
+    have h' := congrArg (Measure.map inverseAffineBernoulliValue) h
+    change Measure.map inverseAffineBernoulliValue
+        (Measure.map affineBernoulliValue mu) =
+      Measure.map inverseAffineBernoulliValue rademacherPMF.toMeasure at h'
+    rw [Measure.map_map hInverse hAffine, hinv,
+      Measure.map_id, href] at h'
+    exact h'
+  · intro h
+    subst mu
+    rw [PMF.toMeasure_map affineBernoulliValue fairBernoulliRealPMF hAffine]
+    exact congrArg PMF.toMeasure
+      ((affineLawIsRademacherIff fairBernoulliRealPMF).2 rfl)
+
 @[simp]
 theorem rademacherPMF_mass_one : rademacherPMF 1 = 1 / 2 := by
   simp [rademacherPMF, fairBernoulliPMF, rademacherValue, PMF.map_apply,
@@ -257,15 +349,14 @@ theorem exponentialMarkovUpper
       simp [Y, Real.exp_neg, div_eq_mul_inv]
       ring
 
-/-! The one-coordinate MGF estimate for a Rademacher law. -/
-theorem rademacherWeightedMGFLe
+/-! The exact one-coordinate MGF of a Rademacher law. -/
+theorem rademacherWeightedMGFEqCosh
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : Ω → ℝ} (hX : Measurable X)
     (hLaw : Measure.map X μ = rademacherPMF.toMeasure)
     (lam a : ℝ) :
-    (∫ ω, Real.exp (lam * (a * X ω)) ∂μ) ≤
-      Real.exp ((lam * a) ^ 2 / 2) := by
+    (∫ ω, Real.exp (lam * (a * X ω)) ∂μ) = Real.cosh (lam * a) := by
   let f : ℝ → ℝ := fun x => Real.exp (lam * (a * x))
   have hf : Measurable f := by fun_prop
   have hmap_integral :
@@ -286,11 +377,48 @@ theorem rademacherWeightedMGFLe
           (1 - 2⁻¹) * Real.exp (-(lam * a)) =
           (Real.exp (lam * a) + Real.exp (-(lam * a))) / 2 := by ring
       _ = Real.cosh (lam * a) := by rw [Real.cosh_eq]
-      _ ≤ Real.exp ((lam * a) ^ 2 / 2) := coshLeExpHalfSq (lam * a)
   · exact measurable_of_countable rademacherValue
+
+/-! The one-coordinate MGF estimate for a Rademacher law. -/
+theorem rademacherWeightedMGFLe
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ} (hX : Measurable X)
+    (hLaw : Measure.map X μ = rademacherPMF.toMeasure)
+    (lam a : ℝ) :
+    (∫ ω, Real.exp (lam * (a * X ω)) ∂μ) ≤
+      Real.exp ((lam * a) ^ 2 / 2) := by
+  calc
+    (∫ ω, Real.exp (lam * (a * X ω)) ∂μ) = Real.cosh (lam * a) :=
+      rademacherWeightedMGFEqCosh hX hLaw lam a
+    _ ≤ Real.exp ((lam * a) ^ 2 / 2) := coshLeExpHalfSq (lam * a)
 
 /-! One-sided Rademacher Hoeffding, with the positive coefficient-energy branch
 made explicit so the optimized exponent never divides by zero. -/
+theorem integrable_exp_mul_rademacher
+    {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : Ω → ℝ}
+    (hX : Measurable X)
+    (hLaw : Measure.map X μ = rademacherPMF.toMeasure)
+    (lam a : ℝ) :
+    Integrable (fun ω => Real.exp (lam * (a * X ω))) μ := by
+  let f : ℝ → ℝ := fun x => Real.exp (lam * (a * x))
+  have hf_bool :
+      Integrable (fun b : Bool => f (rademacherValue b)) fairBernoulliPMF.toMeasure :=
+    Integrable.of_finite
+  have hf_rademacher : Integrable f rademacherPMF.toMeasure := by
+    unfold rademacherPMF
+    rw [← PMF.toMeasure_map]
+    · rw [integrable_map_measure (by fun_prop)
+          (measurable_of_countable rademacherValue).aemeasurable]
+      simpa [Function.comp_def] using hf_bool
+    · exact measurable_of_countable rademacherValue
+  have hf_map : Integrable f (Measure.map X μ) := by
+    rw [hLaw]
+    exact hf_rademacher
+  simpa [f, Function.comp_def] using hf_map.comp_measurable hX
+
 theorem rademacherHoeffding
     {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -381,6 +509,34 @@ theorem rademacherHoeffding
         field_simp [ne_of_gt (by simpa [v] using hv)]
         ring
       _ = Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by rfl
+
+/-- Source-form one-sided Rademacher Hoeffding.  The exponential moments are
+automatic from the Rademacher laws, and the zero-energy branch has right-hand
+side one under the real-division convention. -/
+theorem rademacherHoeffdingAll
+    {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ι → Ω → ℝ} {a : ι → ℝ} {t : ℝ}
+    (hX : ∀ i, Measurable (X i))
+    (hIndep : iIndepFun X μ)
+    (hLaw : ∀ i, Measure.map (X i) μ = rademacherPMF.toMeasure)
+    (ht : 0 ≤ t) :
+    μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤
+      Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) := by
+  have hExp : ∀ (lam : ℝ) (i : ι),
+      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ := by
+    intro lam i
+    exact integrable_exp_mul_rademacher (hX i) (hLaw i) lam (a i)
+  by_cases hv : 0 < ∑ i, (a i) ^ 2
+  · exact rademacherHoeffding hX hIndep hLaw hExp ht hv
+  · have hv_nonneg : 0 ≤ ∑ i, (a i) ^ 2 :=
+      Finset.sum_nonneg fun i _ => sq_nonneg (a i)
+    have hv_zero : ∑ i, (a i) ^ 2 = 0 :=
+      le_antisymm (le_of_not_gt hv) hv_nonneg
+    have hprob : μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤ 1 := by
+      rw [Measure.real_def]
+      exact ENNReal.toReal_mono ENNReal.one_ne_top prob_le_one
+    simpa [hv_zero] using hprob
 
 /-- Zero coefficient energy is the deterministic zero-sum branch. -/
 theorem rademacherHoeffdingZero
@@ -933,13 +1089,11 @@ theorem hdp_02_hthm_h2_d2_d2
     (hIndep : iIndepFun X μ)
     (hLaw : ∀ i, Measure.map (X i) μ =
       NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherPMF.toMeasure)
-    (hExp : ∀ (lam : ℝ) (i : ι),
-      Integrable (fun ω => Real.exp (lam * (a i * X i ω))) μ)
-    (ht : 0 ≤ t) (hv : 0 < ∑ i, (a i) ^ 2) :
+    (ht : 0 ≤ t) :
     μ.real {ω | ∑ i, a i * X i ω ≥ t} ≤
       Real.exp (-t ^ 2 / (2 * ∑ i, (a i) ^ 2)) :=
-  NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherHoeffding
-    hX hIndep hLaw hExp ht hv
+  NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherHoeffdingAll
+    hX hIndep hLaw ht
 
 /-! Stable source-facing alias for Theorem 2.2.5. -/
 theorem hdp_02_hthm_h2_d2_d5
