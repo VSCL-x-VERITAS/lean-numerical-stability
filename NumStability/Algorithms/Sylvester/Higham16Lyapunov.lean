@@ -1,7 +1,12 @@
 import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredLyapunov
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Diagonal
-import NumStability.Algorithms.Sylvester.Higham16
-import NumStability.Algorithms.Sylvester.SylvesterPerturbation
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.FirstOrder
+import NumStability.Algorithms.MatrixEquations.Sylvester.Perturbation.Basic
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation22
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation23
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation24
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation25
 import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation26
 import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation27
 import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation28

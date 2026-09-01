@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Theorem14.CompletePivotedPSD.SchurAsymptotics
+
+#check NumStability.higham10_14_equation_10_22_family

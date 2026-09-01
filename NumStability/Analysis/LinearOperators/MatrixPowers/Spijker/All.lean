@@ -1,3 +1,4 @@
+import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.KreissBounds
 import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.KreissBridge
 import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.PlanarAlgebra
 import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.PlanarAnalysis

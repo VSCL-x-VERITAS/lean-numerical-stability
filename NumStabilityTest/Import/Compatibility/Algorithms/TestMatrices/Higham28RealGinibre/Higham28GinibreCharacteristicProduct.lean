@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GinibreCharacteristicProduct
+
+#check NumStability.integral_realGinibre_coordinateProduct

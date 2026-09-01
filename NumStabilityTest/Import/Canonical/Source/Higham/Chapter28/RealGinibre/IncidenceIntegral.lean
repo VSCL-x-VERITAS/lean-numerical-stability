@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.IncidenceIntegral
+
+#check NumStability.lintegral_ginibreIncidence_regular_eq_rootCount

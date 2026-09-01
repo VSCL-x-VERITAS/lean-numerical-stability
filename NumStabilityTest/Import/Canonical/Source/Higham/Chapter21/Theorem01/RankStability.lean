@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.Theorem01.RankStability
+
+#check NumStability.higham21_theorem21_1_transpose_left_inverse_of_right_inverse

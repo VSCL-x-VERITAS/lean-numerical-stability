@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GaussianDirection
+
+#check NumStability.standardGaussianDirectionMeasure_invariant

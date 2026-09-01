@@ -1,0 +1,3 @@
+import NumStability.Algorithms.NormEstimation.ClassicalEstimators
+
+#check NumStability.Ch15.linpack_estimate_le_infNorm_inv

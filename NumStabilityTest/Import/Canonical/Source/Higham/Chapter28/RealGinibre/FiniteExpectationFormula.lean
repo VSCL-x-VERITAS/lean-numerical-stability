@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.FiniteExpectationFormula
+
+#check NumStability.ch28gf_realGinibreFiniteExpectationFormula

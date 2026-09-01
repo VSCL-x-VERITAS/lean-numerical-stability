@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.Theorem04.SourceEndpoint
+
+#check NumStability.higham21_topBlock_det_ne_zero_of_perturbed_transpose_injective

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Equation29.Mathias.ConditionBounds
+
+#check NumStability.higham10_mathias_firstRoundedSchur_sourceCondition_exists

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.RoundedSylvesterCompletion
+
+#check NumStability.Wave15.H16_eq16_7_8_quasi_sylvesterVecCoeff_blockBackSub_componentwise_error_and_residual

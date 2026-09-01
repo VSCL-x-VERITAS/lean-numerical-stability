@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.SemiNormalEquations.HouseholderAnalysis
+
+#check NumStability.higham21SNEHouseholderQFull

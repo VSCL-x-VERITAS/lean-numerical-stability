@@ -1,0 +1,3 @@
+import NumStability.Algorithms.NormEstimation.PNorm.RealLp
+
+#check NumStability.Ch15.realLpDual_hasDirectionalGradientAt

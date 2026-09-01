@@ -1,0 +1,3 @@
+import NumStability.Algorithms.HighamChapter15BoydLocalStability
+
+#check NumStability.Ch15.higham15_boyd_local_linear_of_fderiv_power_stable

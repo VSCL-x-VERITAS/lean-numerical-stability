@@ -1,6 +1,7 @@
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
 import NumStability.Analysis.LinearOperators.MatrixPowers.Kreiss.ResolventBound
 import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.KreissBridge
+import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.PlanarAnalysis
 import NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.Kreiss
 
 /-!
@@ -626,6 +627,32 @@ theorem higham18_kreiss_two_sided_of_spijker
     exact norm_pow_le_exp_mul_dim_of_spijker hS A hK k
   exact ⟨higham18_kreiss_lower A hpowers,
     higham18_kreiss_upper_of_spijker hS A hres hbdd⟩
+
+
+/-! ## Proved Chapter 18 endpoints -/
+
+/-- Unconditional literal upper endpoint in Higham's notation. -/
+theorem higham18_kreiss_upper_proved
+    {n : ℕ} [Nonempty (Fin n)]
+    (A : CStarMatrix (Fin n) (Fin n) ℂ)
+    (hres : ∀ z : ℂ, 1 < ‖z‖ → z ∈ resolventSet ℂ A)
+    (hbdd : BddAbove (kreissResolventValueSet A)) :
+    matrixPowerNormSup A ≤
+      Real.exp 1 * n * kreissConstant A :=
+  higham18_kreiss_upper_of_spijker
+    (spijkerArcLengthBound_proved n) A hres hbdd
+
+/-- Unconditional two-sided finite-dimensional Kreiss theorem, closing the
+Chapter 18 Spijker dependency. -/
+theorem higham18_kreiss_two_sided_proved
+    {n : ℕ} [Nonempty (Fin n)]
+    (A : CStarMatrix (Fin n) (Fin n) ℂ)
+    (hres : ∀ z : ℂ, 1 < ‖z‖ → z ∈ resolventSet ℂ A)
+    (hbdd : BddAbove (kreissResolventValueSet A)) :
+    kreissConstant A ≤ matrixPowerNormSup A ∧
+      matrixPowerNormSup A ≤ Real.exp 1 * n * kreissConstant A :=
+  higham18_kreiss_two_sided_of_spijker
+    (spijkerArcLengthBound_proved n) A hres hbdd
 
 end
 

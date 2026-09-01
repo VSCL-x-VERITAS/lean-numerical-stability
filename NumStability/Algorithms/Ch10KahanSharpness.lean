@@ -1,4 +1,4 @@
-import NumStability.Algorithms.HighamChapter10
+import NumStability.Source.Higham.Chapter10.Endpoints
 import NumStability.Source.Higham.Chapter10.Lemma13.KahanSharpness.Limit
 
 /-!
@@ -10,4 +10,3 @@ modules imported above. The module's own original imports are
 re-stated so consumers reaching an identifier transitively through
 this path still see the same surface.
 -/
-

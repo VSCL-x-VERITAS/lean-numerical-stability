@@ -1,0 +1,3 @@
+import NumStability.Algorithms.LU.TridiagonalCondCh15IkebeClosure
+
+#check NumStability.Ch15IkebeClosure.H15_Theorem15_9_of_irreducible_rightInverse

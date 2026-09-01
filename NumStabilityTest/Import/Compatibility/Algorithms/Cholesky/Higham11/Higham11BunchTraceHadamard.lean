@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Cholesky.Higham11BunchTraceHadamard
+
+#check NumStability.higham11_1_exists_exactBunchTrace_all_stageRatio_le_maxEntryNorm

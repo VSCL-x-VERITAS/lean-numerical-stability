@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Problem06.InverseNormFormula
+
+#check NumStability.Higham15Problem15_6.H15_Problem15_6_of_irreducible_rightInverse

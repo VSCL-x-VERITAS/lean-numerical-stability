@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Pascal.SpectralPerturbation
+
+#check NumStability.pascalOptimalPerturbation_is_operator2_minimal

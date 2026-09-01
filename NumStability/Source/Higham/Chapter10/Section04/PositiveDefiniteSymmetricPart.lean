@@ -1,5 +1,6 @@
 import NumStability.Source.Higham.Chapter10.Section04.PositiveDefiniteSymmetricPart.Endpoints
 import NumStability.Source.Higham.Chapter10.Section04.PositiveDefiniteSymmetricPart.Equation29
+import NumStability.Source.Higham.Chapter10.Section04.PositiveDefiniteSymmetricPart.LUGrowth
 
 /-!
 # Source Higham Chapter10 Section04 PositiveDefiniteSymmetricPart

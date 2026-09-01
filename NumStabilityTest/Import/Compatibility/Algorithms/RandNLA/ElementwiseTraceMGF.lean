@@ -1,0 +1,4 @@
+import NumStability.Algorithms.RandNLA.ElementwiseTraceMGF
+
+#check NumStability.sqMagTraceProbMass_snoc
+#check NumStability.sqMagSampleProbability

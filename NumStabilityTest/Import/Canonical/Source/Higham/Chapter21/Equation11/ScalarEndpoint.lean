@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.Equation11.ScalarEndpoint
+
+#check NumStability.higham21_eq21_11_firstOrder_norm_le_rowwise_cond2_scalar

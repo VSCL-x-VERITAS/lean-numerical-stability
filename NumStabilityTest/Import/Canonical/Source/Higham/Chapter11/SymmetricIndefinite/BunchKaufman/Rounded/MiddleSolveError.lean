@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.Rounded.MiddleSolveError
+
+#check NumStability.Higham11RoundedBunchKaufmanExecution.actualMiddleSolve_backward_error

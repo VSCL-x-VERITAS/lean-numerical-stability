@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.GaussianIncidenceExpectation
+
+#check NumStability.ginibreCoordinatesLinearEquiv

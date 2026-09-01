@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.Higham11BunchKaufmanExactTrace
+
+#check NumStability.Higham11BunchKaufmanMatrix

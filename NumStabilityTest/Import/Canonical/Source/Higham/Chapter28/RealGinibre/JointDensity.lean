@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.JointDensity
+
+#check NumStability.integral_realGinibre_prod_gaussian_eq_jointDensity

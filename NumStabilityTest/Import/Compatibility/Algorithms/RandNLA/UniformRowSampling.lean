@@ -1,0 +1,5 @@
+import NumStability.Algorithms.RandNLA.UniformRowSampling
+
+#check NumStability.finitePSD_uniformRowOuterGramSample
+#check NumStability.uniformRowOuterGramSample_finiteLoewnerLe_of_leverageScoreProb_le
+#check NumStability.uniformRowTraceProbMass_marginal_two_ne

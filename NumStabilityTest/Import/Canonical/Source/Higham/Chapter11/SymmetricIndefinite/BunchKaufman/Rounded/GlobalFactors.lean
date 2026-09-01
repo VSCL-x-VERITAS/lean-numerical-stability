@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.Rounded.GlobalFactors
+
+#check NumStability.Higham11RoundedBunchKaufmanExecution.flatProduct

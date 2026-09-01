@@ -1,6 +1,6 @@
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
-import NumStability.Algorithms.HighamChapter10
+import NumStability.Source.Higham.Chapter10.Endpoints
 import NumStability.Algorithms.LeastSquares.LSE
 import NumStability.Algorithms.LeastSquares.LSNormalEquations
 import NumStability.Source.Higham.Chapter20.Remaining

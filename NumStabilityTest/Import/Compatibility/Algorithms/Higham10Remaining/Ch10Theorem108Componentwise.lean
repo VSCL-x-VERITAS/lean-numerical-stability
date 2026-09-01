@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Ch10Theorem108Componentwise
+
+#check NumStability.higham10_8_componentwise_source

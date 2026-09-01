@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.Rounded.PivotResiduals
+
+#check NumStability.higham11_2_bunchKaufmanRoundedSchurTwo_residual_bound

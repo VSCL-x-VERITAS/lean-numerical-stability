@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Ch10KahanSharpnessSource
+
+#check NumStability.higham10KahanW_op2_eq_product

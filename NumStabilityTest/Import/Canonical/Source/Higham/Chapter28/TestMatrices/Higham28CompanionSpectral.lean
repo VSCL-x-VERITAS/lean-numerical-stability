@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Companion.Spectral
+
+#check NumStability.companionSingularValues_multiset_eq

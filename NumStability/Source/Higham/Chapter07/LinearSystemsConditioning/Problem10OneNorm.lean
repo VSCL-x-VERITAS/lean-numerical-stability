@@ -5,7 +5,7 @@ import Mathlib.LinearAlgebra.Eigenspace.Charpoly
 import Mathlib.LinearAlgebra.Finsupp.Pi
 import Mathlib.LinearAlgebra.Matrix.FiniteDimensional
 import Mathlib.LinearAlgebra.Matrix.Irreducible.Defs
-import NumStability.Algorithms.CondEstimation
+import NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod
 import NumStability.Analysis.Asymptotics.Bounds
 import NumStability.Analysis.Conditioning.DistanceToSingularity
 import NumStability.Analysis.Conditioning.LinearSystems.PerronFrobenius

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.ProjectiveIntegral
+
+#check NumStability.integral_ginibreProjectiveWeight

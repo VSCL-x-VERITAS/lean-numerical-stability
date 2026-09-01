@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Lemma13.KahanSharpness.TailNormBounds
+
+#check NumStability.higham10KahanW_op2_eq_product

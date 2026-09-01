@@ -1,4 +1,4 @@
-import NumStability.Algorithms.CondEstimation
+import NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod
 import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.PracticalErrorBounds
 import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.PracticalEstimator.OneNorm
 import NumStability.Algorithms.NormEstimation.OneNorm.GeneralIndex

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Cholesky.Higham11RookExecutorAdapter
+
+#check NumStability.Higham11RookExecutorAdapter.higham11_5_rook_theorem11_4_product_bound_of_mixedExecutor

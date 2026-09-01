@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28Pascal
+
+#check NumStability.pascalIdentityCubeRootCandidate_cube

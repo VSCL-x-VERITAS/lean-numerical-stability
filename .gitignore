@@ -4,6 +4,8 @@
 __pycache__/
 /.agents/
 /.codex/
+/.faithfulness-audit/
+/gates/**/faithfulness/history/**/tmp/
 
 # Local auto-formalization workspace. Do not commit or push.
 /chapter_splitting/

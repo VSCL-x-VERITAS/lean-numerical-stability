@@ -3,7 +3,7 @@ import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.Separation
 import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.SigmaMinBounds.SylvesterPerturbation
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Basic
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Rectangular
-import NumStability.Algorithms.Sylvester.Higham16
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
 import NumStability.Analysis.MatrixAlgebra
 
 /-!

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.SignedScalarIntegral
+
+#check NumStability.ginibreCharacteristicProductKernel

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.Rounded.LocalFactorProducts
+
+#check NumStability.higham11_2_ldltProduct

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GaussianQRHaar
+
+#check NumStability.gaussianQRQLaw_eq_normalizedOrthogonalHaar

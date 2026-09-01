@@ -1,5 +1,5 @@
 import NumStability.Source.Higham.Chapter07.LinearSystemsConditioning.ComputedResidual
-import NumStability.Algorithms.CondEstimation
+import NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod
 
 namespace NumStability
 

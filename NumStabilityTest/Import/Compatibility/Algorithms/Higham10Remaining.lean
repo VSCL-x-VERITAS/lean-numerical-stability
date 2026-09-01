@@ -1,0 +1,13 @@
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Ch10ActualSourceClosure
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Ch10ComplexPositiveDefiniteSourceClosure
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Ch10KahanSharpnessSource
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Ch10PivotedPSDSourceClosure
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Ch10Theorem108Componentwise
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Ch10Theorem108Source
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Higham1014Equation1022
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Higham1014SourceError
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.Higham1029Source
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.HighamChapter10
+import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining.HighamMathiasSource
+
+/-! Legacy-only route tests for the remaining Higham Chapter 10 migration. -/

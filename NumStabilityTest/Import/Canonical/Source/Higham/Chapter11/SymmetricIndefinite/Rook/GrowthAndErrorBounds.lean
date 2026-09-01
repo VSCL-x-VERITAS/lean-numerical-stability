@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.Rook.GrowthAndErrorBounds
+
+#check NumStability.higham11_5_rook_theorem11_4_backward_error

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.CharacteristicProduct
+
+#check NumStability.integral_realGinibre_coordinateProduct

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28PascalOscillationCore
+
+#check NumStability.pascalSortedEigenvector_signChangeCount_le

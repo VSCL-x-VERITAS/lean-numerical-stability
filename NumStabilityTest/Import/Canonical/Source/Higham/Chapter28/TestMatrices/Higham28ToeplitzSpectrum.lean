@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Toeplitz.CharacteristicPolynomial
+
+#check NumStability.tridiagonalToeplitz_p522_unrestricted_charpoly

@@ -1,6 +1,9 @@
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.AttainedMinimizerCompletion
 import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.Minimizers
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.SpectralMinimizers
 import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.Spectrum
 import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.Vectorized
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.VectorizedCompletion
 
 /-!
 # Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.All

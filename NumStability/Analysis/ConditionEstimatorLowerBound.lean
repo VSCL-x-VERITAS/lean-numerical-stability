@@ -30,7 +30,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 import Mathlib.Tactic.Positivity
 import NumStability.Analysis.MatrixAlgebra
-import NumStability.Algorithms.CondEstimation
+import NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod
 
 /-!
 # Lower bounds from one-norm condition estimators

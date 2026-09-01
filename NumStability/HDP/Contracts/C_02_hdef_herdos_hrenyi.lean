@@ -1,13 +1,8 @@
-import NumStability.HDP.Scalar.IndependentSums.Chernoff
+import NumStability.Source.Vershynin.Chapter02.ErdosRenyiModel.Contract
 
-namespace NumStability.HDP.Contract
+/-!
+# Compatibility import for an HDP source contract
 
-open MeasureTheory
-
-/-- Chapter 2's Erdős--Rényi random graph and degree interface. -/
-noncomputable def hdp_02_hdef_herdos_hrenyi
-    (n : ℕ) (p : Set.Icc (0 : ℝ) 1) :
-    NumStability.HDP.Scalar.IndependentSums.Chernoff.ErdosRenyiModelData n p :=
-  NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiModel n p
-
-end NumStability.HDP.Contract
+This historical source-locator path forwards to `NumStability.Source.Vershynin.Chapter02.ErdosRenyiModel.Contract`.
+Use the canonical Vershynin module in new imports.
+-/

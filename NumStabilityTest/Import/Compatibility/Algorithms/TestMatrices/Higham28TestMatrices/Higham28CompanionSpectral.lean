@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28CompanionSpectral
+
+#check NumStability.companionSingularValues_multiset_eq

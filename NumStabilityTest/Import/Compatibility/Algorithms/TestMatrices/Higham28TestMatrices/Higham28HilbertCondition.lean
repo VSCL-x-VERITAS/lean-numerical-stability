@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28HilbertCondition
+
+#check NumStability.hilbertConditionTwo_log_rate

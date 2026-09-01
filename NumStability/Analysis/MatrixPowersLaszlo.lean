@@ -1,10 +1,11 @@
-import NumStability.Analysis.HenriciExtremal
 import NumStability.Analysis.LinearOperators.MatrixPowers.Laszlo.NearestNormal
-import NumStability.Analysis.MatrixPowersHenriciNormal
 import NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.Laszlo
 
 /-!
-# Analysis.MatrixPowersLaszlo
+# Compatibility wrapper: MatrixPowersLaszlo
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.Laszlo.NearestNormal`
+- `NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.Laszlo`
 -/

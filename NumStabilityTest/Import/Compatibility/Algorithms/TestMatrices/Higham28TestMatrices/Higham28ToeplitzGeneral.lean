@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28ToeplitzGeneral
+
+#check NumStability.tridiagonalToeplitz_p522_unrestricted_eigenvalue

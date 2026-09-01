@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.SignedIncidenceAlgebra
+
+#check NumStability.det_ginibreIncidenceFull_sub_externalShift

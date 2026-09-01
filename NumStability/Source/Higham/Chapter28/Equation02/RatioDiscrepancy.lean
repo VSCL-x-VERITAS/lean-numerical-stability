@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 See LICENSES/Apache-2.0.txt.
 Authors: QED
 -/
-import NumStability.Algorithms.TestMatrices.Higham28HilbertAsymptotic
+import NumStability.Source.Higham.Chapter28.Hilbert.DeterminantAsymptotic
 
 /-!
 # Higham Chapter 28: the literal Hilbert determinant ratio is false

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Theorem06.RoundedCholesky.ScaledForwardError
+
+#check NumStability.higham10_6_actual_source_closed

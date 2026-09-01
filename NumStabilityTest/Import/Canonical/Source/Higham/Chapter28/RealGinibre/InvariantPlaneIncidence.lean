@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.InvariantPlaneIncidence
+
+#check NumStability.ginibrePlaneIncidenceMatrix

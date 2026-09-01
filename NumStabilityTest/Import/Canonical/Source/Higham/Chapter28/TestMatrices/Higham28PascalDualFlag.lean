@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Pascal.OscillationDualFlag
+
+#check NumStability.pascalOscillation_leftKernel_orients_maximal_minors

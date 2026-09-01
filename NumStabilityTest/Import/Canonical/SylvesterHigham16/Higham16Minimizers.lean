@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.AttainedMinimizerCompletion
+
+#check NumStability.H16_eq16_15_exists_sylvesterBackwardError_minimizer_of_svdOptimalPerturbations

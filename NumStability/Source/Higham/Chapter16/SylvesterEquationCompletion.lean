@@ -1,0 +1,18 @@
+import NumStability.Source.Higham.Chapter16.Problem02.LyapunovIntegral.SemigroupCompletion
+import NumStability.Source.Higham.Chapter16.Section01.SylvesterEquation.VectorizationNotes.PermutationIdentity
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.AutomaticRealSchur
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.RoundedSylvesterCompletion
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.ShiftedHessenbergSolvability
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.SpectralCompletion
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.AutomaticBounds.Equations23To28
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.AttainedMinimizerCompletion
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.SpectralMinimizers
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.VectorizedCompletion
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
+
+/-!
+# Higham Chapter 16 Sylvester-equation completion
+
+Focused declaration-free source umbrella for the atomic private/reverse
+closures migrated from the historical `Algorithms.Sylvester` family.
+-/

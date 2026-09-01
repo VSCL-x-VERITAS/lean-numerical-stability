@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GinibreSignedIncidenceAlgebra
+
+#check NumStability.det_ginibreIncidenceFull_sub_externalShift

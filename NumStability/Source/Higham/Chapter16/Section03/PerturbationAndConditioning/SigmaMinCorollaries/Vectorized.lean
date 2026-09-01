@@ -9,7 +9,7 @@ import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Lyapunov
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Rectangular
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.SchurCoordinates
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Vectorization
-import NumStability.Algorithms.Sylvester.Higham16
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.MatrixSpectral
 import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation27

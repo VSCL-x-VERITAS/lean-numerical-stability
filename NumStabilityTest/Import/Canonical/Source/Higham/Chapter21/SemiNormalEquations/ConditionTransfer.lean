@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.SemiNormalEquations.ConditionTransfer
+
+#check NumStability.higham21SNEPseudoinverseDifferenceCoefficient

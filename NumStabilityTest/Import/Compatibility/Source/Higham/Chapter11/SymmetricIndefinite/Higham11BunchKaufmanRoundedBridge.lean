@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.Higham11BunchKaufmanRoundedBridge
+
+#check NumStability.higham11_5_twoByTwoPivotSolveStable_residual

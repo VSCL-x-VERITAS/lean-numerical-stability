@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.Higham11Chapter9BridgeClosure
+
+#check NumStability.higham11_7_forwardError_firstOrder_condition_product

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Pascal.OscillationCore
+
+#check NumStability.pascalSortedEigenvector_signChangeCount_le

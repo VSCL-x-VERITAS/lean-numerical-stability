@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Theorem08.ComponentwisePerturbation.ComponentwiseBounds
+
+#check NumStability.higham10_8_componentwise_source

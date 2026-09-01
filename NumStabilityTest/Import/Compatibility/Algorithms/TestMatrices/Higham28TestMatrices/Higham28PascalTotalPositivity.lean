@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28PascalTotalPositivity
+
+#check NumStability.pascalMatrix_isStrictlyTotallyPositive

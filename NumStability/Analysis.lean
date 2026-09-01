@@ -53,17 +53,27 @@ import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.MatrixConcentration
 import NumStability.Analysis.MatrixInequalities
 import NumStability.Analysis.MatrixNorms
-import NumStability.Analysis.MatrixPowersBinomialBound
-import NumStability.Analysis.MatrixPowersGautschi
-import NumStability.Analysis.MatrixPowersLaszlo
-import NumStability.Analysis.MatrixPowersLp185Primary
-import NumStability.Analysis.MatrixPowersSpijkerClosure
 import NumStability.Analysis.MatrixSpectral
 import NumStability.Analysis.Monotonicity
 import NumStability.Analysis.NilpotentJordanChain
 import NumStability.Analysis.Nonassociativity
 import NumStability.Analysis.OperatorLog
 import NumStability.Analysis.OperatorNorms
+import NumStability.Analysis.PartialDifferentialEquations.ConservationLaw
+import NumStability.Analysis.PartialDifferentialEquations.ConstantCoefficientLinearSystem
+import NumStability.Analysis.PartialDifferentialEquations.EigenmodeWaves
+import NumStability.Analysis.PartialDifferentialEquations.FiniteVolume.CellAverage
+import NumStability.Analysis.PartialDifferentialEquations.FiniteVolume.FluxDifference
+import NumStability.Analysis.PartialDifferentialEquations.FiniteVolume.LocalFluxBalance
+import NumStability.Analysis.PartialDifferentialEquations.FiniteVolume.RiemannData
+import NumStability.Analysis.PartialDifferentialEquations.FiniteVolume.RiemannInterface
+import NumStability.Analysis.PartialDifferentialEquations.Hyperbolicity
+import NumStability.Analysis.PartialDifferentialEquations.IntegralConservationLaw
+import NumStability.Analysis.PartialDifferentialEquations.LinearAcoustics
+import NumStability.Analysis.PartialDifferentialEquations.LinearAcousticsWaveEquation
+import NumStability.Analysis.PartialDifferentialEquations.LinearAdvection
+import NumStability.Analysis.PartialDifferentialEquations.LinearAdvectionGlobal
+import NumStability.Analysis.PartialDifferentialEquations.OperatorSplitting
 import NumStability.Analysis.Perturbation
 import NumStability.Analysis.PerturbationTheory
 import NumStability.Analysis.Probability
@@ -133,6 +143,7 @@ import NumStability.Source.Higham.Chapter02.Section10.Tablemaker.FiniteSeparatio
 import NumStability.Source.Higham.Chapter03.Problem02.ProductBounds.PositiveFactors
 import NumStability.Source.Higham.Chapter06
 import NumStability.Source.Higham.Chapter17.Equation22
+import NumStability.Source.Higham.Chapter18
 
 /-!
 # NumStability analysis

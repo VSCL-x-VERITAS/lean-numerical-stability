@@ -1,0 +1,3 @@
+import NumStability.Algorithms.LU.Higham15Problem15_6Operational
+
+#check NumStability.Higham15Problem15_6.H15_Problem15_6_operational_of_irreducible_rightInverse

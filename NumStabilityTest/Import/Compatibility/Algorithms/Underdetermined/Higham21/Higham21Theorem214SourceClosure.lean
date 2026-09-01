@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Underdetermined.Higham21Theorem214SourceClosure
+
+#check NumStability.higham21_topBlock_det_ne_zero_of_perturbed_transpose_injective

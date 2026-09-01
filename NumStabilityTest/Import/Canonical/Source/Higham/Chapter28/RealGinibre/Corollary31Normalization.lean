@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.Corollary31Normalization
+
+#check NumStability.gaussianZeroPow_mul_projectiveConstant

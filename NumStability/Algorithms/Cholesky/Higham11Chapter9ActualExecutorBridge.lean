@@ -1,4 +1,4 @@
-import NumStability.Source.Higham.Chapter11.Higham11Chapter9ActualExecutorBridge
+import NumStability.Source.Higham.CrossChapter.Chapter09To11.ExecutorForwardError
 
 /-!
 Compatibility facade for the canonical Chapter 11 owner(s).

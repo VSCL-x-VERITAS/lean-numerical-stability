@@ -1,5 +1,6 @@
 import NumStability.Source.Higham.Chapter14.Corollary06.SPD.Closure
 import NumStability.Source.Higham.Chapter14.Corollary06.SPD.Concrete
+import NumStability.Source.Higham.Chapter14.Corollary06.SPD.FinalizedUniformInverse
 import NumStability.Source.Higham.Chapter14.Corollary06.SPD.GaussJordanSPDCorollary
 import NumStability.Source.Higham.Chapter14.Corollary06.SPD.SourceClosure
 import NumStability.Source.Higham.Chapter14.Corollary06.SPD.UniformInverseBridge

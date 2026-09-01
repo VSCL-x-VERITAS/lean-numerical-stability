@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Probability.GaussianQRHaar
+
+#check NumStability.gaussianQRQLaw_eq_normalizedOrthogonalHaar

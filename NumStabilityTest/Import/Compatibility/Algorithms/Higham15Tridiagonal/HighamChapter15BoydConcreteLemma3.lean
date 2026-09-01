@@ -1,0 +1,3 @@
+import NumStability.Algorithms.HighamChapter15BoydConcreteLemma3
+
+#check NumStability.Ch15.higham15_boyd_concrete_linear_of_strongLocalMaximum_subsequentialLimit

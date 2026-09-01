@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Sylvester.Higham16
+
+#check NumStability.H16_eq16_29_sylvesterComputedResidualBudget_of_schur_frobenius_error_model

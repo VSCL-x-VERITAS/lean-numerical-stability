@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.ExactGrowthBounds
+
+#check NumStability.higham11_4_exactArithmeticBunchKaufmanMaxEntryNorm_productBound

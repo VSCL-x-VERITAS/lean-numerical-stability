@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Theorem06.GaussianDirection
+
+#check NumStability.ch15_standardGaussianDirection_inner_dixon_bound

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Sylvester.Higham16Lyapunov
+
+#check NumStability.H16_eq16_26_SepLowerBound_lyapunov_diagonal_of_entrywise_abs_ge

@@ -40,7 +40,7 @@ import NumStability.Source.Higham.Chapter09.Section10
 import NumStability.Source.Higham.Chapter09.Section11
 import NumStability.Source.Higham.Chapter13.Section01.OperationModels
 import NumStability.Source.Higham.Chapter14.Problem02.TriangularInversion.Basic
-import NumStability.Source.Higham.Chapter14.Problem02.TriangularInversion.Method2B
+import NumStability.Source.Higham.Chapter14.Problem02.TriangularInversion.Method2B.Core
 
 /-!
 # Chapter14 Problem02 TriangularInversion Families

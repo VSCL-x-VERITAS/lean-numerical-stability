@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28StewartRecursion
+
+#check NumStability.stewartOrthogonalGroupLaw_succ

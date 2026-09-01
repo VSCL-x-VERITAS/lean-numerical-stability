@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.SkewSymmetric.MultiplierCorrection
+
+#check NumStability.higham11_9_printed_twoColumn_search_does_not_bound_multipliers

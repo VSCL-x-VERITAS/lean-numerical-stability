@@ -1,6 +1,6 @@
 import NumStability.Algorithms.Cholesky.CholeskySolve
 import NumStability.Algorithms.Cholesky.CholeskySpec
-import NumStability.Algorithms.HighamChapter10
+import NumStability.Source.Higham.Chapter10.Endpoints
 import NumStability.Algorithms.MatMul
 import NumStability.Algorithms.QR.Higham19
 import NumStability.Algorithms.QR.Higham19Alg12MGSRepair
@@ -12,7 +12,7 @@ import NumStability.Algorithms.QR.Higham19Thm6CoxHighamConcrete
 import NumStability.Algorithms.QR.Higham19Thm6ElementwisePackaged
 import NumStability.Algorithms.QR.Higham19Thm6RowSpecific
 import NumStability.Algorithms.RandNLA.LowRankApprox
-import NumStability.Algorithms.Underdetermined.Higham21ProjectorNorm
+import NumStability.Source.Higham.Chapter21.ProjectorComplementNorm
 import NumStability.Algorithms.Underdetermined.UnderdeterminedSolve
 import NumStability.Algorithms.Underdetermined.UnderdeterminedSpec
 import NumStability.Analysis.HighamChapter7

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28PascalSpectral
+
+#check NumStability.pascalOptimalPerturbation_is_operator2_minimal

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Chapter15CondEst
+
+#check NumStability.Higham15.H15_Algorithm15_4_lower_bound

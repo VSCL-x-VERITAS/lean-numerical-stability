@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28PascalDualFlag
+
+#check NumStability.pascalOscillation_leftKernel_orients_maximal_minors

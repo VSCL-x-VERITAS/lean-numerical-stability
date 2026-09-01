@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.SemiNormalEquations.QRMajorant
+
+#check NumStability.higham21_sne_qr_error_transpose_action_le_majorant

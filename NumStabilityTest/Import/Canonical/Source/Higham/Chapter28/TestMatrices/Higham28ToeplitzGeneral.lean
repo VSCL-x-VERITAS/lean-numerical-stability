@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Toeplitz.TridiagonalSpectrum
+
+#check NumStability.tridiagonalToeplitz_p522_unrestricted_eigenvalue

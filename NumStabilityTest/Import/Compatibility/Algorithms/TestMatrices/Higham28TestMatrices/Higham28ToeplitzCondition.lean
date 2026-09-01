@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28ToeplitzCondition
+
+#check NumStability.secondDifferenceConditionAsymptotic_proved

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.QRFoundations
+
+#check NumStability.higham21_rectGram_det_ne_zero_of_transpose_full_col_rank

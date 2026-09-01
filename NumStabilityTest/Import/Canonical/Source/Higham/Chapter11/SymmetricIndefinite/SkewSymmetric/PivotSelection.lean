@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.SkewSymmetric.PivotSelection
+
+#check NumStability.higham11_9_skewActualPivotChoice_spec

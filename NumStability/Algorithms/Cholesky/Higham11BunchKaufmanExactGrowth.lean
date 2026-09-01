@@ -1,4 +1,4 @@
-import NumStability.Source.Higham.Chapter11.Higham11BunchKaufmanExactGrowth
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.ExactGrowthBounds
 
 /-!
 Compatibility facade for the canonical Chapter 11 owner(s).

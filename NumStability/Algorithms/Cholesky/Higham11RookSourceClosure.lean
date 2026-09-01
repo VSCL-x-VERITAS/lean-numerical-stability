@@ -1,4 +1,4 @@
-import NumStability.Source.Higham.Chapter11.Higham11RookSourceClosure
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.Rook.GrowthAndErrorBounds
 
 /-!
 Compatibility facade for the canonical Chapter 11 owner(s).

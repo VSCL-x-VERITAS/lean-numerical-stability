@@ -1,4 +1,4 @@
-import NumStability.Algorithms.CondEstimation
+import NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod
 import NumStability.Analysis.MatrixAlgebra
 
 /-!

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28HilbertAsymptotic
+
+#check NumStability.hilbertDetLeadingLogRate_proved

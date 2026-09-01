@@ -1,0 +1,3 @@
+import NumStability.Algorithms.LU.TridiagonalCondCh15Closure
+
+#check NumStability.Ch15Closure.H15_Theorem15_8_of_rowDiagDominant

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Ch10Theorem108Source
+
+#check NumStability.higham10_8_counterRhat_unique

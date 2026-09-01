@@ -1,0 +1,3 @@
+import NumStability.Algorithms.HighamChapter15BoydBridges
+
+#check NumStability.Ch15.higham15_boyd_global_of_compact_unique_optimal_fixed

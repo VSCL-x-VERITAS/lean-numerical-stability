@@ -1,0 +1,3 @@
+import NumStability.Algorithms.HighamChapter10
+
+#check NumStability.higham10_1_cholesky_existence

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.VectorizedCompletion
+
+#check NumStability.H16_eq16_3_existsUnique_isSylvesterSolutionRect_of_no_common_complex_eigenpair

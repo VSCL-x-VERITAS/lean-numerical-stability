@@ -1,0 +1,3 @@
+import NumStability.Algorithms.PNormPowerMethodRect
+
+#check NumStability.RectPNormPair.higham15_algorithm15_1_rectangular_result

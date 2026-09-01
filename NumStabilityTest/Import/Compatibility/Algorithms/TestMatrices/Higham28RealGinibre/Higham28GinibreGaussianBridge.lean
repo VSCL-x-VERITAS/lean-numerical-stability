@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GinibreGaussianBridge
+
+#check NumStability.ginibreCoordinatesLinearEquiv

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28PascalCondition
+
+#check NumStability.pascalConditionTwo_log_rate

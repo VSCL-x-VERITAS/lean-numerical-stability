@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.Boyd.FixedPointConvergence
+
+#check NumStability.Ch15.higham15_boyd_global_of_compact_unique_optimal_fixed

@@ -1,9 +1,17 @@
 import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
-import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
 import Mathlib.Combinatorics.SimpleGraph.Finite
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Tactic
+
+/-!
+# Vertex-degree law for binomial random graphs
+
+This reusable support module identifies the degree of a fixed vertex in
+Mathlib's binomial random graph with the corresponding binomial law. It is
+kept separate from the source-facing Chernoff applications so the finite-event
+and measurability lemmas can be reused independently.
+-/
 
 noncomputable section
 
@@ -532,4 +540,3 @@ theorem graphDegreeSum_hasLaw {n : ℕ} (p : Set.Icc (0 : ℝ) 1) (v : Fin n) :
   exact graphDegreeSum_map_apply p v k
 
 end NumStability.HDP.Scalar.IndependentSums.Chernoff
-

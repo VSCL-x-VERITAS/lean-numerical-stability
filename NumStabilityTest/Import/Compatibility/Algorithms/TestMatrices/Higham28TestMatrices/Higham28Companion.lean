@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28Companion
+
+#check NumStability.companionMatrix_charpoly

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.Higham11RookRoundedGap
+
+#check NumStability.Higham11RookExecutorAdapter.exists_aligned_small_mixedExecutor_without_printed_growth

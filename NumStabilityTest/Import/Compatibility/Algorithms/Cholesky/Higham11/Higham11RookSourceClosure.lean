@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Cholesky.Higham11RookSourceClosure
+
+#check NumStability.higham11_5_rook_theorem11_4_backward_error

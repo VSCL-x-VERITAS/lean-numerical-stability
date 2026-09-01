@@ -1,10 +1,9 @@
-import Mathlib.Data.Complex.Basic
-import Mathlib.LinearAlgebra.Matrix.Charpoly.Basic
-import Mathlib.LinearAlgebra.Matrix.Trace
 import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality
 
 /-!
-# Analysis.MatrixPowersHenrici
+# Compatibility wrapper: MatrixPowersHenrici
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality`
 -/

@@ -1,3 +1,8 @@
-import NumStability.HDP.Scalar.Preliminaries
+import NumStability.Source.Vershynin.Chapter01.JensenInequality.Contract
 
-/-! Stable Chapter 1 forwarding module for Jensen's inequality. -/
+/-!
+# Compatibility import for an HDP source contract
+
+This historical source-locator path forwards to `NumStability.Source.Vershynin.Chapter01.JensenInequality.Contract`.
+Use the canonical Vershynin module in new imports.
+-/

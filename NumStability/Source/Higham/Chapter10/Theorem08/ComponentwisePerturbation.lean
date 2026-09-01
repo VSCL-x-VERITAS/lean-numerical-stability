@@ -1,3 +1,4 @@
+import NumStability.Source.Higham.Chapter10.Theorem08.ComponentwisePerturbation.ComponentwiseBounds
 import NumStability.Source.Higham.Chapter10.Theorem08.ComponentwisePerturbation.Endpoints
 import NumStability.Source.Higham.Chapter10.Theorem08.ComponentwisePerturbation.Resolvent
 

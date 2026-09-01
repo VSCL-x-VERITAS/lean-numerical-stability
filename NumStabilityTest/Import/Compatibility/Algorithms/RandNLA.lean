@@ -1,0 +1,24 @@
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.Aggregate
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.ElementwiseSampling
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.ElementwiseSpectral
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.ElementwiseTraceMGF
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.HitCountConcentration
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.LeastSquaresSketch
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.LowRankApprox
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.Preconditioning
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.RowSampling
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.RowSamplingGram
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.RowSamplingLeverage
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.RowSamplingLeverageComputedBasis
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.RowSamplingLeverageMGF
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.RowSamplingTraceMGF
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.UniformRowSampling
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.UniformRowSamplingComposition
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.UniformRowSamplingFP
+import NumStabilityTest.Import.Compatibility.Algorithms.RandNLA.UniformRowSamplingMGF
+
+/-!
+# Legacy RandNLA import isolation
+
+Each child imports only one historical wrapper and checks its former public surface.
+-/

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Section06.TridiagonalConditioning.Ikebe
+
+#check NumStability.Ch15IkebeClosure.H15_Theorem15_9_of_irreducible_rightInverse

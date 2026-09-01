@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.Rook.ExactTrace
+
+#check NumStability.Higham11RookExecutorAdapter.Higham11ExactRookTrace

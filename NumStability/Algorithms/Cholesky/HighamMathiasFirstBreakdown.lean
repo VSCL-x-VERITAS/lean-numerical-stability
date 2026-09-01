@@ -1,4 +1,4 @@
-import NumStability.Algorithms.Cholesky.Higham1029Source
+import NumStability.Source.Higham.Chapter10.Section04.PositiveDefiniteSymmetricPart.LUGrowth
 import NumStability.Source.Higham.Chapter09.DoolittleClosure
 import NumStability.Source.Higham.Chapter10.Equation29.Mathias.FirstBreakdown
 
@@ -11,4 +11,3 @@ modules imported above. The module's own original imports are
 re-stated so consumers reaching an identifier transitively through
 this path still see the same surface.
 -/
-

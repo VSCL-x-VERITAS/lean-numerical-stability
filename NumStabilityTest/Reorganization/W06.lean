@@ -255,9 +255,11 @@ import NumStabilityTest.Reorganization.W06.Focused.PseudospectralResolvent
 import NumStabilityTest.Reorganization.W06.Focused.RetainedHigham16Bridges
 import NumStabilityTest.Reorganization.W06.Focused.SylvesterConditioning
 import NumStabilityTest.Reorganization.W06.Focused.SylvesterSolvers
+import NumStabilityTest.Reorganization.W06.MatrixPowersCanonical
+import NumStabilityTest.Reorganization.W06.MatrixPowersCompatibility
 
 /-!
 # NumStabilityTest.Reorganization.W06
 
-Integrated discovery aggregate for all 257 W06 reorganization tests.
+Integrated discovery aggregate for all 259 W06 reorganization tests.
 -/

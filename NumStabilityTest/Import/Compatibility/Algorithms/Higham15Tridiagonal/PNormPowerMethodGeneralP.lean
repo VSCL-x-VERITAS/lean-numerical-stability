@@ -1,0 +1,3 @@
+import NumStability.Algorithms.PNormPowerMethodGeneralP
+
+#check NumStability.Ch15.realLpDual_hasDirectionalGradientAt

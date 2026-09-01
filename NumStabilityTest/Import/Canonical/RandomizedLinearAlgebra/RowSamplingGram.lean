@@ -1,0 +1,7 @@
+import NumStability.Algorithms.RandomizedLinearAlgebra.Sampling.RowNorm.Gram
+import NumStability.Source.DrineasMahoney.RandNLA2016.Equation05.GramApproximation.Bounds
+import NumStability.Source.DrineasMahoney.RandNLA2016.Equation05.GramApproximation.FiniteSampleBounds
+
+#check NumStability.abs_rowOuterGramSample_le_den
+#check NumStability.rowSqNormTraceProbMass_marginal_one
+#check NumStability.rowSqNormTraceProbMass_marginal_two_ne

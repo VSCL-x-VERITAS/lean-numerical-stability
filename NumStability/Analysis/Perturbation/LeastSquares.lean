@@ -14,6 +14,7 @@ import NumStability.Analysis.Perturbation.LeastSquares.MinimumNorm
 import NumStability.Analysis.Perturbation.LeastSquares.NormalEquations
 import NumStability.Analysis.Perturbation.LeastSquares.Normwise
 import NumStability.Analysis.Perturbation.LeastSquares.Projection
+import NumStability.Analysis.Perturbation.LeastSquares.ProjectorComplementNorm
 import NumStability.Analysis.Perturbation.LeastSquares.ResidualQuality
 import NumStability.Analysis.Perturbation.LeastSquares.Wedin
 import NumStability.Analysis.Perturbation.LeastSquares.WeightedLimit

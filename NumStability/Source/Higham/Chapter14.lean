@@ -1,10 +1,13 @@
 import NumStability.Source.Higham.Chapter14.Algorithm04
+import NumStability.Source.Higham.Chapter14.AsymptoticFamilies
 import NumStability.Source.Higham.Chapter14.Corollary06
 import NumStability.Source.Higham.Chapter14.Corollary07
 import NumStability.Source.Higham.Chapter14.Discrepancies
 import NumStability.Source.Higham.Chapter14.Equation34
 import NumStability.Source.Higham.Chapter14.Equation35
 import NumStability.Source.Higham.Chapter14.Equation36
+import NumStability.Source.Higham.Chapter14.ForwardErrorEndpoints
+import NumStability.Source.Higham.Chapter14.MatrixInversionProblems
 import NumStability.Source.Higham.Chapter14.Problem02
 import NumStability.Source.Higham.Chapter14.Problem03
 import NumStability.Source.Higham.Chapter14.Problem04

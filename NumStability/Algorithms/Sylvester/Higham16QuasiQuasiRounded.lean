@@ -1,5 +1,5 @@
 import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.QuasiTriangularBartelsStewart.SmallSystemRounding
-import NumStability.Algorithms.Sylvester.Higham16QuasiRoundedSylvester
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.RoundedSylvesterCompletion
 
 /-!
 # Algorithms.Sylvester.Higham16QuasiQuasiRounded

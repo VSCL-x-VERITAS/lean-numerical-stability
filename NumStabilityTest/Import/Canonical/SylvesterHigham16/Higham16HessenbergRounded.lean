@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.AutomaticRealSchur
+
+#check NumStability.Wave17.H16_eq16_4_8_auto_realSchur_existsUnique_solution_of_no_common

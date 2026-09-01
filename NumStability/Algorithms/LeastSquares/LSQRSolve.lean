@@ -20,7 +20,8 @@ import NumStability.Algorithms.LinearSystems.QR.QRSolve
 import NumStability.Algorithms.LinearSystems.Triangular.BackSubstitution
 import NumStability.Algorithms.LinearSystems.Triangular.ForwardSubstitution
 import NumStability.Algorithms.LinearSystems.Triangular.InverseBounds
-import NumStability.Algorithms.RandNLA.LowRankApprox
+import NumStability.Algorithms.RandomizedLinearAlgebra.LowRankApproximation.ColumnSketches.Core
+import NumStability.Algorithms.RandomizedLinearAlgebra.LowRankApproximation.RankFactorizations.Core
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.Perturbation.LeastSquares.AugmentedSystem
 import NumStability.Analysis.Perturbation.LeastSquares.BackwardError
@@ -31,6 +32,7 @@ import NumStability.Analysis.Perturbation.LeastSquares.Normwise
 import NumStability.Analysis.PerturbationTheory
 import NumStability.Analysis.SingularValues.Realification
 import NumStability.Source.Higham.Chapter20.Theorem03.QRSolve
+import NumStability.Source.DrineasMahoney.RandNLA2016.Equation09.LowRankApproximation.Endpoints
 
 /-!
 # LSQRSolve (historical compatibility wrapper)

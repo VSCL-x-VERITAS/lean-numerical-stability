@@ -1,0 +1,3 @@
+import NumStability.Algorithms.HighamChapter15BoydScalar
+
+#check NumStability.Ch15.higham15_boyd_global_of_nonnegative_irreducibleGram_all_dimensions

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Theorem14.CompletePivotedPSD.StoppingErrorBounds
+
+#check NumStability.higham10_14_completePivotedPSD_actual_source_closed

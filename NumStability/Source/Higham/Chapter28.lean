@@ -1,4 +1,10 @@
+import NumStability.Source.Higham.Chapter28.Asymptotics
 import NumStability.Source.Higham.Chapter28.Equation02
+import NumStability.Source.Higham.Chapter28.PositiveMatrices
+import NumStability.Source.Higham.Chapter28.ProbabilityStatements
+import NumStability.Source.Higham.Chapter28.RealGinibre
+import NumStability.Source.Higham.Chapter28.TestMatrices
+import NumStability.Source.Higham.Chapter28.Theorem01
 
 /-!
 # Higham Chapter 28: Test Matrices

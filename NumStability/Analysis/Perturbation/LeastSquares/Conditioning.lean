@@ -1,8 +1,8 @@
 import NumStability.Algorithms.LinearSystems.LeastSquares.Basic
-import NumStability.Algorithms.Underdetermined.Higham21ProjectorNorm
 import NumStability.Algorithms.Underdetermined.UnderdeterminedSpec
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.Perturbation.LeastSquares.Normwise
+import NumStability.Analysis.Perturbation.LeastSquares.ProjectorComplementNorm
 import NumStability.Analysis.SingularValues.Basic
 import NumStability.Analysis.SingularValues.Realification
 

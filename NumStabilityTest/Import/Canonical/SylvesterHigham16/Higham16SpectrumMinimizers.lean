@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.SpectralMinimizers
+
+#check NumStability.H16_eq16_29_sylvester_practical_error_bound_fl_of_realQuasiSchur_strictBlockMap

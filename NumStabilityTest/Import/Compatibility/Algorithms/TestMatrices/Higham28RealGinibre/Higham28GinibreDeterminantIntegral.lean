@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GinibreDeterminantIntegral
+
+#check NumStability.lintegral_ginibreIncidence_gaussian_eq_rootCount

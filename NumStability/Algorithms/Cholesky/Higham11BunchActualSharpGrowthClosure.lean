@@ -1,4 +1,4 @@
-import NumStability.Source.Higham.Chapter11.Higham11BunchActualSharpGrowthClosure
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.Bunch.CertifiedSharpGrowth
 
 /-!
 Compatibility facade for the canonical Chapter 11 owner(s).

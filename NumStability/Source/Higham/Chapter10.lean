@@ -1,3 +1,4 @@
+import NumStability.Source.Higham.Chapter10.Endpoints
 import NumStability.Source.Higham.Chapter10.Equation07.AbsoluteFactorNorm
 import NumStability.Source.Higham.Chapter10.Equation29.Mathias
 import NumStability.Source.Higham.Chapter10.Equation30.ComplexPositiveDefinite

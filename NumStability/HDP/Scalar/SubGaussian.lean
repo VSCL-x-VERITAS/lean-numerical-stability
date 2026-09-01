@@ -15,7 +15,7 @@ import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.Tactic
 import NumStability.HDP.Scalar.Preliminaries
 import NumStability.HDP.Scalar.IndependentSums.Hoeffding
-import NumStability.HDP.ContractSignatures.C_02_hex_h2_d6_d9
+import NumStability.Source.Vershynin.Chapter02.Section06.Exercise09.Signature
 
 /-!
 # Standard-normal MGF

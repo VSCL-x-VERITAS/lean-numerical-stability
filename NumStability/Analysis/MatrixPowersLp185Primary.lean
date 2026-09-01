@@ -1,14 +1,9 @@
-import Mathlib.Data.Real.Basic
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
-import NumStability.Algorithms.MatrixPowersJordan
-import NumStability.Algorithms.MatrixPowersLp
-import NumStability.Algorithms.MatrixPowersLpJordan
-import NumStability.Analysis.MatrixNorms.Lp
 import NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.Equations04And05.Equation05Primary
 
 /-!
-# Analysis.MatrixPowersLp185Primary
+# Compatibility wrapper: MatrixPowersLp185Primary
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.Equations04And05.Equation05Primary`
 -/

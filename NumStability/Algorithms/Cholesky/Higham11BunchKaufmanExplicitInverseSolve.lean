@@ -1,4 +1,4 @@
-import NumStability.Source.Higham.Chapter11.Higham11BunchKaufmanExplicitInverseSolve
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.BunchKaufman.ExplicitInverseSolve
 
 /-!
 Compatibility facade for the canonical Chapter 11 owner(s).

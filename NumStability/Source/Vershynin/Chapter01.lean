@@ -1,0 +1,21 @@
+import NumStability.Source.Vershynin.Chapter01.BernoulliAndBinomial.Contract
+import NumStability.Source.Vershynin.Chapter01.CauchySchwarz
+import NumStability.Source.Vershynin.Chapter01.CDFAndTail.Contract
+import NumStability.Source.Vershynin.Chapter01.ConvergenceInDistribution.Contract
+import NumStability.Source.Vershynin.Chapter01.ExpectationAndVariance.Contract
+import NumStability.Source.Vershynin.Chapter01.JensenInequality
+import NumStability.Source.Vershynin.Chapter01.L2Geometry.Contract
+import NumStability.Source.Vershynin.Chapter01.Section02.Corollary05
+import NumStability.Source.Vershynin.Chapter01.Section02.Exercise02
+import NumStability.Source.Vershynin.Chapter01.Section02.Lemma01
+import NumStability.Source.Vershynin.Chapter01.Section02.Proposition04
+import NumStability.Source.Vershynin.Chapter01.Section03.Theorem01
+import NumStability.Source.Vershynin.Chapter01.StandardDeviationAndCovariance.Contract
+import NumStability.Source.Vershynin.Chapter01.StandardNormal.Contract
+
+/-!
+# Vershynin Chapter 01 source contracts
+
+Complete source entry point for the migrated signatures and checked contracts
+from Vershynin's *High-Dimensional Probability*, Chapter 01.
+-/

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.LU.Higham15Problem15_6
+
+#check NumStability.Higham15Problem15_6.problem15_6_factors

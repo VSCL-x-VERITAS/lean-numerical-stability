@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28PascalOscillationExact
+
+#check NumStability.pascalSortedEigenvector_hasExactlySignChanges

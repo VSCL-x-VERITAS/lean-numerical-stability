@@ -1,12 +1,11 @@
-import Mathlib.Analysis.CStarAlgebra.CStarMatrix
-import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import NumStability.Analysis.LinearOperators.MatrixPowers.BaiDemmelGu.StabilityRadius
-import NumStability.Analysis.PseudospectralPowerBound
 import NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.BaiDemmelGu
 
 /-!
-# Analysis.MatrixPowersBaiDemmelGu
+# Compatibility wrapper: MatrixPowersBaiDemmelGu
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.BaiDemmelGu.StabilityRadius`
+- `NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.BaiDemmelGu`
 -/

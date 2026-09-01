@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.Boyd.RowwiseSmoothness
+
+#check NumStability.Ch15.rect_general_fderiv_xnext_apply_eq_inv_projectedLemma3B_rowwise_source_domain

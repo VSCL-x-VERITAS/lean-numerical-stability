@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28Cauchy
+
+#check NumStability.cauchyMatrix_det_eq_formula

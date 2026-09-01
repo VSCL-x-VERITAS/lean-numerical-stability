@@ -1,7 +1,7 @@
 import NumStability.Algorithms.LeastSquares.LSQRSolve
-import NumStability.Algorithms.Underdetermined.Higham21ProjectorNorm
 import NumStability.Analysis.Perturbation.LeastSquares.Conditioning
 import NumStability.Source.Higham.Chapter20.Prose
+import NumStability.Source.Higham.Chapter21.ProjectorComplementNorm
 
 /-!
 # Higham20Prose (historical compatibility wrapper)

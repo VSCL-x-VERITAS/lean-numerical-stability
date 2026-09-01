@@ -5,41 +5,11 @@ SPDX-License-Identifier: Apache-2.0
 See LICENSES/Apache-2.0.txt.
 Authors: QED
 -/
-import NumStability.Algorithms.LinearSystems.QR.HouseholderQApply
-import NumStability.Algorithms.Underdetermined.Higham21Attainability
-import NumStability.Algorithms.Underdetermined.Higham21Eq21_11Uniform
-import NumStability.Algorithms.Underdetermined.Higham21Eq21_8
-import NumStability.Algorithms.Underdetermined.Higham21Eq21_9
-import NumStability.Algorithms.Underdetermined.Higham21Equation21_11
-import NumStability.Algorithms.Underdetermined.Higham21Equation21_11Scalar
-import NumStability.Algorithms.Underdetermined.Higham21Givens
-import NumStability.Algorithms.Underdetermined.Higham21GivensClosure
-import NumStability.Algorithms.Underdetermined.Higham21GivensRounded
-import NumStability.Algorithms.Underdetermined.Higham21MGS
-import NumStability.Algorithms.Underdetermined.Higham21MGSRounded
-import NumStability.Algorithms.Underdetermined.Higham21Perturbation
-import NumStability.Algorithms.Underdetermined.Higham21PerturbationRadius
-import NumStability.Algorithms.Underdetermined.Higham21ProjectorNorm
-import NumStability.Algorithms.Underdetermined.Higham21QRFoundations
-import NumStability.Algorithms.Underdetermined.Higham21RankStability
-import NumStability.Algorithms.Underdetermined.Higham21SNEActualOutput
-import NumStability.Algorithms.Underdetermined.Higham21SNEClosure
-import NumStability.Algorithms.Underdetermined.Higham21SNEConditionTransfer
-import NumStability.Algorithms.Underdetermined.Higham21SNEEnvelopeTransfer
-import NumStability.Algorithms.Underdetermined.Higham21SNEForward
-import NumStability.Algorithms.Underdetermined.Higham21SNEQRMajorant
-import NumStability.Algorithms.Underdetermined.Higham21SNERemainderBounds
-import NumStability.Algorithms.Underdetermined.Higham21SNESigned
-import NumStability.Algorithms.Underdetermined.Higham21SNEUniform
-import NumStability.Algorithms.Underdetermined.Higham21Theorem214SourceClosure
 import NumStability.Source.Higham.Chapter21
-import NumStability.Source.Higham.Chapter21.Theorem03
-import NumStability.Source.Higham.Chapter21.Theorem04
 
 /-!
 # Historical Higham Chapter 21 aggregate
 
-Broad compatibility and discovery surface for the repository's Chapter 21
-formalization. New code should prefer the canonical source aggregate or the
-narrowest reusable algorithm module it needs.
+Exact import-only compatibility surface for the canonical Chapter 21 source
+aggregate. New code should prefer the canonical source aggregate directly.
 -/

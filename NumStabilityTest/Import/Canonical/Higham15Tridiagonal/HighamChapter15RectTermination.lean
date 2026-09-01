@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.RectangularTermination
+
+#check NumStability.RectPNormPair.higham15_rectangular_infinity_n_plus_one_source_discrepancy

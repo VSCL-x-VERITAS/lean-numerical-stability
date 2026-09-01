@@ -38,7 +38,7 @@ FULL_LOCATOR_RE = re.compile(
     r"^(?:Theorem|Lemma|Equation|Corollary|Problem|Algorithm|Example|Table)(\d+)(.*)$"
 )
 PLACEHOLDER_RE = re.compile(
-    r"\b(?:sorry|admit)\b|^\s*(?:axiom|constant)\b",
+    r"\b(?:sorry|admit)\b|^\s*(?:axiom|constant)\b(?!\s*(?::|:=))",
     re.MULTILINE,
 )
 PROCESS_WORDS = (
@@ -260,9 +260,56 @@ def placeholder_failures(modules: list[SourceModule]) -> list[str]:
     findings: list[str] = []
     for path in paths:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
-        if PLACEHOLDER_RE.search(remove_lean_comments(text)):
+        if has_placeholder(text):
             findings.append(path.relative_to(ROOT).as_posix())
     return ["proof placeholders or axiom/constant commands: " + ", ".join(findings)] if findings else []
+
+
+def has_placeholder(text: str) -> bool:
+    """Detect proof holes and actual axiom/constant commands in Lean source."""
+
+    return bool(PLACEHOLDER_RE.search(remove_lean_comments(text)))
+
+
+def run_self_test() -> int:
+    clean_structure = """\
+structure LipschitzCertificate where
+  constant : Nat
+  bound : constant = constant
+
+def certificate : LipschitzCertificate := by
+  exact {
+    constant := 1
+    bound := rfl
+  }
+"""
+    if has_placeholder(clean_structure):
+        raise AssertionError("structure fields or literals named `constant` were rejected")
+
+    clean_comments = """\
+-- axiom commentedOut : False
+/- constant alsoCommentedOut : False -/
+theorem complete : True := by trivial
+"""
+    if has_placeholder(clean_comments):
+        raise AssertionError("commented placeholders were rejected")
+
+    rejected = {
+        "top-level axiom": "axiom unsupported : False\n",
+        "indented axiom command": "namespace Example\n  axiom unsupported : False\nend Example\n",
+        "top-level constant": "constant unsupported : Nat\n",
+        "indented constant command": (
+            "namespace Example\n  constant unsupported : Nat\nend Example\n"
+        ),
+        "sorry": "theorem unfinished : True := by sorry\n",
+        "admit": "theorem unfinished : True := by admit\n",
+    }
+    for label, source in rejected.items():
+        if not has_placeholder(source):
+            raise AssertionError(f"placeholder self-test accepted {label}")
+
+    print("Layout placeholder scanner self-test passed")
+    return 0
 
 
 def current_debt(
@@ -452,13 +499,21 @@ def check() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument(
         "--write-baseline",
         action="store_true",
         help="review-only operation: replace the exact legacy debt baseline",
     )
+    action.add_argument(
+        "--self-test",
+        action="store_true",
+        help="run focused placeholder-scanner regression tests",
+    )
     args = parser.parse_args()
     try:
+        if args.self_test:
+            return run_self_test()
         if not args.write_baseline:
             return check()
         _, modules = scan_sources(ROOT)

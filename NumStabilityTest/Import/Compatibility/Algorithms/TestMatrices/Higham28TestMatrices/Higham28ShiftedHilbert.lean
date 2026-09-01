@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28ShiftedHilbert
+
+#check NumStability.shiftedHilbert_norm_asymptotic

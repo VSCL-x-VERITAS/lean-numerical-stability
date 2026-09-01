@@ -1,6 +1,11 @@
 import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.SingularValue
-import NumStability.Algorithms.Sylvester.Higham16Lyapunov
-import NumStability.Algorithms.Sylvester.Higham16Psi
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredLyapunov
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredSylvester
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation23
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation24
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation26
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation27
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation28
 import NumStability.Analysis.MatrixSpectral
 import NumStability.Analysis.SingularValues.InverseBounds.Gram
 import NumStability.Analysis.SingularValues.InverseBounds.OperatorTwo

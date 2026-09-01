@@ -1,11 +1,11 @@
-import NumStability.Algorithms.MatrixPowersComplex
-import NumStability.Algorithms.MatrixPowersLpJordan
 import NumStability.Analysis.LinearOperators.MatrixPowers.Gautschi.Bounds
-import NumStability.Analysis.MatrixNorms.Comparisons
 import NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.Gautschi
 
 /-!
-# Analysis.MatrixPowersGautschi
+# Compatibility wrapper: MatrixPowersGautschi
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.Gautschi.Bounds`
+- `NumStability.Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.Gautschi`
 -/

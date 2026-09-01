@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Underdetermined.Higham21Equation21_11Scalar
+
+#check NumStability.higham21_eq21_11_firstOrder_norm_le_rowwise_cond2_scalar

@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.SemiNormalEquations.UniformBounds
+
+#check NumStability.higham21SNEHouseholderSourceEnvelope

@@ -1,20 +1,15 @@
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Data.Real.Basic
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
-import NumStability.Algorithms.MatrixPowersJordan
 import NumStability.Analysis.LinearOperators.MatrixPowers.ExactNormBounds.Complex
 import NumStability.Analysis.LinearOperators.MatrixPowers.JordanScaling.Complex
-import NumStability.Analysis.MatrixNorms.Basic
 import NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Equations08To14.ComplexSimilarity
 import NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.ComplexJordan
 
 /-!
-# Algorithms.MatrixPowersComplex
+# Compatibility wrapper: MatrixPowersComplex
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.ExactNormBounds.Complex`
+- `NumStability.Analysis.LinearOperators.MatrixPowers.JordanScaling.Complex`
+- `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Equations08To14.ComplexSimilarity`
+- `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.ComplexJordan`
 -/

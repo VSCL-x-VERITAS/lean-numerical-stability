@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Section06.TridiagonalConditioning.DiagonalDominance
+
+#check NumStability.Ch15Closure.H15_Theorem15_8_of_rowDiagDominant

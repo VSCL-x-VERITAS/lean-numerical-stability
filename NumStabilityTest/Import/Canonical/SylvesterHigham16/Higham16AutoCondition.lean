@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.AutomaticBounds.Equations23To28
+
+#check NumStability.Wave17.H16_eq16_23_sylvester_first_order_bound_of_no_common_complex_right_eigenvalue

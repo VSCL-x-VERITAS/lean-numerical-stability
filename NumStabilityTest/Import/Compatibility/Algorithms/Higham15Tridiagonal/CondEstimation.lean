@@ -1,0 +1,3 @@
+import NumStability.Algorithms.CondEstimation
+
+#check NumStability.lapackNormEstimator_lower_bound

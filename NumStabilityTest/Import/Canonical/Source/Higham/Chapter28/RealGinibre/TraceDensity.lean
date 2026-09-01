@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.RealGinibre.TraceDensity
+
+#check NumStability.ginibreTraceCorrelatedDensityReal

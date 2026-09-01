@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Hilbert.DeterminantAsymptotic
+
+#check NumStability.hilbertDetLeadingLogRate_proved

@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28Exact
+
+#check NumStability.hilbert_det_formula

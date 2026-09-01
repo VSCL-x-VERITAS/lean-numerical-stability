@@ -1,4 +1,4 @@
-import NumStability.Source.Higham.Chapter11.Higham11Chapter9BridgeClosure
+import NumStability.Source.Higham.CrossChapter.Chapter09To11.SymmetricIndefiniteErrorBounds
 
 /-!
 Compatibility facade for the canonical Chapter 11 owner(s).

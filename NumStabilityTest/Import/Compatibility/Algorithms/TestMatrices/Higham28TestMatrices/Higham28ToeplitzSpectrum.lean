@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28ToeplitzSpectrum
+
+#check NumStability.tridiagonalToeplitz_p522_unrestricted_charpoly

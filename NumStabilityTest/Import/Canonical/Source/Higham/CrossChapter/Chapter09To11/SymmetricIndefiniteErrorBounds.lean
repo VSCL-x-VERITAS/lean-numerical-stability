@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.CrossChapter.Chapter09To11.SymmetricIndefiniteErrorBounds
+
+#check NumStability.higham11_7_forwardError_firstOrder_condition_product

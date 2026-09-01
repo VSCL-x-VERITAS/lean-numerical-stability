@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Sylvester.Higham16VecNorm
+
+#check NumStability.H16_eq16_3_existsUnique_isSylvesterSolutionRect_of_no_common_complex_eigenpair

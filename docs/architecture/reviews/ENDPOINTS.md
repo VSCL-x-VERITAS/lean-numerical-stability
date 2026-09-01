@@ -18,7 +18,7 @@ move pilot.
 | `Analysis.Problem2_7` | Mixed generic operation laws and source counterexamples | `FloatingPoint.OperationLaws` plus `Source.Higham.Chapter02.Problem07` | Split by meaning; retain an old wrapper importing both. |
 | `Algorithms.QR.Higham19Lemma3ActualSequence` | Higham Lemma 19.3 source endpoint over reusable stored-Householder producers | Future `Source.Higham.Chapter19` module | Retain for this slice; move with the Chapter 19 QR source cluster so its broad support imports can be reviewed together. |
 | `Algorithms.QR.Higham19Theorem6ActualSource` | Import-and-alias endpoint for Higham Theorem 19.6 | Future `Source.Higham.Chapter19` source-alias module | Retain for this slice; co-migrate with the Theorem 20.7 assembly dependency rather than hiding the current cross-chapter direction. |
-| `Analysis.MatrixPowersSpijkerClosure` | Higham Chapter 18 Kreiss/Spijker source capstone | Future `Source.Higham.Chapter18` module | Retain for this slice; queue with the MatrixPowers source cluster and preserve the public endpoint. |
+| `Analysis.MatrixPowersSpijkerClosure` | Higham Chapter 18 Kreiss/Spijker source capstone | `Analysis.LinearOperators.MatrixPowers.Spijker.KreissBounds`; `Source.Higham.Chapter18.Section01.MatrixPowerBounds.NamedBounds.SpijkerKreiss` | Declaration-free compatibility wrapper; generic bounds and source-named endpoints are separated without a reusable-to-source edge. |
 
 ## Conclusions
 

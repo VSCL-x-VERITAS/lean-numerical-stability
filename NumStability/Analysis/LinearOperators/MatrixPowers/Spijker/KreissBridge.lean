@@ -595,41 +595,6 @@ theorem powerBound_exp_mul_dim_of_spijker
     PowerBound A (Real.exp 1 * n * K) :=
   fun k => norm_pow_le_exp_mul_dim_of_spijker hS A hK k
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 end
 
 end NumStability

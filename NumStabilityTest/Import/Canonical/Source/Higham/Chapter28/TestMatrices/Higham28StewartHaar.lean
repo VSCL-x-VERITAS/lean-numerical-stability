@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Stewart.HaarCoordinateSplit
+
+#check NumStability.stewartInputSplitEquiv_measurePreserving

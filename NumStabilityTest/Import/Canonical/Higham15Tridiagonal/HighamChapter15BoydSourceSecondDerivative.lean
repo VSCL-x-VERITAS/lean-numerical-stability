@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.Boyd.SecondDerivative
+
+#check NumStability.Ch15.boydConstrainedSecondVariation_is_second_derivative_rowwise_source_domain

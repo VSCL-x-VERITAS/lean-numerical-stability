@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter21.SemiNormalEquations.SignedFactorAnalysis
+
+#check NumStability.higham21SNEDHFactorLeadingAt

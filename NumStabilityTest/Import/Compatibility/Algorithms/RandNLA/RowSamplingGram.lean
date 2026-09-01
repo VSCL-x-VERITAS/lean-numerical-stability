@@ -1,0 +1,5 @@
+import NumStability.Algorithms.RandNLA.RowSamplingGram
+
+#check NumStability.abs_rowOuterGramSample_le_den
+#check NumStability.rowSqNormTraceProbMass_marginal_one
+#check NumStability.rowSqNormTraceProbMass_marginal_two_ne

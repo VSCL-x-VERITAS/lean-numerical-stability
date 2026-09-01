@@ -11,7 +11,7 @@ import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.Probability.Distributions.Exponential
 import Mathlib.Probability.Moments.IntegrableExpMul
-import NumStability.HDP.ContractSignatures.C_02_hrem_h2_d7_d9
+import NumStability.Source.Vershynin.Chapter02.Section07.Remark09.Signature
 import NumStability.HDP.Scalar.SubGaussian
 import Mathlib.Tactic
 

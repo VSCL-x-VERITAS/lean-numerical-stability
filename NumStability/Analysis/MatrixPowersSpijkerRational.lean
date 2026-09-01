@@ -1,9 +1,9 @@
-import Mathlib.LinearAlgebra.Matrix.Charpoly.Basic
 import NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.Rational
-import NumStability.Analysis.MatrixPowersKreissSpijker
 
 /-!
-# Analysis.MatrixPowersSpijkerRational
+# Compatibility wrapper: MatrixPowersSpijkerRational
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.Rational`
 -/

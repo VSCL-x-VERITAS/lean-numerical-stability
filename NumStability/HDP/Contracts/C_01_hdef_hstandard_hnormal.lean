@@ -1,18 +1,8 @@
-import NumStability.HDP.Scalar.LimitTheorems
+import NumStability.Source.Vershynin.Chapter01.StandardNormal.Contract
 
 /-!
-Cross-split stable API for `HDP-01-DEF-STANDARD-NORMAL`.
+# Compatibility import for an HDP source contract
 
-The semantic producer owns the canonical Gaussian law and the random-variable
-predicate; this leaf owns only the stable source-facing law name.
+This historical source-locator path forwards to `NumStability.Source.Vershynin.Chapter01.StandardNormal.Contract`.
+Use the canonical Vershynin module in new imports.
 -/
-
-namespace NumStability.HDP.Contract
-
-open MeasureTheory
-
-/-- The standard normal probability law from Chapter 1, equation (1.6). -/
-noncomputable def hdp_01_hdef_hstandard_hnormal : Measure ℝ :=
-  NumStability.HDP.Scalar.LimitTheorems.standardNormalLaw
-
-end NumStability.HDP.Contract

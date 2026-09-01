@@ -1,5 +1,5 @@
 import NumStability.Algorithms.Cholesky.CholeskyFl
-import NumStability.Algorithms.HighamChapter10
+import NumStability.Source.Higham.Chapter10.Endpoints
 import NumStability.Algorithms.LinearSystems.Cholesky.ErrorAnalysis.Certificates
 import NumStability.Algorithms.LinearSystems.Cholesky.Factorization.Spec
 import NumStability.Algorithms.LinearSystems.Cholesky.PositiveSemidefinite.ScaledStage

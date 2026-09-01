@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.SkewSymmetric.ExactTrace
+
+#check NumStability.Higham11ExactSkewTrace

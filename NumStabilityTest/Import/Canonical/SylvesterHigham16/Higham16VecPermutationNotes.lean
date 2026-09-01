@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section01.SylvesterEquation.VectorizationNotes.PermutationIdentity
+
+#check NumStability.H16_notes_kronecker_mul_vecTransposePermutation

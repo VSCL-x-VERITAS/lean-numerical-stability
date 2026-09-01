@@ -1,5 +1,5 @@
 import NumStability.Algorithms.LinearSystems.SymmetricIndefinite.BlockLDLT.BunchTridiagonalGrowthInvariant
-import NumStability.Algorithms.Sylvester.Higham16QuasiRoundedSolve
+import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.QuasiTriangularBartelsStewart.RoundedBlockBackSubstitution
 import NumStability.Source.Higham.Chapter11.BlockLDLTMixedPivot
 import NumStability.Source.Higham.Chapter11.BlockLDLTSolveBackward
 import NumStability.Source.Higham.Chapter11.Section01.PartialPivoting

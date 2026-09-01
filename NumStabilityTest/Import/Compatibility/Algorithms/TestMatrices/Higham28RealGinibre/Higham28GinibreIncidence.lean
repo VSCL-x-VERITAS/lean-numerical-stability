@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28GinibreIncidence
+
+#check NumStability.ginibreIncidenceChart

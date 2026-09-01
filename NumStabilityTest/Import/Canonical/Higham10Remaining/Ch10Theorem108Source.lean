@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter10.Theorem08.NormwiseDiscrepancy.FactorUniqueness
+
+#check NumStability.higham10_8_counterRhat_unique

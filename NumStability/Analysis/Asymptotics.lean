@@ -1,4 +1,5 @@
 import NumStability.Analysis.Asymptotics.Bounds
+import NumStability.Analysis.Asymptotics.CentralBinomial
 
 /-!
 # Asymptotic analysis

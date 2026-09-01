@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.Boyd.WeightedSecondVariation
+
+#check NumStability.Ch15.higham15_boyd_concrete_linear_of_strongLocalMaximum_subsequentialLimit

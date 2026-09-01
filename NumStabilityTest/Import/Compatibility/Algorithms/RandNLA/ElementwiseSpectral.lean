@@ -1,0 +1,5 @@
+import NumStability.Algorithms.RandNLA.ElementwiseSpectral
+
+#check NumStability.FiniteProbability.expectationReal_vecNorm2_le_prod_expectationReal_vecNorm2_sub_of_expectation_eq_zero
+#check NumStability.algorithm1ExactAllCopyDiffSpectralEvent
+#check NumStability.sqMagTraceProbability_eventProb_algorithm1ExactEntrywiseEvent_ge_one_sub

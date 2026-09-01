@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.TestMatrixContracts
+
+#check NumStability.IsStrictlyTotallyPositive

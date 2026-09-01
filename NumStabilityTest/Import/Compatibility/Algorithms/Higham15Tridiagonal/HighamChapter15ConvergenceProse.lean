@@ -1,0 +1,3 @@
+import NumStability.Algorithms.HighamChapter15ConvergenceProse
+
+#check NumStability.Ch15.rankOne_second_step_whatever_x0_unit_opNorm_counterexample

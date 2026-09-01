@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.Boyd.LocalLinearization
+
+#check NumStability.Ch15.higham15_boyd_local_corrected_of_actual_derivative_power_stable

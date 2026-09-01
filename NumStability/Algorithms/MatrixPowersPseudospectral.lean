@@ -1,10 +1,11 @@
-import NumStability.Algorithms.MatrixPowersComplex
 import NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.Definitions
-import NumStability.Analysis.MatrixNorms.SpectralRadius
 import NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralPackaging
 
 /-!
-# Algorithms.MatrixPowersPseudospectral
+# Compatibility wrapper: MatrixPowersPseudospectral
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.Definitions`
+- `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralPackaging`
 -/

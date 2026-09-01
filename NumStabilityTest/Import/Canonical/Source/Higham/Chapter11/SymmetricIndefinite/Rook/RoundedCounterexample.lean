@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.Rook.RoundedCounterexample
+
+#check NumStability.Higham11RookExecutorAdapter.exists_aligned_small_mixedExecutor_without_printed_growth

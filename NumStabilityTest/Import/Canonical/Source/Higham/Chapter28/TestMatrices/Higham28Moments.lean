@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.MomentRepresentations
+
+#check NumStability.hilbertMatrix_eq_intervalMomentMatrix

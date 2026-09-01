@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Ch15DixonClosure
+
+#check NumStability.higham15_6_dixon_closed

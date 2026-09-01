@@ -1,0 +1,5 @@
+import NumStability.Algorithms.RandNLA.LeastSquaresSketch
+
+#check NumStability.ColumnsAndRhsInColumnSpace
+#check NumStability.leverageTraceProbability_eventProb_fl_lsObjective_le_one_add_eta_of_augmentedSpan_sample_budget
+#check NumStability.leverageTraceProbability_eventProb_fl_lsObjective_le_one_add_eta_of_augmentedSpan

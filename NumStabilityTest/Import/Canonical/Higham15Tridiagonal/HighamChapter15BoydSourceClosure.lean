@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter15.Algorithm01.Boyd.CorrectedConvergence
+
+#check NumStability.Ch15.higham15_boyd_source_linear_of_strongLocalMaximum_subsequentialLimit

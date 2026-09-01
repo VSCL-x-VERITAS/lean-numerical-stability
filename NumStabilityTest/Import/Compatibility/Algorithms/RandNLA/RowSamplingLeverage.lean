@@ -1,0 +1,5 @@
+import NumStability.Algorithms.RandNLA.RowSamplingLeverage
+
+#check NumStability.HasOrthonormalColumns
+#check NumStability.leverageScoreProb_eq_rowNormSq_div_nat
+#check NumStability.leverageTraceProbability_eventProb_fl_rowSampleGramDot_opNorm2_error_le_epsilon_add_budget

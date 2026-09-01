@@ -1,7 +1,7 @@
 import NumStability.Algorithms.LinearSystems.QR.HouseholderQR
 import NumStability.Algorithms.MatrixEquations.Sylvester.Equation.Rectangular
 import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.TriangularBartelsStewart.ResidualAssembly
-import NumStability.Algorithms.Sylvester.Higham16
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.Rounding
 import NumStability.FloatingPoint.Model

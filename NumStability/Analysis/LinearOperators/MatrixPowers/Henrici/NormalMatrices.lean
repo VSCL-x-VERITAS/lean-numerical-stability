@@ -1,9 +1,10 @@
-import NumStability.Analysis.LinearOperators.Schur.Complex.Triangulation
+import NumStability.Analysis.LinearOperators.MatrixPowers.ExactNormBounds.Schur
+import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality
 
 /-!
 # Analysis.LinearOperators.MatrixPowers.Henrici.NormalMatrices
 
-W06 semantic leaf. Whole declaration commands are copied from the frozen C0005 owners; local private notations are expanded at their use sites.
+Canonical semantic owner for Henrici's normal-matrix characterization, including the unconditional Schur closure formerly retained by the historical facade.
 -/
 
 /-
@@ -23,8 +24,6 @@ fully unconditional equivalence `normal_iff_strictUpper_eq_zero_unconditional`.
 
 Reference: N. J. Higham, *ASNA* 2nd ed., §18.1, p. 345.
 -/
-
-
 
 open scoped BigOperators Matrix
 open Matrix
@@ -57,47 +56,47 @@ lemma schurFactor_normal_of_normal
     rw [← Matrix.mul_assoc U Uᴴ (Aᴴ * U), hUUh, Matrix.one_mul]
   rw [hTT, hTTh, hAnormal]
 
+/-- **The hard direction discharged.**  `SchurNormalImpliesStrictUpperZero`
+holds unconditionally: for a normal `A`, the strict-upper factor `N` of any Schur
+form vanishes.  Proof: the Schur factor `T = Uᴴ A U` is normal
+(`schurFactor_normal_of_normal`) and upper-triangular, hence diagonal
+(`normal_upperTriangular_isDiag`), so its strict-upper part `N` is `0`.
+Reference: Higham, *ASNA* 2nd ed., §18.1, p. 345. -/
+theorem schurNormalImpliesStrictUpperZero_holds :
+    SchurNormalImpliesStrictUpperZero (n := n) := by
+  intro A U T D N hU hUeq hTtri _hD hN _hTeq hnorm
+  -- Normality of `A` in matrix (conjTranspose) form.
+  have hAnormal : Aᴴ * A = A * Aᴴ := by
+    have h := hnorm.star_comm_self.eq
+    rwa [Matrix.star_eq_conjTranspose] at h
+  -- The Schur factor `T` is normal.
+  have hTnormal : Tᴴ * T = T * Tᴴ :=
+    schurFactor_normal_of_normal A U T hU hUeq hAnormal
+  -- Upper-triangularity in ℕ-index form.
+  have hUpper : ∀ i j : Fin n, (j : ℕ) < (i : ℕ) → T i j = 0 := by
+    intro i j h; exact hTtri i j h
+  -- Normal + upper-triangular ⟹ diagonal.
+  have hdiag := normal_upperTriangular_isDiag hUpper hTnormal
+  -- Hence `N = 0`.
+  ext i j
+  rw [Matrix.zero_apply, hN i j]
+  split_ifs with h
+  · exact hdiag i j (ne_of_lt h)
+  · rfl
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/-- **Full Henrici normal ⟺ `N = 0`, UNCONDITIONAL.**  Both directions proved:
+the reverse is the unconditional easy direction, the forward is the now-discharged
+hard direction.  No hypothesis beyond a genuine Schur form is required.
+Reference: Higham, *ASNA* 2nd ed., §18.1, p. 345. -/
+theorem normal_iff_strictUpper_eq_zero_unconditional
+    (A U T D N : Matrix (Fin n) (Fin n) ℂ)
+    (hU : U ∈ Matrix.unitaryGroup (Fin n) ℂ) (hUeq : Uᴴ * A * U = T)
+    (hTtri : ∀ i j, j < i → T i j = 0)
+    (hD : D = Matrix.diagonal (fun i => T i i))
+    (hN : ∀ i j, N i j = if j > i then T i j else 0)
+    (hTeq : T = D + N) :
+    IsStarNormal A ↔ N = 0 :=
+  normal_iff_strictUpper_eq_zero schurNormalImpliesStrictUpperZero_holds
+    A U T D N hU hUeq hTtri hD hN hTeq
 
 end NumStability

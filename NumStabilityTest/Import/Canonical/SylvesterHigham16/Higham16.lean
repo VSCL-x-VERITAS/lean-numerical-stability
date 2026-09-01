@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
+
+#check NumStability.H16_eq16_29_sylvesterComputedResidualBudget_of_schur_frobenius_error_model

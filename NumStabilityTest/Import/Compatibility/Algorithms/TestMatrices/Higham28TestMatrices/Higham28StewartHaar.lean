@@ -1,0 +1,3 @@
+import NumStability.Algorithms.TestMatrices.Higham28StewartHaar
+
+#check NumStability.stewartInputSplitEquiv_measurePreserving

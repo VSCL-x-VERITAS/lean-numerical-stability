@@ -1,9 +1,9 @@
-import NumStability.Analysis.Conditioning.DistanceToSingularity
 import NumStability.Analysis.LinearOperators.MatrixPowers.BaiDemmelGu.DistanceToInstability
-import NumStability.Analysis.MatrixPowersBaiDemmelGu
 
 /-!
-# Analysis.MatrixPowersBaiDemmelGuDistance
+# Compatibility wrapper: MatrixPowersBaiDemmelGuDistance
 
-Historical import-only compatibility facade for the W06 semantic modules.
+This historical import path is retained for downstream compatibility. It is declaration-free and re-exports the canonical reusable and source-specific owners:
+
+- `NumStability.Analysis.LinearOperators.MatrixPowers.BaiDemmelGu.DistanceToInstability`
 -/

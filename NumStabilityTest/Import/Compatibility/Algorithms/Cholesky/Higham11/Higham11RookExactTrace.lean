@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Cholesky.Higham11RookExactTrace
+
+#check NumStability.Higham11RookExecutorAdapter.Higham11ExactRookTrace

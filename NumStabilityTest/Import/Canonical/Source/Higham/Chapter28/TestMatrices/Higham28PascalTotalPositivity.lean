@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter28.Pascal.TotalPositivity
+
+#check NumStability.pascalMatrix_isStrictlyTotallyPositive

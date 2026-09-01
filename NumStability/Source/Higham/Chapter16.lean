@@ -4,6 +4,7 @@ import NumStability.Source.Higham.Chapter16.Section02
 import NumStability.Source.Higham.Chapter16.Section03
 import NumStability.Source.Higham.Chapter16.Section04
 import NumStability.Source.Higham.Chapter16.Section05
+import NumStability.Source.Higham.Chapter16.SylvesterEquationCompletion
 
 /-!
 # Source Higham Chapter16

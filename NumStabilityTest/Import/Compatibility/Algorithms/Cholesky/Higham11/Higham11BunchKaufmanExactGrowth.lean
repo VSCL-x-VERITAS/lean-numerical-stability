@@ -1,0 +1,3 @@
+import NumStability.Algorithms.Cholesky.Higham11BunchKaufmanExactGrowth
+
+#check NumStability.higham11_4_exactArithmeticBunchKaufmanMaxEntryNorm_productBound

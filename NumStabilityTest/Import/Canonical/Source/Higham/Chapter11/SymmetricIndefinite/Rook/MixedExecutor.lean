@@ -1,0 +1,3 @@
+import NumStability.Source.Higham.Chapter11.SymmetricIndefinite.Rook.MixedExecutor
+
+#check NumStability.Higham11RookExecutorAdapter.higham11_5_rook_theorem11_4_product_bound_of_mixedExecutor
