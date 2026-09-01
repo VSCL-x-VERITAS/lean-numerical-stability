@@ -1,0 +1,7 @@
+import NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.Complexification
+import NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.Existence
+import NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.TwoByTwo
+
+#check NumStability.RealInvariantSubspaceAux.cplx
+#check NumStability.exists_real_invariant_subspace_dim_le_two
+#check NumStability.MatrixNoRealEigenline

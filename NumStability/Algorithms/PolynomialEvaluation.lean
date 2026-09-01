@@ -1,0 +1,17 @@
+import NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve
+import NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds
+import NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds
+import NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence
+import NumStability.Algorithms.PolynomialEvaluation.ElementaryErrorBounds
+import NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel
+import NumStability.Algorithms.PolynomialEvaluation.MatrixNorms
+import NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness
+import NumStability.Algorithms.PolynomialEvaluation.RootProduct
+
+/-!
+# Polynomial evaluation algorithms
+
+Reusable polynomial-evaluation infrastructure, coupled derivative analysis,
+fast quintic kernels, Paterson–Stockmeyer correctness, and complex Horner error
+bounds.
+-/

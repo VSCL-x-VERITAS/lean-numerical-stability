@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 See LICENSES/Apache-2.0.txt.
 Authors: QED
 -/
-import NumStability.Algorithms.Horner
+import NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence
 import NumStability.Source.Higham.Chapter12.IterativeRefinement
 import NumStability.Source.Higham.Chapter22.Section03.ComplexConfluentRefinement
 import NumStability.Source.Higham.Chapter22.VandermondeSystems

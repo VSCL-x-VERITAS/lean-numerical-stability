@@ -1,0 +1,5 @@
+import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality
+import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.Extremal
+import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.ImprovedConstant
+
+#check NumStability.henriciSharpConst

@@ -1,5 +1,5 @@
 import NumStability.Source.Higham.Chapter28.TestMatrixContracts
-import NumStability.Analysis.JordanNormalForm
+import NumStability.Analysis.LinearOperators.Jordan.NormalForm.PrimaryDecomposition
 import Mathlib.LinearAlgebra.Matrix.Charpoly.Minpoly
 
 /-! # Higham Chapter 28: Basic

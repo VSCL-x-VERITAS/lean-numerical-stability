@@ -1,0 +1,7 @@
+import NumStability.Analysis.FunctionalCalculus.Resolvent.Analyticity
+import NumStability.Analysis.FunctionalCalculus.Resolvent.DunfordResidue
+import NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion
+import NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds
+import NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion
+
+#check NumStability.circleIntegral_pow_smul_pow_inv_eq

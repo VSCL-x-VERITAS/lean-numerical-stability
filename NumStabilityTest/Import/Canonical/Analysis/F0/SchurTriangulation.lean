@@ -1,0 +1,7 @@
+import NumStability.Analysis.LinearOperators.Schur.Complex.BlockEmbedding
+import NumStability.Analysis.LinearOperators.Schur.Complex.Deflation
+import NumStability.Analysis.LinearOperators.Schur.Complex.Triangulation
+
+#check NumStability.SchurAux.conj_embed_succ_succ
+#check NumStability.SchurAux.conj_eigenvector_col_zero
+#check NumStability.schur_triangulation

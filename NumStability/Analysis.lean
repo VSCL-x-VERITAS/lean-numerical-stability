@@ -1,4 +1,5 @@
 import NumStability.Algorithms.LinearSystems.CramersRule.Core
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning
 import NumStability.Analysis.AccuracyTests
 import NumStability.Analysis.AlternativeNumberSystems
 import NumStability.Analysis.Asymptotics
@@ -13,9 +14,6 @@ import NumStability.Analysis.ComplexSqrt
 import NumStability.Analysis.ConditionEstimatorLowerBound
 import NumStability.Analysis.Conditioning
 import NumStability.Analysis.CStarMatrices
-import NumStability.Analysis.CStarMatrixBridge
-import NumStability.Analysis.CStarMatrixExpectation
-import NumStability.Analysis.CStarMatrixTrace
 import NumStability.Analysis.DoubleRounding
 import NumStability.Analysis.Equidistribution
 import NumStability.Analysis.Error.MatrixProducts
@@ -36,7 +34,6 @@ import NumStability.Analysis.FloatingPointArithmetic.TrigonometricCancellation.A
 import NumStability.Analysis.FloatingPointArithmetic.TrigonometricCancellation.Core
 import NumStability.Analysis.ForwardError
 import NumStability.Analysis.FunctionalCalculus
-import NumStability.Analysis.HenriciSharpConstantExact
 import NumStability.Analysis.Heron
 import NumStability.Analysis.HighamChapter2ElementaryFunctions
 import NumStability.Analysis.HighamChapter2FmaDiscriminant
@@ -45,9 +42,7 @@ import NumStability.Analysis.HighamChapter7
 import NumStability.Analysis.HighamChapter7Rectangular
 import NumStability.Analysis.IncreasingPrecision
 import NumStability.Analysis.InstabilityWithoutCancellation
-import NumStability.Analysis.InverseOpNorm2
 import NumStability.Analysis.LeadingDigits
-import NumStability.Analysis.LiebTrace
 import NumStability.Analysis.LinearOperators
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.MatrixConcentration
@@ -55,9 +50,7 @@ import NumStability.Analysis.MatrixInequalities
 import NumStability.Analysis.MatrixNorms
 import NumStability.Analysis.MatrixSpectral
 import NumStability.Analysis.Monotonicity
-import NumStability.Analysis.NilpotentJordanChain
 import NumStability.Analysis.Nonassociativity
-import NumStability.Analysis.OperatorLog
 import NumStability.Analysis.OperatorNorms
 import NumStability.Analysis.PartialDifferentialEquations.ConservationLaw
 import NumStability.Analysis.PartialDifferentialEquations.ConstantCoefficientLinearSystem
@@ -88,15 +81,10 @@ import NumStability.Analysis.Problem2_27
 import NumStability.Analysis.Problem2_3
 import NumStability.Analysis.ProblemDependentStability.All
 import NumStability.Analysis.ProblemDependentStability.HessenbergDeterminant
-import NumStability.Analysis.PseudospectralLowerBound
 import NumStability.Analysis.Quadratic
-import NumStability.Analysis.RealInvariantSubspace
-import NumStability.Analysis.RealQuasiSchur
-import NumStability.Analysis.RealSchurTriangulation
 import NumStability.Analysis.RelativePrecision
 import NumStability.Analysis.Rounding
 import NumStability.Analysis.SampleVariance
-import NumStability.Analysis.SchurTriangulation
 import NumStability.Analysis.SemiconvergentRealSpectrumComplete
 import NumStability.Analysis.SemiconvergentSpectral
 import NumStability.Analysis.SingularValues
@@ -142,6 +130,8 @@ import NumStability.Source.Higham.Chapter02.Section06.ReciprocalIteration.Basic
 import NumStability.Source.Higham.Chapter02.Section10.Tablemaker.FiniteSeparation.Basic
 import NumStability.Source.Higham.Chapter03.Problem02.ProductBounds.PositiveFactors
 import NumStability.Source.Higham.Chapter06
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.All
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation28
 import NumStability.Source.Higham.Chapter17.Equation22
 import NumStability.Source.Higham.Chapter18
 

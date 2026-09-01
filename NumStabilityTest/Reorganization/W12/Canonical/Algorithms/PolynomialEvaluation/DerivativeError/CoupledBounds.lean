@@ -1,0 +1,6 @@
+import NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds
+
+#check @NumStability.ch5deriv_derivative_forward_error_bound
+#check @NumStability.ch5deriv_derivative_backward_error_coefficients
+#check @NumStability.ch5deriv_pair_forward_error_bound
+#check @NumStability.ch5deriv_derivative_first_order_error_bound

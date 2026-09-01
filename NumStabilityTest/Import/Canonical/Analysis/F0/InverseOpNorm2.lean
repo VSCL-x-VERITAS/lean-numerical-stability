@@ -1,0 +1,17 @@
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.SingularValue
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredLyapunov
+import NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredSylvester
+import NumStability.Analysis.MatrixSpectral
+import NumStability.Analysis.SingularValues.InverseBounds.Gram
+import NumStability.Analysis.SingularValues.InverseBounds.OperatorTwo
+import NumStability.Analysis.SingularValues.InverseBounds.Rayleigh
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation23
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation24
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation26
+import NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation27
+import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation28
+
+#check NumStability.lyapunovInverseOpBound_of_sigmaMin
+#check NumStability.finitePSD_gram
+#check NumStability.lamMin_mul_vecNorm2Sq_le_matMulVec
+#check NumStability.rayleigh_lower_bound_of_le_finiteHermitianEigenvalues

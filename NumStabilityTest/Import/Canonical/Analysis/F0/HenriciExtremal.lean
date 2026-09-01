@@ -1,0 +1,4 @@
+import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality
+import NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.Extremal
+
+#check NumStability.blockMass

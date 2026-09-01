@@ -1,3 +1,4 @@
 import NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion
 
+#check NumStability.matrixPowers_tendsto_zero_of_pseudospectralRadiusLt
 #check NumStability.higham_18_2_pseudospectral_criterion

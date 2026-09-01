@@ -1,3 +1,14 @@
 import NumStability.Analysis.PseudospectralResolvent
 
+#check NumStability.resolvent_factor
+#check NumStability.spectrum_one_le_dist_mul_norm_resolvent
+#check NumStability.spectrum_one_div_dist_le_norm_resolvent
+#check NumStability.spectrum_one_le_dist_mul_norm_resolvent'
 #check NumStability.dist_ge_one_div_norm_resolvent
+
+#check NumStability.eigenvalueModulus_lt_of_pseudospectralRadiusLt
+#check NumStability.pseudospectrum_in_unit_disc_of_pseudospectralRadiusLt
+#check NumStability.spectralRadius_lt_one_of_pseudospectralRadiusLt
+#check NumStability.spectrum_norm_lt_one_of_pseudospectralRadiusLt
+#check NumStability.matrixPowers_tendsto_zero_of_pseudospectralRadiusLt
+#check NumStability.higham_18_2_pseudospectral_criterion

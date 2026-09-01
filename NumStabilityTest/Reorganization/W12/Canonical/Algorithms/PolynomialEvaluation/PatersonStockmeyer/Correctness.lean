@@ -1,0 +1,6 @@
+import NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness
+
+#check @NumStability.higham5_patersonStockmeyerHorner_eq
+#check @NumStability.higham5_patersonStockmeyer_eq_P1
+#check @NumStability.higham5_patersonStockmeyerHorner_eq_P1
+#check @NumStability.higham5_patersonStockmeyer_source_claim

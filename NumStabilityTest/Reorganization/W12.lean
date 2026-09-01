@@ -1,5 +1,11 @@
+import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve
+import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds
+import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds
+import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence
 import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.ElementaryErrorBounds
+import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel
 import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.MatrixNorms
+import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness
 import NumStabilityTest.Reorganization.W12.Canonical.Algorithms.PolynomialEvaluation.RootProduct
 import NumStabilityTest.Reorganization.W12.Canonical.Chapter01.Problem02.NearIntegerTable.Basic
 import NumStabilityTest.Reorganization.W12.Canonical.Chapter01.Problem05.CompensatedLogarithm.Basic
@@ -111,5 +117,5 @@ import NumStabilityTest.Reorganization.W12.Compatibility.WilkinsonAttainability
 /-!
 # W12 reorganization tests
 
-Declaration-free aggregate for the 67 canonical-only and 42 historical-import tests.
+Declaration-free aggregate for the 73 canonical-only and 42 historical-import tests.
 -/

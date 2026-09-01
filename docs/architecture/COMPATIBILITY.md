@@ -8,9 +8,15 @@ the table remains an import-only forwarding module.
 
 | Historical path | Canonical path |
 | --- | --- |
-| `NumStability.Algorithms.Ch5LejaProducer` | `NumStability.Algorithms.Horner`, `NumStability.Source.Higham.Chapter05.Problem04.LejaOrdering.Basic` |
-| `NumStability.Algorithms.Ch5NewtonForm` | `NumStability.Algorithms.Horner`, `NumStability.Analysis.Rounding`, `NumStability.FloatingPoint.Model`, `NumStability.Source.Higham.Chapter05.Section03.NewtonEvaluation.Basic` |
+| `NumStability.Algorithms.Ch5DerivativeError` | `NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds` |
+| `NumStability.Algorithms.Ch5LejaProducer` | `NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence`, `NumStability.Source.Higham.Chapter05.Problem04.LejaOrdering.Basic` |
+| `NumStability.Algorithms.Ch5NewtonForm` | `NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence`, `NumStability.Analysis.Rounding`, `NumStability.FloatingPoint.Model`, `NumStability.Source.Higham.Chapter05.Section03.NewtonEvaluation.Basic` |
+| `NumStability.Algorithms.Ch5SourceClosure` | `NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve` |
+| `NumStability.Algorithms.Higham5FastPolynomialEvaluation` | `NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel` |
+| `NumStability.Algorithms.Higham5PatersonStockmeyer` | `NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness` |
+| `NumStability.Algorithms.HighamChapter5ComplexAlgorithm51` | `NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds` |
 | `NumStability.Algorithms.HighamLemma88Entrywise` | `NumStability.Source.Higham.Chapter08.Lemma08.Entrywise.Basic` |
+| `NumStability.Algorithms.Horner` | `NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence` |
 | `NumStability.Algorithms.OrderingExamples` | `NumStability.Algorithms.Summation.Insertion.ActiveList`, `NumStability.Algorithms.Summation.Recursive.Core`, `NumStability.Algorithms.Summation.Tree.Core`, `NumStability.Source.Higham.Chapter04.Equation05.OrderingExamples.Basic` |
 | `NumStability.Analysis.Accumulation` | `NumStability.Analysis.FloatingPointArithmetic.Format`, `NumStability.Analysis.FloatingPointArithmetic.NearestRoundingError`, `NumStability.Analysis.Rounding`, `NumStability.Source.Higham.Chapter01.Problem05.CompensatedLogarithm.Basic`, `NumStability.Source.Higham.Chapter01.Section11.Accumulation.Basic` |
 | `NumStability.Analysis.CalculatorWords` | `NumStability.Source.Higham.Chapter01.Problem06.CalculatorWords.Basic` |
@@ -27,6 +33,27 @@ the table remains an import-only forwarding module.
 | `NumStability.Analysis.Problem2_26` | `NumStability.Analysis.Problem2_14`, `NumStability.Source.Higham.Chapter02.Section06.ReciprocalIteration.Basic` |
 | `NumStability.Analysis.Problem2_5` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem05.BinaryOneTenth.Basic` |
 | `NumStability.Analysis.Problem2_6` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem06.IntegerRepresentability.Basic` |
+| `NumStability.Analysis.CStarMatrixBridge` | `NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge`, `NumStability.Analysis.MatrixAlgebra` |
+| `NumStability.Analysis.CStarMatrixExpectation` | `NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge`, `NumStability.Analysis.CStarMatrices.Expectation.Finite`, `NumStability.Analysis.CStarMatrices.Trace.Basic`, `NumStability.Analysis.FiniteProbability`, `NumStability.Analysis.FunctionalCalculus.OperatorLog.Monotonicity`, `NumStability.Analysis.MatrixAlgebra`, `NumStability.Analysis.MatrixSpectral` |
+| `NumStability.Analysis.CStarMatrixTrace` | `NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge`, `NumStability.Analysis.CStarMatrices.Trace.Basic`, `NumStability.Analysis.FunctionalCalculus.OperatorLog.Monotonicity`, `NumStability.Analysis.MatrixAlgebra`, `NumStability.Analysis.MatrixSpectral` |
+| `NumStability.Analysis.DunfordResidue` | `NumStability.Analysis.FunctionalCalculus.Resolvent.Analyticity`, `NumStability.Analysis.FunctionalCalculus.Resolvent.DunfordResidue`, `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion`, `NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion` |
+| `NumStability.Analysis.HenriciExtremal` | `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality`, `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.Extremal` |
+| `NumStability.Analysis.HenriciSharpConstant` | `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality`, `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.Extremal`, `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.ImprovedConstant` |
+| `NumStability.Analysis.HenriciSharpConstantExact` | `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.DepartureFromNormality`, `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.Extremal`, `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.ImprovedConstant`, `NumStability.Analysis.LinearOperators.MatrixPowers.Henrici.SharpConstant` |
+| `NumStability.Analysis.InverseOpNorm2` | `NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.SingularValue`, `NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredLyapunov`, `NumStability.Algorithms.MatrixEquations.Sylvester.Conditioning.StructuredSylvester`, `NumStability.Analysis.MatrixSpectral`, `NumStability.Analysis.SingularValues.InverseBounds.Gram`, `NumStability.Analysis.SingularValues.InverseBounds.OperatorTwo`, `NumStability.Analysis.SingularValues.InverseBounds.Rayleigh`, `NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation23`, `NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation24`, `NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation26`, `NumStability.Source.Higham.Chapter16.Section03.PerturbationAndConditioning.Equation27`, `NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation28` |
+| `NumStability.Analysis.JordanNormalForm` | `NumStability.Analysis.LinearOperators.Jordan.NormalForm.PrimaryDecomposition` |
+| `NumStability.Analysis.LiebTrace` | `NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge`, `NumStability.Analysis.CStarMatrices.Expectation.Finite`, `NumStability.Analysis.CStarMatrices.Trace.Basic`, `NumStability.Analysis.FiniteProbability`, `NumStability.Analysis.FunctionalCalculus.OperatorLog.Monotonicity`, `NumStability.Analysis.MatrixAlgebra`, `NumStability.Analysis.MatrixInequalities.LiebTrace.Concavity`, `NumStability.Analysis.MatrixSpectral` |
+| `NumStability.Analysis.NilpotentJordanChain` | `NumStability.Analysis.LinearOperators.Jordan.NormalForm.NilpotentChains`, `NumStability.Analysis.LinearOperators.Jordan.NormalForm.PrimaryDecomposition` |
+| `NumStability.Analysis.OperatorLog` | `NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge`, `NumStability.Analysis.FunctionalCalculus.OperatorLog.Monotonicity`, `NumStability.Analysis.MatrixAlgebra` |
+| `NumStability.Analysis.PseudospectralLowerBound` | `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion`, `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.LowerBounds`, `NumStability.Analysis.SingularValues.Basic`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion` |
+| `NumStability.Analysis.PseudospectralPowerBound` | `NumStability.Analysis.FunctionalCalculus.Resolvent.Analyticity`, `NumStability.Analysis.FunctionalCalculus.Resolvent.DunfordResidue`, `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion`, `NumStability.Analysis.LinearOperators.Pseudospectra.PowerBounds.Contour`, `NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Equations08To14.PowerBound`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion` |
+| `NumStability.Analysis.PseudospectralResolvent` | `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion`, `NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion` |
+| `NumStability.Analysis.RealInvariantSubspace` | `NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.Complexification`, `NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.Existence`, `NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.TwoByTwo` |
+| `NumStability.Analysis.RealQuasiSchur` | `NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.Complexification`, `NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.Existence`, `NumStability.Analysis.LinearOperators.Schur.Real.InvariantSubspace.TwoByTwo`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.API`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.Basic`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.BlockEmbedding`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.Deflation`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.Existence`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.OrthogonalFrame`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.Reindex`, `NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.TrailingConjugation` |
+| `NumStability.Analysis.RealSchurTriangulation` | `NumStability.Analysis.LinearOperators.Schur.Real.Triangularization.SplitCharpoly` |
+| `NumStability.Analysis.ResolventFunctionalCalculus` | `NumStability.Analysis.FunctionalCalculus.Resolvent.Analyticity`, `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion`, `NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion` |
+| `NumStability.Analysis.SchurTriangulation` | `NumStability.Analysis.LinearOperators.Schur.Complex.BlockEmbedding`, `NumStability.Analysis.LinearOperators.Schur.Complex.Deflation`, `NumStability.Analysis.LinearOperators.Schur.Complex.Triangulation` |
+| `NumStability.Analysis.SpijkerProjectionIntegral` | `NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.ProjectionIntegral` |
 | `NumStability.Algorithms.HighamChapter8FanInClosure` | `NumStability.Source.Higham.Chapter08.Equation15.GlobalEnvelopeCounterexample.RawCube` |
 | `NumStability.Algorithms.IterativeRefinement` | `NumStability.Algorithms.LinearSystems.IterativeRefinement.Core`, `NumStability.Source.Higham.Chapter12.IterativeRefinement.Chapter12Bounds`, and `NumStability.Source.Higham.Chapter12.IterativeRefinement.LegacyChapter11Surface` |
 | `NumStability.Algorithms.PriestFiniteFormat` | `NumStability.Algorithms.Summation.Compensated.Priest.FiniteFormat` and `NumStability.Source.Higham.Chapter04.Algorithm03.Priest.SourceAssumptions` |
@@ -753,8 +780,15 @@ also declaration-free and is audited as a reusable entry point for its former
 reusable subset; numbered Chapter 6 results are intentionally exposed through
 the source aggregate and the broader historical `Analysis.Norms` facade.
 
-The compatibility inventory now contains 663 wrappers with 1,159 direct project
+The compatibility inventory now contains 706 wrappers with 1,291 direct project
 targets.
+
+The F0 analysis-facade wave classifies 20 pre-existing declaration-free
+historical paths as exact compatibility wrappers. Their 88 direct canonical
+and source targets preserve the former import surfaces, while all 39 audited
+production import edges now route through semantic families. Isolated
+canonical-only and legacy-only leaves cover every facade independently; no
+declaration changed owner or public name in this import-only wave.
 
 The randomized linear algebra wave replaces 17 declaration owners and the
 historical family aggregate with 18 exact declaration-free compatibility

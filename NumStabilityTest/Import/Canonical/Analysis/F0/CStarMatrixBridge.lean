@@ -1,0 +1,4 @@
+import NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge
+import NumStability.Analysis.MatrixAlgebra
+
+#check NumStability.cstarMatrixBlockDiagonal

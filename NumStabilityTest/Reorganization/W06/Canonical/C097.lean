@@ -1,3 +1,7 @@
 import NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds
 
+#check NumStability.resolvent_factor
+#check NumStability.spectrum_one_le_dist_mul_norm_resolvent
+#check NumStability.spectrum_one_div_dist_le_norm_resolvent
+#check NumStability.spectrum_one_le_dist_mul_norm_resolvent'
 #check NumStability.dist_ge_one_div_norm_resolvent

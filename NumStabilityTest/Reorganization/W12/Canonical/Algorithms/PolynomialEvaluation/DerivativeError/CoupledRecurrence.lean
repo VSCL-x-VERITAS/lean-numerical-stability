@@ -1,0 +1,6 @@
+import NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence
+
+#check @NumStability.fl_hornerDerivativeFold_snd_backward_error_coefficients
+#check @NumStability.fl_hornerDerivativeDesc_snd_backward_error_coefficients_coupled
+#check @NumStability.fl_hornerDerivativeDesc_snd_forward_error_bound_coupled
+#check @NumStability.fl_hornerDerivativeDesc_first_derivative_error_bound

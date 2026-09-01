@@ -1,3 +1,6 @@
 import NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion
 
 #check NumStability.eigenvalueModulus_lt_of_pseudospectralRadiusLt
+#check NumStability.pseudospectrum_in_unit_disc_of_pseudospectralRadiusLt
+#check NumStability.spectralRadius_lt_one_of_pseudospectralRadiusLt
+#check NumStability.spectrum_norm_lt_one_of_pseudospectralRadiusLt

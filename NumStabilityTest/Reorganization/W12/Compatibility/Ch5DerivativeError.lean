@@ -8,6 +8,7 @@ modules during wave W12, so this compiles only if the compatibility module
 still re-exports them at their original names.
 -/
 
-#check @NumStability.ch5psi_AlternatingSignDesc
-#check @NumStability.ch5deriv_value_forward_error_bound
-#check @NumStability.ch5psi_polyDesc_eq_polyDescAbs_of_nonneg
+#check @NumStability.ch5deriv_derivative_forward_error_bound
+#check @NumStability.ch5deriv_derivative_backward_error_coefficients
+#check @NumStability.ch5deriv_pair_forward_error_bound
+#check @NumStability.ch5deriv_derivative_first_order_error_bound

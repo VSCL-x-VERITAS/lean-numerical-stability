@@ -6,7 +6,7 @@ See LICENSES/Apache-2.0.txt.
 Authors: QED
 -/
 import NumStability.Source.Higham.Chapter12.IterativeRefinement
-import NumStability.Algorithms.Horner
+import NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence
 import NumStability.Source.Higham.Chapter22.VandermondeSystems
 import NumStability.Analysis.ComplexArithmetic
 
