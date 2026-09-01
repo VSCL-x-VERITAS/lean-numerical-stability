@@ -2,7 +2,7 @@ import NumStability.Algorithms.LinearSystems.QR.HouseholderApply
 import NumStability.Algorithms.LinearSystems.QR.HouseholderOneStep
 import NumStability.Algorithms.LinearSystems.QR.HouseholderReflector
 import NumStability.Algorithms.LinearSystems.QR.HouseholderSpec
-import NumStability.Algorithms.LinearSystems.QR.HouseholderSpecSupport
+import NumStability.Algorithms.LinearSystems.QR.Householder.TrailingPanels
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.Rounding
 import NumStability.FloatingPoint.Model
@@ -566,7 +566,7 @@ theorem sourceConstructedPivotedStoredQREseq_abs_le_componentBudget
         sourceConstructedPivotedStoredQRPseq_pivot_tail_zero
           fp hn hmn A k hk i hki]
       simp [sourceConstructedPivotedStoredQRComponentBudget,
-        pivotedQRActiveCol, hjPrev, hiPrev, hiPivot]
+        pivotedQRActiveCol, hiPrev, hiPivot]
   · have hkj : k < j.val := by omega
     simpa [sourceConstructedPivotedStoredQRComponentBudget,
       hjPrev, hiPrev, hjPivot] using

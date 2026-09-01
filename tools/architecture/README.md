@@ -13,7 +13,12 @@ book-formalization migration. The generator has two layers:
   constructors, unfold helpers, and similar implementation details do not.
 - `check_compatibility.py` verifies that every old path documented in the
   compatibility table is an import-only wrapper around exactly its stated
-  canonical targets, and that production code does not import old paths.
+  canonical targets, that the table agrees exactly with the `compatibility`
+  tier in `docs/architecture/tiers.json`, that every historical path and
+  every canonical target carries a direct test import, and that production
+  code contains zero imports of historical paths outright. The former
+  retained-boundary exception mechanism was retired with R0015; the checker
+  carries no exception list.
 - `check_layout.py` enforces the naming, classification, aggregate, generated-
   artifact, and documentation ratchet recorded in
   `docs/architecture/layout-exceptions.json`.
@@ -26,7 +31,48 @@ book-formalization migration. The generator has two layers:
   Block LU semantic route map, staged destination ownership, private-name
   rewrites, structural aggregates, destination DAG, and exactly normalized
   contracted graph.
+- `check_phase.py` validates the tracked repository-reorganization operating
+  contract: phase, milestone, branch, request, projection, and checkpoint
+  records, using only the Python standard library and read-only Git commands.
+  By default it checks the phase directory named by
+  `docs/architecture/phases/active-phase.json`; `--phase-dir` targets another
+  phase directory, and `--all-phases` validates every retained phase
+  directory plus the supersession fleet invariants: exactly one effectively
+  active phase, active-phase pointer agreement, every other retained phase
+  effectively terminal, supersession records whose successor chains name
+  existing phases, stay acyclic, and reach the active phase, and a
+  preserved-phase hash matching each superseded phase's live `phase.json`.
+- `check_completion_phase.py` is the dedicated validator for the 2026-08
+  completion phase, rooted at the predecessor reorganization phase's final
+  C0008 checkpoint. It is deliberately independent of `check_phase.py` and
+  enforces the phase's exact one-off contract, including pinned commits,
+  frozen inventories, request/branch/projection lifecycles, reviewed-union
+  postimages, and checkpoint acceptance evidence, using disposable Git
+  indexes rooted at the applicable checkpoint.
+- `check_phase_projection.py` compares a frozen format-2 declaration
+  projection with a candidate dependency graph: selected declaration names,
+  kinds, visibility, and the exact signature/body incident edge sets must be
+  preserved, and only the owning module may change, to owners matching the
+  exact modules or namespace prefixes given on the command line.
+- `check_completion_phase_projection.py` is the completion-phase variant of
+  the projection comparison. It additionally accepts a hash-pinned private
+  normalization map, total over the projection's private declarations, that
+  permits selected private names to change while pinning each normalized
+  declaration's destination owner.
 - `check_provenance.py` validates license pointers and exact upstream evidence.
+- `check_warnings.py` enforces the warning contract in
+  `docs/architecture/warnings.json` against a build or test log. It normalizes
+  ANSI sequences, CRLF, GitHub timestamp prefixes, runner path prefixes, and
+  multiline diagnostics, then identifies each diagnostic by path, kind,
+  normalized message, a stable nearby-source anchor hash, and occurrence, so
+  line and column stay evidence rather than identity. `--check` fails on a new
+  fingerprint, an unclassifiable diagnostic, an exceeded global, per-kind,
+  per-role, or per-file ceiling, a warning in a file with no reviewed
+  allowance, a path or kind mutation, an unlisted or expired suppression, or a
+  capture-environment change; a diagnostic that no longer fires fails as an
+  improvement requiring a reviewed reduction. `--write-baseline` is review-only
+  and byte-reproducible from a given log. `--self-test` exercises every failure
+  class against synthetic fixtures.
 - `sort_aggregate_imports.py` mechanically normalizes import-only umbrellas.
 
 Run the complete capture from the repository root:
@@ -224,7 +270,7 @@ The generator also reads
 [`docs/architecture/tiers.json`](../../docs/architecture/tiers.json). It reports
 classification coverage, a tier-to-tier import matrix, and direct/transitive
 `reusable -> source` / `reusable -> mixed` violations. The manifest is
-deliberately partial while mixed historical modules are being split. A zero
-violation count does not satisfy the physical-target gate until coverage
-reaches 100% and no mixed modules remain; see
+complete: every production module is classified, coverage is 100%, and no
+`mixed` modules remain, so the physical-target gate's precondition holds and
+a zero violation count is conclusive; see
 [`docs/architecture/TIERS.md`](../../docs/architecture/TIERS.md).

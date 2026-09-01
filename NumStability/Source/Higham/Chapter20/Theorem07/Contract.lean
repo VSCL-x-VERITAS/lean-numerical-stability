@@ -4,10 +4,10 @@ import NumStability.Algorithms.LinearSystems.LeastSquares.NormalEquations
 import NumStability.Algorithms.LinearSystems.LeastSquares.RankGeometry
 import NumStability.Algorithms.LinearSystems.LeastSquares.TraceKernel
 import NumStability.Algorithms.LinearSystems.QR.HouseholderApply
-import NumStability.Algorithms.LinearSystems.QR.HouseholderApplySupport
+import NumStability.Algorithms.LinearSystems.QR.Householder.PanelApplication
 import NumStability.Algorithms.LinearSystems.QR.HouseholderQR
 import NumStability.Algorithms.LinearSystems.QR.HouseholderSpec
-import NumStability.Algorithms.LinearSystems.QR.HouseholderSpecSupport
+import NumStability.Algorithms.LinearSystems.QR.Householder.TrailingPanels
 import NumStability.Algorithms.LinearSystems.Triangular.BackSubstitution
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.Rounding
@@ -942,7 +942,7 @@ theorem rawRowCounter_printedAlphaScale_zero :
     · simpa [fl_pivotedStoredQRMatrixSeq,
         rawRowCounter_rowInftyNorm_zero] using
         (show (0 : ℝ) ≤ 27 / 64 by norm_num)
-    · simpa [rawRowCounter_rowInftyNorm_one]
+    · simp [rawRowCounter_rowInftyNorm_one]
   · have h := le_ciSup
       (Finite.bddAbove_range (fun t : Fin 2 =>
         Wave18D.rowInftyNorm

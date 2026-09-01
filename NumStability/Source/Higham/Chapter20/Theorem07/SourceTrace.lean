@@ -1,9 +1,9 @@
 import NumStability.Algorithms.LinearSystems.LeastSquares.TraceKernel
 import NumStability.Algorithms.LinearSystems.QR.HouseholderApply
-import NumStability.Algorithms.LinearSystems.QR.HouseholderApplySupport
+import NumStability.Algorithms.LinearSystems.QR.Householder.PanelApplication
 import NumStability.Algorithms.LinearSystems.QR.HouseholderQR
 import NumStability.Algorithms.LinearSystems.QR.HouseholderSpec
-import NumStability.Algorithms.LinearSystems.QR.HouseholderSpecSupport
+import NumStability.Algorithms.LinearSystems.QR.Householder.TrailingPanels
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.Rounding
 import NumStability.FloatingPoint.Model
@@ -691,7 +691,7 @@ theorem sourcePivotedStoredQRRawVector_abs_le_two_printedAlphaScale
         simpa [row] using hirowNot
       have hv : sourcePivotedStoredQRRawVector fp hmn A k i =
           As i col := by
-        simp [sourcePivotedStoredQRRawVector, hk, row, col, As, alpha,
+        simp [sourcePivotedStoredQRRawVector, hk, col, As,
           householderTrailingActiveVector, householderActiveVector,
           householderTrailingPart, hirowNot', hir']
       have hx := sourcePivotedStoredQRSwappedPanel_abs_le_printedAlphaScale

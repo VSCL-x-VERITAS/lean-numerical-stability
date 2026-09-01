@@ -17,7 +17,6 @@ IMPORT_LINE_RE = re.compile(
     r"(?m)^[ \t]*(?:(?:public|private|meta)\s+)*import[ \t]+[^\r\n]+(?:\r?\n|$)"
 )
 
-
 def module_path(name: str) -> Path:
     return ROOT / Path(*name.split(".")).with_suffix(".lean")
 
@@ -39,7 +38,44 @@ def documented_mappings() -> dict[str, tuple[str, ...]]:
     return mappings
 
 
+def production_import_failures(
+    production_import_edges: set[tuple[str, str]],
+) -> list[str]:
+    return [
+        f"{name}: production import uses historical path {target}"
+        for name, target in sorted(production_import_edges)
+    ]
+
+
+def self_test_zero_production_imports() -> None:
+    assert not production_import_failures(set())
+
+    adversarial_edge = (
+        "NumStability.Source.Higham.Chapter19.Core",
+        "NumStability.Algorithms.LinearSystems.QR.HouseholderQRSupport",
+    )
+    assert production_import_failures({adversarial_edge}) == [
+        "NumStability.Source.Higham.Chapter19.Core: production import uses "
+        "historical path "
+        "NumStability.Algorithms.LinearSystems.QR.HouseholderQRSupport"
+    ]
+
+    second_adversarial_edge = (
+        "NumStability.Source.Higham.Chapter19.Unreviewed",
+        "NumStability.Algorithms.LinearSystems.QR.HouseholderSpecSupport",
+    )
+    assert len(
+        production_import_failures({adversarial_edge, second_adversarial_edge})
+    ) == 2
+
+
 def main() -> int:
+    try:
+        self_test_zero_production_imports()
+    except AssertionError as error:
+        print(f"error: compatibility checker self-test failed: {error}", file=sys.stderr)
+        return 2
+
     try:
         mappings = documented_mappings()
     except (OSError, ValueError) as error:
@@ -95,6 +131,7 @@ def main() -> int:
             failures.append(f"{historical}: forwarding module contains Lean code")
 
     historical_names = set(mappings)
+    production_import_edges: set[tuple[str, str]] = set()
     for path in source_paths(ROOT):
         name = module_name(path.relative_to(ROOT))
         if name in historical_names:
@@ -102,7 +139,8 @@ def main() -> int:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         for target in IMPORT_RE.findall(remove_lean_comments(text)):
             if target in historical_names:
-                failures.append(f"{name}: production import uses historical path {target}")
+                production_import_edges.add((name, target))
+    failures.extend(production_import_failures(production_import_edges))
 
     test_imports: set[str] = set()
     test_paths = [ROOT / "NumStabilityTest.lean"]
@@ -131,7 +169,8 @@ def main() -> int:
     target_count = sum(len(targets) for targets in mappings.values())
     print(
         f"compatibility contract passed: {len(mappings)} forwarding modules, "
-        f"{target_count} canonical targets"
+        f"{target_count} canonical targets, "
+        f"{len(production_import_edges)} production imports of historical paths"
     )
     return 0
 

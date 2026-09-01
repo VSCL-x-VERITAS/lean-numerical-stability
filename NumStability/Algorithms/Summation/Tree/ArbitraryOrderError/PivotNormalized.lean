@@ -2,6 +2,14 @@ import NumStability.Algorithms.Summation.Tree.Core
 import NumStability.Analysis.Rounding
 import NumStability.FloatingPoint.Model
 
+/-!
+# PivotNormalized
+
+Retained R03 owner (reusable): every declaration stays at this exact path
+under the frozen B0005 route; wave R03 adds this module docstring only.
+-/
+
+
 -- Algorithms/TriangularArbitraryOrder.lean
 --
 -- Higham, "Accuracy and Stability of Numerical Algorithms", 2nd ed., Chapter 8.
@@ -280,7 +288,7 @@ theorem backward_error_counter (fp : FPModel) {n : ℕ} (t : SumTree n)
           have hpad : l.depth + 1 ≤ max l.depth r.depth + 1 := by omega
           have hcounter := higham8_relErrorCounter_pad fp hpad hprod
           simp only [η, Fin.addCases_left]
-          convert hcounter using 1 <;> ring
+          (convert hcounter using 1; ring)
         · intro j
           have hprod := relErrorCounter_mul fp r.depth 1
             (1 + ηR j) (1 + δ) (hηR j)
@@ -288,7 +296,7 @@ theorem backward_error_counter (fp : FPModel) {n : ℕ} (t : SumTree n)
           have hpad : r.depth + 1 ≤ max l.depth r.depth + 1 := by omega
           have hcounter := higham8_relErrorCounter_pad fp hpad hprod
           simp only [η, Fin.addCases_right]
-          convert hcounter using 1 <;> ring
+          (convert hcounter using 1; ring)
       · show fp.fl_add (l.eval fp vL) (r.eval fp vR) =
           ∑ i : Fin (m + k), v i * (1 + η i)
         rw [hfl, hLeq, hReq, Fin.sum_univ_add]
