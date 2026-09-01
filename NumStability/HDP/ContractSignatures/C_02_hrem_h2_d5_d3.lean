@@ -1,5 +1,18 @@
 import NumStability.HDP.Scalar.SubGaussian
 
+/-!
+# Contract signature: HDP Remark 2.5.3
+
+Frozen `Prop`-valued signature for Vershynin, *High-Dimensional Probability*
+(first edition, 2018), Remark 2.5.3, printed page 26: the constant `2`
+appearing in the sub-gaussian properties of Proposition 2.5.2 may be replaced
+by any absolute constant larger than `1`.
+
+The signature exists so that the shape of the source-facing statement is
+pinned independently of its proof, and so a later change to the proof cannot
+silently change the contract.
+-/
+
 noncomputable section
 
 open MeasureTheory

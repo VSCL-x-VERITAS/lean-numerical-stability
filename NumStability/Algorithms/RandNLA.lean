@@ -15,9 +15,12 @@ import NumStability.Algorithms.RandNLA.UniformRowSampling
 import NumStability.Algorithms.RandNLA.UniformRowSamplingComposition
 import NumStability.Algorithms.RandNLA.UniformRowSamplingFP
 import NumStability.Algorithms.RandNLA.UniformRowSamplingMGF
-
 /-!
 # NumStability.Algorithms.RandNLA
 
 Historical W11 RandNLA discovery facade. It preserves every pre-migration child import.
--/
+
+Reference: Petros Drineas and Michael W. Mahoney, “RandNLA: Randomized Numerical
+Linear Algebra,” *Communications of the ACM* 59(6), 80–90, 2016.
+https://dl.acm.org/doi/10.1145/2842602
+/-
