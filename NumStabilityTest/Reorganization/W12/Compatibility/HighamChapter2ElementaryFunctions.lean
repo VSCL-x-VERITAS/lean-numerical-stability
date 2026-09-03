@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.higham2ArctanSingleLower
 #check @NumStability.higham2ArctanSingleUpper
 #check @NumStability.higham2ArctanSingleLower_value
+#check @NumStability.higham2_arctan_two_pow_thirty_correct_rounding_exceeds_pi_div_two

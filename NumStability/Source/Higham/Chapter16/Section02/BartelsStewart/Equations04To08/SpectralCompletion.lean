@@ -3,7 +3,7 @@ import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.ComplexSchur.Sp
 import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.QuasiTriangularBartelsStewart.BlockTraversal
 import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.SchurTransformClosure
 import NumStability.Analysis.LinearOperators.Schur.Real.QuasiTriangular.API
-import NumStability.Analysis.SylvesterSchurExistence
+import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.ComplexSchur.Existence
 import NumStability.Source.Higham.Chapter16.Section01.SylvesterEquation.ComplexSolvability.SpectralCriterion
 import NumStability.Source.Higham.Chapter16.Section02.BartelsStewart.Equations04To08.Spectrum
 import NumStability.Source.Higham.Chapter16.Section04.PracticalErrorBounds.Equation29Extensions.Spectrum

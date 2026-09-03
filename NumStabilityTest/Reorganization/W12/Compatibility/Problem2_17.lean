@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.problem2_17_discriminant
 #check @NumStability.problem2_17_computedDiscriminant
 #check @NumStability.problem2_17_true_discriminant_nonnegative
+#check @NumStability.problem2_17_standard_model_counterexample_with_decimal_finite_inputs

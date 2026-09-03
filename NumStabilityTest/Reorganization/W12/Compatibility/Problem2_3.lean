@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.FloatingPointFormat.problem2_3_subnormalBlockScale
 #check @NumStability.FloatingPointFormat.Problem2_3IeeeSingleAdjacentGap
 #check @NumStability.FloatingPointFormat.problem2_3_adjacentSingleGapLeftValue
+#check @NumStability.FloatingPointFormat.problem2_3_adjacentSingleGapDoubleValue_finiteSystem_of_mem

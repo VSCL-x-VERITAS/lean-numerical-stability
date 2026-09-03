@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.FloatingPointFormat.problem2_12_ieeeDouble_one_normalized
 #check @NumStability.FloatingPointFormat.problem2_12_ieeeDouble_one_finiteSystem
 #check @NumStability.FloatingPointFormat.problem2_12_ieeeDouble_rounds_one_to_self
+#check @NumStability.FloatingPointFormat.problem2_12_ieeeDouble_reciprocal_product_rounding_options

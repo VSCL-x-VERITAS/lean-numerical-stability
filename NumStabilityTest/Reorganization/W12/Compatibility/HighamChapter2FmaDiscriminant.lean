@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.higham2FmaDiscriminantInput
 #check @NumStability.higham2FmaDiscriminantSquareNext
 #check @NumStability.higham2FmaDiscriminantInput_value
+#check @NumStability.higham2_fma_discriminant_source_counterexample_ieeeSingle

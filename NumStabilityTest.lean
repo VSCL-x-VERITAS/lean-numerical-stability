@@ -82,8 +82,8 @@ import NumStabilityTest.Import.Canonical.Analysis.F0
 import NumStabilityTest.Import.Canonical.Analysis.Perturbation.LeastSquares.ProjectorComplementNorm
 import NumStabilityTest.Import.Canonical.Higham10Remaining
 import NumStabilityTest.Import.Canonical.Higham15Tridiagonal
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual
 import NumStabilityTest.Import.Canonical.RandomizedLinearAlgebra
-import NumStabilityTest.Import.Canonical.SylvesterHigham16
 import NumStabilityTest.Import.Canonical.Source.Higham.Chapter11.SymmetricIndefinite
 import NumStabilityTest.Import.Canonical.Source.Higham.Chapter14
 import NumStabilityTest.Import.Canonical.Source.Higham.Chapter21
@@ -91,6 +91,7 @@ import NumStabilityTest.Import.Canonical.Source.Higham.Chapter28.RealGinibreWave
 import NumStabilityTest.Import.Canonical.Source.Higham.Chapter28.TestMatricesWave
 import NumStabilityTest.Import.Canonical.Source.Vershynin.Contracts
 import NumStabilityTest.Import.Canonical.Source.Vershynin.ContractSignatures
+import NumStabilityTest.Import.Canonical.SylvesterHigham16
 import NumStabilityTest.Import.Compatibility.Algorithms.Cholesky.Higham11
 import NumStabilityTest.Import.Compatibility.Algorithms.Higham10Remaining
 import NumStabilityTest.Import.Compatibility.Algorithms.Higham14

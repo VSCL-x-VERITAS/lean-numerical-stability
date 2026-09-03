@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.higham2_lindemannExpProperty
 #check @NumStability.higham2_real_exp_transcendental
 #check @NumStability.FloatingPointFormat.finiteValues
+#check @NumStability.higham2_exp_eventually_stable_midpoint_comparisons

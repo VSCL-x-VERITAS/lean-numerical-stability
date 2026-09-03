@@ -7,7 +7,8 @@ import NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.ComplexSchur.Ex
 /-!
 # Source.Higham.Chapter16.Section01.SylvesterEquation.ComplexSolvability.SchurFactors
 
-W06 semantic leaf. Whole declaration commands are copied from the frozen C0005 owners; local private notations are expanded at their use sites.
+Source-numbered aliases connecting the reusable complex Schur solvability
+results to Higham, Chapter 16, equations (16.2), (16.3), and (16.6).
 -/
 
 /-
@@ -431,11 +432,73 @@ theorem H16_eq16_2_complexSylvesterVecCoeff {m n : ℕ}
         Matrix.kronecker (Matrix.transpose B) (1 : Matrix (Fin m) (Fin m) ℂ) :=
   rfl
 
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    the supplied complex triangular vec/Kronecker determinant product. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_det_eq_prod_of_upperTriangular
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B) :
+    Matrix.det (complexSylvesterVecCoeff A B) =
+      ∏ p : Prod (Fin n) (Fin m), (A p.2 p.2 - B p.1 p.1) :=
+  complexSylvesterVecCoeff_det_eq_prod_of_upperTriangular A B hA hB
 
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    the supplied complex triangular shifted vec/Kronecker determinant product. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_shifted_det_eq_prod_of_upperTriangular
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ) (μ : ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B) :
+    Matrix.det (complexSylvesterVecCoeff A B -
+        Matrix.scalar (Prod (Fin n) (Fin m)) μ) =
+      ∏ p : Prod (Fin n) (Fin m), (A p.2 p.2 - B p.1 p.1 - μ) :=
+  complexSylvesterVecCoeff_shifted_det_eq_prod_of_upperTriangular A B μ hA hB
 
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    the supplied complex triangular shifted determinant/separation equivalence. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_shifted_det_ne_zero_iff_of_upperTriangular_diagonal_separation
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ) (μ : ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B) :
+    Matrix.det (complexSylvesterVecCoeff A B -
+        Matrix.scalar (Prod (Fin n) (Fin m)) μ) ≠ 0 ↔
+      ∀ i : Fin m, ∀ j : Fin n, A i i - B j j ≠ μ :=
+  complexSylvesterVecCoeff_shifted_det_ne_zero_iff_of_upperTriangular_diagonal_separation
+    A B μ hA hB
 
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    the supplied complex triangular shifted determinant nonsingularity
+    consequence. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_shifted_det_ne_zero_of_upperTriangular_diagonal_separation
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ) (μ : ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B)
+    (hsep : ∀ i : Fin m, ∀ j : Fin n, A i i - B j j ≠ μ) :
+    Matrix.det (complexSylvesterVecCoeff A B -
+        Matrix.scalar (Prod (Fin n) (Fin m)) μ) ≠ 0 :=
+  complexSylvesterVecCoeff_shifted_det_ne_zero_of_upperTriangular_diagonal_separation
+    A B μ hA hB hsep
 
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    the supplied complex triangular determinant/separation equivalence. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_det_ne_zero_iff_of_upperTriangular_diagonal_separation
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B) :
+    Matrix.det (complexSylvesterVecCoeff A B) ≠ 0 ↔
+      ∀ i : Fin m, ∀ j : Fin n, A i i ≠ B j j :=
+  complexSylvesterVecCoeff_det_ne_zero_iff_of_upperTriangular_diagonal_separation
+    A B hA hB
 
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    supplied complex triangular nonsingularity from diagonal separation. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_det_ne_zero_of_upperTriangular_diagonal_separation
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B)
+    (hsep : ∀ i : Fin m, ∀ j : Fin n, A i i ≠ B j j) :
+    Matrix.det (complexSylvesterVecCoeff A B) ≠ 0 :=
+  complexSylvesterVecCoeff_det_ne_zero_of_upperTriangular_diagonal_separation
+    A B hA hB hsep
 
 
 
@@ -512,82 +575,20 @@ theorem H16_eq16_2_complexSylvesterVecCoeff {m n : ℕ}
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/-- Higham, 2nd ed., Chapter 16.1, equation (16.3): source-numbered alias for
+    the supplied complex triangular no-common-eigenpair determinant route. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_det_ne_zero_of_upperTriangular_no_common_eigenpair
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (hA : IsUpperTriangularC A) (hB : IsUpperTriangularC B)
+    (hno : ∀ μ : ℂ,
+      ¬ ((∃ y : Fin m → ℂ,
+            y ≠ 0 ∧ Matrix.mulVec A y = fun i => μ * y i) ∧
+          (∃ z : Fin n → ℂ,
+            z ≠ 0 ∧ Matrix.mulVec B z = fun j => μ * z j))) :
+    Matrix.det (complexSylvesterVecCoeff A B) ≠ 0 :=
+  complexSylvesterVecCoeff_det_ne_zero_of_upperTriangular_no_common_eigenpair
+    A B hA hB hno
 
 -- ============================================================
 -- Complex Schur factors exist unconditionally
@@ -1128,6 +1129,11 @@ alias H16_eq16_3_6_complexSylvester_shift_det_ne_zero_of_schur_diagonal_separati
 
 
 
+/-- Higham, 2nd ed., Chapter 16.2, equations (16.3)-(16.6):
+    source-numbered alias for the supplied complex Schur diagonal-separation
+    exact unique-solve theorem. -/
+alias H16_eq16_3_6_complexSylvester_exists_unique_of_schur_diagonal_separation :=
+  complexSylvester_exists_unique_of_schur_diagonal_separation
 
 
 
@@ -1221,6 +1227,28 @@ alias H16_eq16_3_6_complexSylvester_shift_det_ne_zero_of_schur_diagonal_separati
 
 
 
+/-- Higham, 2nd ed., Chapter 16.1-16.2, equations (16.3)-(16.6):
+    source-numbered alias for the complex Schur unique-solve route from a
+    no-common-right-eigenpair hypothesis on the original matrices. -/
+theorem H16_eq16_3_complexSylvester_exists_unique_of_schur_no_common_eigenpair
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (U : Matrix (Fin m) (Fin m) ℂ) (V : Matrix (Fin n) (Fin n) ℂ)
+    (R : Matrix (Fin m) (Fin m) ℂ) (S : Matrix (Fin n) (Fin n) ℂ)
+    (C : Matrix (Fin m) (Fin n) ℂ)
+    (hU : U ∈ Matrix.unitaryGroup (Fin m) ℂ)
+    (hV : V ∈ Matrix.unitaryGroup (Fin n) ℂ)
+    (hR : Uᴴ * A * U = R) (hS : Vᴴ * B * V = S)
+    (hRtri : IsUpperTriangularC R)
+    (hStri : IsUpperTriangularC S)
+    (hno : ∀ μ : ℂ,
+      ¬ ((∃ y : Fin m → ℂ,
+            y ≠ 0 ∧ Matrix.mulVec A y = fun i => μ * y i) ∧
+          (∃ z : Fin n → ℂ,
+            z ≠ 0 ∧ Matrix.mulVec B z = fun j => μ * z j))) :
+    ∃! X : Matrix (Fin m) (Fin n) ℂ, IsComplexSylvesterSolution A B C X :=
+  complexSylvester_exists_unique_of_schur_no_common_eigenpair
+    A B U V R S C hU hV hR hS hRtri hStri hno
 
 
 
@@ -1240,6 +1268,21 @@ alias H16_eq16_3_6_complexSylvester_shift_det_ne_zero_of_schur_diagonal_separati
 
 
 
+/-- Higham, 2nd ed., Chapter 16.1-16.2, equations (16.3)-(16.6):
+    source-numbered alias for the exact complex Sylvester unique-solve theorem
+    from no common supplied right eigenpair, with Schur factors obtained by
+    existence. -/
+theorem H16_eq16_3_complexSylvester_exists_unique_of_no_common_eigenpair
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (C : Matrix (Fin m) (Fin n) ℂ)
+    (hno : ∀ μ : ℂ,
+      ¬ ((∃ y : Fin m → ℂ,
+            y ≠ 0 ∧ Matrix.mulVec A y = fun i => μ * y i) ∧
+          (∃ z : Fin n → ℂ,
+            z ≠ 0 ∧ Matrix.mulVec B z = fun j => μ * z j))) :
+    ∃! X : Matrix (Fin m) (Fin n) ℂ, IsComplexSylvesterSolution A B C X :=
+  complexSylvester_exists_unique_of_no_common_eigenpair A B C hno
 
 
 
@@ -1257,61 +1300,19 @@ alias H16_eq16_3_6_complexSylvester_shift_det_ne_zero_of_schur_diagonal_separati
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/-- Higham, 2nd ed., Chapter 16.1-16.2, equations (16.2)-(16.3):
+    source-numbered alias for the complex vec/Kronecker determinant
+    nonsingularity theorem from no common supplied right eigenpair. -/
+theorem H16_eq16_3_complexSylvesterVecCoeff_det_ne_zero_of_no_common_eigenpair
+    {m n : ℕ}
+    (A : Matrix (Fin m) (Fin m) ℂ) (B : Matrix (Fin n) (Fin n) ℂ)
+    (hno : ∀ μ : ℂ,
+      ¬ ((∃ y : Fin m → ℂ,
+            y ≠ 0 ∧ Matrix.mulVec A y = fun i => μ * y i) ∧
+          (∃ z : Fin n → ℂ,
+            z ≠ 0 ∧ Matrix.mulVec B z = fun j => μ * z j))) :
+    Matrix.det (complexSylvesterVecCoeff A B) ≠ 0 :=
+  complexSylvesterVecCoeff_det_ne_zero_of_no_common_eigenpair A B hno
 
 
 

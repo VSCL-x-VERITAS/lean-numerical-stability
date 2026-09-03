@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.problem2_27_residual
 #check @NumStability.problem2_27_fullAccuracy
 #check @NumStability.problem2_27_fullAccuracy_iff_eq_div
+#check @NumStability.FloatingPointFormat.problem2_27_convergenceTest_iff_eq_div_of_additive_model_normal_branch

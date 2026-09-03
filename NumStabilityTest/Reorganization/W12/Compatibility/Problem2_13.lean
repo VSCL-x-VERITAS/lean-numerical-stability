@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.FloatingPointFormat.problem2_13_sourceX
 #check @NumStability.FloatingPointFormat.problem2_13_candidateJ
 #check @NumStability.FloatingPointFormat.problem2_13_candidateX
+#check @NumStability.FloatingPointFormat.problem2_13_predecessor_rounds_to_one

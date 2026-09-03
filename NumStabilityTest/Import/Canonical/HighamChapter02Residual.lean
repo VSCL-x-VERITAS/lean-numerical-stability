@@ -1,0 +1,21 @@
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.AllPublicNames
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.ArctangentRange
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.FusedMultiplyAdd
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.HermiteLindemann
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem03
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem10
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem12
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem13
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem14
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem17
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem20
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem24
+import NumStabilityTest.Import.Canonical.HighamChapter02Residual.Problem27
+
+/-!
+# Canonical retained Chapter 2 routes
+
+Isolated canonical-import tests for the whole source closures moved out of the
+historical Chapter 2 analysis modules, plus the exhaustive frozen public-name
+audit.
+-/

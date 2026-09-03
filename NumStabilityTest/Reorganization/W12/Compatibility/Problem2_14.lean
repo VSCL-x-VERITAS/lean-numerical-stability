@@ -10,3 +10,4 @@ still re-exports them at their original names.
 
 #check @NumStability.FloatingPointFormat.problem2_14_ieeeDoubleKahanEstimate
 #check @NumStability.FloatingPointFormat.problem2_14_ieeeSingleKahanEstimate
+#check @NumStability.FloatingPointFormat.problem2_14_ieeeSingleKahanEstimate_eq_two_unitRoundoff

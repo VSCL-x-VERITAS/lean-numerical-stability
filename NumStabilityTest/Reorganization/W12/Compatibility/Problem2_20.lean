@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.problem2_20_exactRatio
 #check @NumStability.problem2_20_computedRatio
 #check @NumStability.problem2_20_exactRatio_le_one
+#check @NumStability.problem2_20_standard_model_counterexample_with_decimal_finite_inputs

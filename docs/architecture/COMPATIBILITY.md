@@ -21,16 +21,28 @@ the table remains an import-only forwarding module.
 | `NumStability.Analysis.Accumulation` | `NumStability.Analysis.FloatingPointArithmetic.Format`, `NumStability.Analysis.FloatingPointArithmetic.NearestRoundingError`, `NumStability.Analysis.Rounding`, `NumStability.Source.Higham.Chapter01.Problem05.CompensatedLogarithm.Basic`, `NumStability.Source.Higham.Chapter01.Section11.Accumulation.Basic` |
 | `NumStability.Analysis.CalculatorWords` | `NumStability.Source.Higham.Chapter01.Problem06.CalculatorWords.Basic` |
 | `NumStability.Analysis.Counting` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem01.FloatingPointCounts.Basic` |
+| `NumStability.Analysis.HighamChapter2ElementaryFunctions` | `NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.All` |
+| `NumStability.Analysis.HighamChapter2FmaDiscriminant` | `NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.All` |
 | `NumStability.Analysis.HighamChapter2GradualUnderflowExact` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem19.GradualUnderflowExactness.Basic` |
+| `NumStability.Analysis.HighamChapter2Lindemann` | `NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.All` |
 | `NumStability.Analysis.HighamChapter2Tablemaker` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Section10.Tablemaker.FiniteSeparation.Basic` |
 | `NumStability.Analysis.MullerRecurrence` | `NumStability.Source.Higham.Chapter01.Problem08.MullerRecurrence.Basic` |
 | `NumStability.Analysis.NearInteger` | `NumStability.Source.Higham.Chapter01.Problem02.NearIntegerTable.Basic` |
+| `NumStability.Analysis.Problem2_10` | `NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.All` |
+| `NumStability.Analysis.Problem2_12` | `NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.All`, `NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.All` |
+| `NumStability.Analysis.Problem2_13` | `NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.All` |
+| `NumStability.Analysis.Problem2_14` | `NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.All`, `NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.All` |
 | `NumStability.Analysis.Problem2_15_16` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problems15And16.SpecialValueProbes.Basic` |
+| `NumStability.Analysis.Problem2_17` | `NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.All` |
 | `NumStability.Analysis.Problem2_18` | `NumStability.Source.Higham.Chapter02.Problem18.ExactSubtractionCounterexample.Basic` |
 | `NumStability.Analysis.Problem2_19` | `NumStability.Source.Higham.Chapter02.Problem20.SquareRootIdentities.Basic` |
+| `NumStability.Analysis.Problem2_20` | `NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.All` |
 | `NumStability.Analysis.Problem2_23` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem24.GuardDigitCancellation.Basic` |
+| `NumStability.Analysis.Problem2_24` | `NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.All` |
 | `NumStability.Analysis.Problem2_25` | `NumStability.Source.Higham.Chapter02.Problem27.KahanDeterminant.Basic` |
-| `NumStability.Analysis.Problem2_26` | `NumStability.Analysis.Problem2_14`, `NumStability.Source.Higham.Chapter02.Section06.ReciprocalIteration.Basic` |
+| `NumStability.Analysis.Problem2_26` | `NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.All`, `NumStability.Source.Higham.Chapter02.Section06.ReciprocalIteration.Basic` |
+| `NumStability.Analysis.Problem2_27` | `NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.All`, `NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.All` |
+| `NumStability.Analysis.Problem2_3` | `NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.All` |
 | `NumStability.Analysis.Problem2_5` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem05.BinaryOneTenth.Basic` |
 | `NumStability.Analysis.Problem2_6` | `NumStability.Analysis.FloatingPointArithmetic`, `NumStability.Source.Higham.Chapter02.Problem06.IntegerRepresentability.Basic` |
 | `NumStability.Analysis.CStarMatrixBridge` | `NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge`, `NumStability.Analysis.MatrixAlgebra` |
@@ -54,6 +66,7 @@ the table remains an import-only forwarding module.
 | `NumStability.Analysis.ResolventFunctionalCalculus` | `NumStability.Analysis.FunctionalCalculus.Resolvent.Analyticity`, `NumStability.Analysis.LinearOperators.Pseudospectra.Perturbation.ConvergenceCriterion`, `NumStability.Analysis.LinearOperators.Pseudospectra.Resolvent.LowerBounds`, `NumStability.Source.Higham.Chapter18.Section02.FinitePrecisionPowers.Theorems01And02.PseudospectralCriterion` |
 | `NumStability.Analysis.SchurTriangulation` | `NumStability.Analysis.LinearOperators.Schur.Complex.BlockEmbedding`, `NumStability.Analysis.LinearOperators.Schur.Complex.Deflation`, `NumStability.Analysis.LinearOperators.Schur.Complex.Triangulation` |
 | `NumStability.Analysis.SpijkerProjectionIntegral` | `NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.ProjectionIntegral` |
+| `NumStability.Analysis.SylvesterSchurExistence` | `NumStability.Algorithms.MatrixEquations.Sylvester.Solvers.ComplexSchur.Existence`, `NumStability.Analysis.LinearOperators.Schur.Complex.Triangulation`, `NumStability.Source.Higham.Chapter16.Section01.SylvesterEquation.ComplexSolvability.SchurFactors` |
 | `NumStability.Algorithms.HighamChapter8FanInClosure` | `NumStability.Source.Higham.Chapter08.Equation15.GlobalEnvelopeCounterexample.RawCube` |
 | `NumStability.Algorithms.IterativeRefinement` | `NumStability.Algorithms.LinearSystems.IterativeRefinement.Core`, `NumStability.Source.Higham.Chapter12.IterativeRefinement.Chapter12Bounds`, and `NumStability.Source.Higham.Chapter12.IterativeRefinement.LegacyChapter11Surface` |
 | `NumStability.Algorithms.PriestFiniteFormat` | `NumStability.Algorithms.Summation.Compensated.Priest.FiniteFormat` and `NumStability.Source.Higham.Chapter04.Algorithm03.Priest.SourceAssumptions` |

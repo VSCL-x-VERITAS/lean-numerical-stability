@@ -11,3 +11,4 @@ still re-exports them at their original names.
 #check @NumStability.FloatingPointFormat.problem2_24_y1
 #check @NumStability.FloatingPointFormat.problem2_24_y2
 #check @NumStability.FloatingPointFormat.problem2_24_y3
+#check @NumStability.FloatingPointFormat.problem2_24_ieeeDouble_eval_ne_zero_of_finiteSystem_input

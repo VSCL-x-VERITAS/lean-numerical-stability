@@ -8,7 +8,7 @@ Authors: QED
 import NumStability.Analysis.VectorNorms.Basic
 import NumStability.Analysis.MatrixAlgebra
 import NumStability.Analysis.FloatingPointArithmetic
-import NumStability.Analysis.Problem2_24
+import NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.All
 import Mathlib.Data.Complex.Basic
 import Mathlib.Analysis.Complex.Norm
 import Mathlib.Tactic.FieldSimp

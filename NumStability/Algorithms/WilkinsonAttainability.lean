@@ -1,6 +1,6 @@
 import Mathlib.Tactic
 import NumStability.Algorithms.Summation.Recursive.Core
-import NumStability.Analysis.Problem2_10
+import NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.All
 import NumStability.Source.Higham.Chapter04.Problem02.WilkinsonAttainability.Basic
 
 /-!

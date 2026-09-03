@@ -108,7 +108,6 @@ import NumStability.Analysis.SemiconvergentLimitGeneral
 import NumStability.Analysis.SemiconvergentRealSpectrumComplete
 import NumStability.Analysis.SemiconvergentSpectral
 import NumStability.Analysis.SingularValues.InverseBounds
-import NumStability.Analysis.SylvesterSchurExistence
 import NumStability.Source.Higham.Chapter04
 import NumStability.Source.Higham.Chapter06.Asides
 import NumStability.Source.Higham.Chapter06.BlockAntidiagonalNorm
