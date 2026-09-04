@@ -1,18 +1,18 @@
 {
  "counts": {
   "by_role": {
-   "aggregate": 427,
-   "compatibility": 782,
+   "aggregate": 428,
+   "compatibility": 788,
    "internal": 5,
    "reusable": 593,
    "source": 1355,
    "upstream": 5
   },
-  "exact_rules": 2283,
+  "exact_rules": 2290,
   "exact_rules_with_absent_file": 0,
   "prefix_rules": 27,
   "prefix_rules_deciding_nothing": 1,
-  "production_modules": 3167
+  "production_modules": 3174
  },
  "exact": {
   "NumStability": "aggregate",
@@ -589,9 +589,16 @@
   "NumStability.Algorithms.PNormPowerMethodRect": "compatibility",
   "NumStability.Algorithms.PairwiseSum": "compatibility",
   "NumStability.Algorithms.PlusMinusSum": "compatibility",
+  "NumStability.Algorithms.PolynomialEvaluation": "aggregate",
+  "NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve": "compatibility",
+  "NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds": "compatibility",
+  "NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds": "compatibility",
+  "NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence": "compatibility",
   "NumStability.Algorithms.PolynomialEvaluation.DerivativeEvaluation.ErrorBounds": "source",
   "NumStability.Algorithms.PolynomialEvaluation.ElementaryErrorBounds": "reusable",
+  "NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel": "compatibility",
   "NumStability.Algorithms.PolynomialEvaluation.MatrixNorms": "reusable",
+  "NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness": "compatibility",
   "NumStability.Algorithms.PolynomialEvaluation.RootProduct": "reusable",
   "NumStability.Algorithms.PriestAccuracy": "reusable",
   "NumStability.Algorithms.PriestDefectBounded": "reusable",
@@ -13840,6 +13847,106 @@
    "exception": null,
    "file_present": true,
    "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve",
+   "rationale": "Historical path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds",
+   "rationale": "Historical path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds",
+   "rationale": "Historical path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence",
+   "rationale": "Historical path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
     "commit": "1f8ff4ca5b0b136901a2f47d43e1064dc09aa556",
     "date": "2026-08-13T23:28:35-04:00",
     "determined_by": "diff_filter_add"
@@ -13880,6 +13987,26 @@
    "exception": null,
    "file_present": true,
    "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel",
+   "rationale": "Historical path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
     "commit": "380d3cba83bb9e3704232720f371f28cbbc673da",
     "date": "2026-08-02T13:09:53-04:00",
     "determined_by": "diff_filter_add"
@@ -13895,6 +14022,26 @@
    },
    "role": "reusable",
    "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.MatrixNorms"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00",
+    "determined_by": "diff_filter_add"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness",
+   "rationale": "Historical path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "checkpoint commit 5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "review_date": "2026-09-03T00:00:00-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness"
   },
   {
    "exception": null,

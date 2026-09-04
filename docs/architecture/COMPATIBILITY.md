@@ -314,6 +314,12 @@ the table remains an import-only forwarding module.
 | `NumStability.Algorithms.PNormPowerMethodRect` | `NumStability.Algorithms.NormEstimation.PNorm.Endpoints.PNormRectangular`, `NumStability.Algorithms.NormEstimation.PNorm.Rectangular.PNormRectangular`, `NumStability.Algorithms.PNormPowerMethodGeneralP`, `NumStability.Source.Higham.Chapter15.Algorithm01.PNormPowerMethod.PNormRectangular`, `NumStability.Source.Higham.Chapter15.Lemma02.PNormPowerMethod.PNormRectangular` |
 | `NumStability.Algorithms.PairwiseSum` | `NumStability.Algorithms.Summation.Pairwise` |
 | `NumStability.Algorithms.PlusMinusSum` | `NumStability.Algorithms.Summation.PlusMinus` |
+| `NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve` | `NumStability.Source.Higham.Chapter05.Section02.BidiagonalDerivativeAnalysis.Results.Theorems` |
+| `NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds` | `NumStability.Source.Higham.Chapter05.Algorithm01.ComplexHorner.ErrorBounds.Theorems` |
+| `NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds` | `NumStability.Source.Higham.Chapter05.Section02.DerivativeError.Results.Theorems` |
+| `NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence` | `NumStability.Algorithms.PolynomialEvaluation.DerivativeEvaluation.ErrorBounds` |
+| `NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel` | `NumStability.Source.Higham.Chapter05.Section05.FastPolynomialEvaluation.Results.Theorems` |
+| `NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness` | `NumStability.Source.Higham.Chapter05.Section04.PatersonStockmeyer.Results.Theorems` |
 | `NumStability.Algorithms.PriestFiniteFormat` | `NumStability.Algorithms.Summation.Compensated.Priest.FiniteFormat` and `NumStability.Source.Higham.Chapter04.Algorithm03.Priest.SourceAssumptions` |
 | `NumStability.Algorithms.Problem44SixTerm` | `NumStability.Source.Higham.Chapter04.Problem04` |
 | `NumStability.Algorithms.QR.GivensMatrixStep` | `NumStability.Algorithms.LinearSystems.QR.GivensMatrixStep` |

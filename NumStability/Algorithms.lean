@@ -67,7 +67,7 @@ import NumStability.Algorithms.NeumaierCompensatedFiniteFormat
 import NumStability.Algorithms.Norm2
 import NumStability.Algorithms.NormEstimation
 import NumStability.Algorithms.OuterProduct
-import NumStability.Algorithms.PolynomialEvaluation.DerivativeEvaluation.ErrorBounds
+import NumStability.Algorithms.PolynomialEvaluation
 import NumStability.Algorithms.PriestAccuracy
 import NumStability.Algorithms.PriestDefectBounded
 import NumStability.Algorithms.Quadrature
@@ -100,11 +100,6 @@ import NumStability.Analysis.SemiconvergentSpectral
 import NumStability.Source.Higham.Chapter03.Problem11.KahanAbsoluteValue.IeeeDoubleTrace.Results
 import NumStability.Source.Higham.Chapter04
 import NumStability.Source.Higham.Chapter04.Problem02.WilkinsonAttainability.IeeeDoubleTrace.Results
-import NumStability.Source.Higham.Chapter05.Algorithm01.ComplexHorner.ErrorBounds.Theorems
-import NumStability.Source.Higham.Chapter05.Section02.BidiagonalDerivativeAnalysis.Results.Theorems
-import NumStability.Source.Higham.Chapter05.Section02.DerivativeError.Results.Theorems
-import NumStability.Source.Higham.Chapter05.Section04.PatersonStockmeyer.Results.Theorems
-import NumStability.Source.Higham.Chapter05.Section05.FastPolynomialEvaluation.Results.Theorems
 import NumStability.Source.Higham.Chapter06.Asides
 import NumStability.Source.Higham.Chapter06.BlockAntidiagonalNorm
 import NumStability.Source.Higham.Chapter06.Lemma06

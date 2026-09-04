@@ -29,6 +29,17 @@
   "NumStability.Algorithms.MatrixEquations.Sylvester.Perturbation": "NumStability.Algorithms.MatrixEquations.Sylvester.Perturbation.",
   "NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod": "NumStability.Algorithms.NormEstimation.OneNorm.PowerMethod.",
   "NumStability.Algorithms.NormEstimation.PNorm.Rectangular": "NumStability.Algorithms.NormEstimation.PNorm.Rectangular.",
+  "NumStability.Algorithms.PolynomialEvaluation": [
+   "NumStability.Algorithms.PolynomialEvaluation.DerivativeEvaluation.ErrorBounds",
+   "NumStability.Algorithms.PolynomialEvaluation.ElementaryErrorBounds",
+   "NumStability.Algorithms.PolynomialEvaluation.MatrixNorms",
+   "NumStability.Algorithms.PolynomialEvaluation.RootProduct",
+   "NumStability.Source.Higham.Chapter05.Algorithm01.ComplexHorner.ErrorBounds.Theorems",
+   "NumStability.Source.Higham.Chapter05.Section02.BidiagonalDerivativeAnalysis.Results.Theorems",
+   "NumStability.Source.Higham.Chapter05.Section02.DerivativeError.Results.Theorems",
+   "NumStability.Source.Higham.Chapter05.Section04.PatersonStockmeyer.Results.Theorems",
+   "NumStability.Source.Higham.Chapter05.Section05.FastPolynomialEvaluation.Results.Theorems"
+  ],
   "NumStability.Algorithms.Summation": "NumStability.Algorithms.Summation.",
   "NumStability.Algorithms.Summation.Compensated": "NumStability.Algorithms.Summation.Compensated.",
   "NumStability.Algorithms.Summation.Compensated.Alternative": "NumStability.Algorithms.Summation.Compensated.Alternative.",

@@ -2,8 +2,8 @@
  "ambiguous_match": "fail",
  "counts": {
   "aggregate_target_set": 383,
-  "historical_modules": 782,
-  "single_target": 399
+  "historical_modules": 788,
+  "single_target": 405
  },
  "generated_from": "docs/architecture/COMPATIBILITY.md",
  "paths": [
@@ -6997,6 +6997,126 @@
    "review": {
     "reviewer": "primary-human",
     "status": "accepted"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter05_Section02_BidiagonalDerivativeAnalysis_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter05.Section02.BidiagonalDerivativeAnalysis.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Algorithms.PolynomialEvaluation.BidiagonalDerivativeAnalysis.InverseAndRoundedSolve",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Algorithms_PolynomialEvaluation_BidiagonalDerivativeAnalysis_InverseAndRoundedSolve",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter05_Algorithm01_ComplexHorner_ErrorBounds_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter05.Algorithm01.ComplexHorner.ErrorBounds.Theorems"
+   ],
+   "historical_module": "NumStability.Algorithms.PolynomialEvaluation.ComplexHorner.ErrorBounds",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Algorithms_PolynomialEvaluation_ComplexHorner_ErrorBounds",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter05_Section02_DerivativeError_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter05.Section02.DerivativeError.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledBounds",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Algorithms_PolynomialEvaluation_DerivativeError_CoupledBounds",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Algorithms_PolynomialEvaluation_DerivativeEvaluation_ErrorBounds",
+   "canonical_targets": [
+    "NumStability.Algorithms.PolynomialEvaluation.DerivativeEvaluation.ErrorBounds"
+   ],
+   "historical_module": "NumStability.Algorithms.PolynomialEvaluation.DerivativeError.CoupledRecurrence",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Algorithms_PolynomialEvaluation_DerivativeError_CoupledRecurrence",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter05_Section05_FastPolynomialEvaluation_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter05.Section05.FastPolynomialEvaluation.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Algorithms.PolynomialEvaluation.FastPolynomialEvaluation.QuinticKernel",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Algorithms_PolynomialEvaluation_FastPolynomialEvaluation_QuinticKernel",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter05_Section04_PatersonStockmeyer_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter05.Section04.PatersonStockmeyer.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Algorithms.PolynomialEvaluation.PatersonStockmeyer.Correctness",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "5e14756a1e6b7c0f99968f0e3e5f52702ff03f49",
+    "date": "2026-09-01T16:01:58-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Algorithms_PolynomialEvaluation_PatersonStockmeyer_Correctness",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
    },
    "wrapper_shape": "single_target"
   },
