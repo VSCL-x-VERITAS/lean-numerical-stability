@@ -1,59 +1,91 @@
 # NumStability
 
-NumStability is a Lean 4 library for machine-checked floating-point error
-analysis and numerical stability. It develops reusable mathematics for rounding,
-summation, matrix computations, perturbation theory, and related numerical
-algorithms. It also provides source correspondence with Nicholas J. Higham's
-*Accuracy and Stability of Numerical Algorithms* (2nd ed.) and a randomized
-numerical linear algebra (RandNLA) case study based on work by Drineas and
-Mahoney.
+[![Lean CI](https://github.com/VSCL-x-VERITAS/lean-numerical-stability/actions/workflows/lean_action_ci.yml/badge.svg?branch=main)](https://github.com/VSCL-x-VERITAS/lean-numerical-stability/actions/workflows/lean_action_ci.yml)
+[![Lean](https://img.shields.io/badge/Lean-4.29.0--rc3-blue)](lean-toolchain)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The library contains material from all 28 chapters of Higham. This does not mean
-that every sentence in the book has been formalized: the
-[source audit](docs/source_coverage/AUDIT_ch01-28_PDF_FIRST_2026-07-21.md)
-tracks a selected precise scope and distinguishes source-strength proofs,
-checked discrepancies with corrected statements, and claims that the source
-does not specify precisely enough to formalize honestly.
+NumStability is a Lean 4 library for machine-checked numerical analysis. It
+contains reusable mathematics for floating-point error analysis, numerical
+stability, matrix algorithms, finite-volume methods, hyperbolic partial
+differential equations, and high-dimensional probability, together with
+source-correspondence modules for results from books and papers.
 
-## Reorganization acceptance record
+> **Active development repository:**
+> [`VSCL-x-VERITAS/lean-numerical-stability`](https://github.com/VSCL-x-VERITAS/lean-numerical-stability).
+> The [`AlexGeorgantzas` repository](https://github.com/AlexGeorgantzas/lean-numerical-stability)
+> is the upstream project history; new development, branches, and issues for
+> this continuation should target the VSCL-x-VERITAS repository.
 
-Checkpoint C0008 (exact code commit
-`897557779a2102aa0e23b0b2f63edeb35b06bc68`) is the current accepted
-checkpoint. It accepts milestone M13 with its I01 wave (the reviewed
-R0014/R0015 union applied on `main` at
-`9fbb1e36bcc85f866893e902cbe206ba468a65b0` under the primary human's recorded
-2026-08-30 cutover decision) and is the evidence checkpoint for bounded-phase
-completion. Repository-wide completion remains incomplete. Repository
-reorganization follows
-[`docs/architecture/PROCESS.md`](docs/architecture/PROCESS.md).
+The principal source developments currently cover:
 
-The accepted C0007/R09-R10 epoch retains the following checkpoint facts as
-immutable history; the current production statistics appear below.
-C0005 accepts M04/R04 and M08/R08 at exact integrated code commit
-`ad92bbfae62d538f3e52829a269a846688a8e213`. Its generated evidence records
-2,818 production modules: 2,685 classified, 133 unclassified, and 0 mixed. M04
-and M08 are accepted; M07 became ready and B0010/R07 was delivered from exact
-C0005 base code `ad92bbfae62d538f3e52829a269a846688a8e213`. Immutable delivery
-`2f55e0aa5687829ca3a7dd54d5f90663ec4293cc` is preserved by true merge
-`4e298a102c6f914b42581492152ab9eea1cd0edf`, whose first parent is exact
-activation-control commit `35cb1a7c5f136f291398dddd99d8012dcf38f967`.
-The separate integration-control commit applies exact R0011 and reviewed
-correction `DFF0256BCDAB3DA2A3248D85A5A390E345AE5C49D45C6E099E26E315CF03B909`.
-The resulting projection was 2,860 production modules: 2,770 classified, 90
-unclassified, and 0 mixed, with the residual queue exactly R09=72 and R10=18.
-That queue is now empty: R09 and R10 were integrated at
-`09512c1b15fd4f6892a313341b1edc8c02bb913d`, after which the accepted C0007
-baseline recorded 2,927 production modules with 0 unclassified; the later I01
-landing brought the live tree to 2,928 production modules, still with 0
-unclassified.
+- all 28 chapters of Nicholas J. Higham's *Accuracy and Stability of Numerical
+  Algorithms* (2nd ed.), within a selected audited scope;
+- Chapter 1 of Randall J. LeVeque's *Finite Volume Methods for Hyperbolic
+  Problems*, backed by reusable PDE and finite-volume foundations;
+- Chapters 1, 2, and 5 of Roman Vershynin's *High-Dimensional Probability*,
+  backed by reusable scalar-probability and concentration modules; and
+- a randomized numerical linear algebra case study based on work by Petros
+  Drineas and Michael W. Mahoney.
 
-Exact integration-control commit `b2b9ab9057deda15c3fcf27745b76dcc49d3a1a5`
-passed GitHub Lean CI run 32616508317 (job 97138028649). Checkpoint C0006 is
-accepted by `primary-human` at exact code commit
-`fda296b2079acae3bf1d3565b2dc6e45dc8f6ef5`: M07 is accepted at C0006, B0010 is
-accepted with retirement due, and P0010 is retired and R0011 is applied with
-its reviewed supplemental correction. The remote worker ref remains preserved
-at the immutable delivery. Branch retirement remains a separate later control.
+Source coverage is deliberately not described as “the whole book.” Audits
+distinguish formalized claims, corrected discrepancies, claims ready for more
+work, and statements that are too narrative or underspecified to formalize
+faithfully.
+
+## Current repository status
+
+The source-only figures below were generated on 2026-09-04 from the integrated
+code tree at `1ff124d06a9a127bd956edf40280c4d7c6436737` with the repository-owned
+strict baseline generator. This README-only update does not change the Lean
+source tree.
+
+| Metric | Current result |
+|---|---:|
+| Production Lean modules | **3,198** |
+| Nonblank Lean source lines | **1,474,872** |
+| Direct imports | **31,987** (20,049 internal; 11,938 external) |
+| Import cycles / unresolved project imports | **0 / 0** |
+| Classified modules | **3,198 / 3,198 (100%)** |
+| Modules with module documentation | **3,198 / 3,198 (100%)** |
+| Aggregate / compatibility modules | **443 / 797** |
+| Reusable / source / internal / upstream modules | **593 / 1,355 / 5 / 5** |
+| Mixed or unclassified modules | **0** |
+| Forbidden reusable-to-source import paths | **0** |
+
+The executable tier manifest is
+[`docs/architecture/tiers.json`](docs/architecture/tiers.json). The current
+compatibility map contains 797 forwarding modules, 1,713 unique canonical
+targets, and 2,449 forwarding edges; production code has no imports of the
+historical paths. The placeholder gate finds no `sorry`, `admit`, or unreviewed
+project axiom declaration. Five attributed upstream modules and 137
+Apache-2.0-marked production files are covered by the provenance gate.
+
+The bounded 2026-08 repository-reorganization phase is accepted at checkpoint
+[`C0008`](docs/architecture/phases/2026-08-repository-reorganization-completion/checkpoints/C0008-gates.md),
+whose evidence commit is `897557779a2102aa0e23b0b2f63edeb35b06bc68`.
+Current `main` contains later work, including the LeVeque, MatrixPowers,
+PolynomialEvaluation, Higham Chapter 2, and high-dimensional-probability
+developments. Bounded-phase completion is recorded; repository-wide completion
+is not claimed. See the
+[`active phase registry`](docs/architecture/phases/2026-08-repository-reorganization-completion/README.md)
+and [`architecture process`](docs/architecture/PROCESS.md) for the distinction.
+
+### CI status
+
+The current source graph passes the layout, tier, placeholder, compatibility,
+provenance, and strict source-baseline checks. The exact `main` run for
+`1ff124d06` passed that architecture stage and then reached the workflow's
+180-minute limit during the full build. The three immediately preceding
+checkpoint runs completed the full `NumStability NumStabilityTest` build and
+`lake test`, but stopped at the warning ratchet: the captured tree emits 248
+diagnostics across 52 files, versus 12 reviewed fingerprints in
+[`warnings.json`](docs/architecture/warnings.json). The remaining 236
+fingerprints include 38 `linter.style.nameCheck` diagnostics. The reviewed
+warning baseline has not been expanded automatically, and the lint-baseline
+step remains pending behind that gate.
+
+The badge above reflects the live GitHub Actions state. A green build should
+not be inferred from the absence of `sorry` or from a passing structural scan.
 
 ## Floating-point model
 
@@ -67,26 +99,29 @@ square root. For the binary operations, the central relative-error law is
 fl(x ◦ y) = (x ◦ y)(1 + δ),    |δ| ≤ u.
 ```
 
-Division carries a nonzero-denominator condition, square root a nonnegative-input
-condition, and the model assumes `fl_add 0 x = x`. Individual theorems state any
-additional guards they need, such as bounds ensuring `γ(n)` is defined.
+Division carries a nonzero-denominator condition, square root a
+nonnegative-input condition, and the model assumes `fl_add 0 x = x`.
+Individual theorems state additional guards, such as bounds ensuring that
+`γ(n)` is defined.
 
 Results are parameterized by this model. The exact-arithmetic instance
-`FPModel.exactWithUnitRoundoff` is also useful for proving that an overly strong
+`FPModel.exactWithUnitRoundoff` is useful for proving that an overly strong
 claim cannot follow from the abstract assumptions alone. Exact algebra and
-matrix norms come from Mathlib; new APIs use Mathlib's `Matrix` and norm
-interfaces directly, while older function-shaped matrix APIs remain available
+matrix norms come from Mathlib. New APIs use Mathlib's `Matrix` and norm
+interfaces directly; older function-shaped matrix APIs remain available
 through compatibility wrappers.
 
-## Coverage
+## Formalized source areas
 
-All 28 chapter rows are terminal under the audit rules, with no unresolved
-precise core rows. In the table, **Closed** means compiled at source strength,
-**Discrepancy** means the printed claim has a compiled counterexample and a
-faithful correction, and **Defer** records an imprecise source statement or an
-external citation rather than a proof hole. The detailed evidence lives in the
-[per-chapter ledgers](docs/source_coverage/) and the
-[PDF-first audit](docs/source_coverage/AUDIT_ch01-28_PDF_FIRST_2026-07-21.md).
+### Higham: numerical stability
+
+All 28 Higham chapter rows are terminal under the selected audit rules. In the
+table, **Closed** means compiled at source strength, **Discrepancy** means the
+printed claim has a compiled counterexample and a faithful correction, and
+**Defer** records an imprecise source statement or external citation rather
+than a Lean proof hole. Detailed evidence lives in the
+[`source_coverage` ledgers](docs/source_coverage/) and the
+[`PDF-first audit`](docs/source_coverage/AUDIT_ch01-28_PDF_FIRST_2026-07-21.md).
 
 | Ch. | Topic | Audit result |
 |---:|---|---|
@@ -119,63 +154,73 @@ external citation rather than a proof hole. The detailed evidence lives in the
 | 27 | Software issues in floating point | Discrepancy · Defer |
 | 28 | A gallery of test matrices | Discrepancy · Defer |
 
+### LeVeque: hyperbolic PDEs and finite-volume methods
+
+Fifteen reusable modules under
+[`NumStability/Analysis/PartialDifferentialEquations/`](NumStability/Analysis/PartialDifferentialEquations/)
+provide conservation-law residuals, constant-coefficient systems,
+hyperbolicity, eigenmode waves, scalar advection, linear acoustics, integral
+conservation, finite-volume cell averages and flux differences, Riemann data,
+Riemann-interface adapters, and operator splitting.
+
+The 30-module LeVeque source surface begins at
+[`NumStability.Source.LeVeque`](NumStability/Source/LeVeque.lean); its
+[`Chapter01` subtree](NumStability/Source/LeVeque/) connects those foundations
+to Chapter 1 equations and constructions. The machine-readable
+[`Chapter 1 gate`](gates/leveque-finite-volume/chapter-01.json) and its
+[`audit artifacts`](gates/leveque-finite-volume/artifacts/) record source
+inventory, declaration and axiom checks, focused builds, organization checks,
+and per-claim faithfulness decisions. Book and workflow limitations are kept
+under [`ledgers/leveque-finite-volume/`](ledgers/leveque-finite-volume/).
+
+### Vershynin: high-dimensional probability
+
+[`NumStability.HDP`](NumStability/HDP.lean) is the current high-dimensional
+probability entry point. Its semantic layer covers probability preliminaries,
+limit theorems, independent sums, Hoeffding and Chernoff bounds, random-graph
+degree laws, sub-Gaussian and sub-exponential variables, and metric-measure
+concentration.
+
+[`NumStability.Source.Vershynin`](NumStability/Source/Vershynin.lean) exposes
+checked source contracts and frozen signatures for selected material in
+Chapters 1, 2, and 5 of *High-Dimensional Probability*. Historical
+`NumStability.HDP.Contracts` and `NumStability.HDP.ContractSignatures` paths
+remain supported through the compatibility map.
+
+### Drineas–Mahoney: randomized numerical linear algebra
+
 The RandNLA case study separates reusable algorithms and analysis under
 [`NumStability/Algorithms/RandomizedLinearAlgebra/`](NumStability/Algorithms/RandomizedLinearAlgebra/)
 from source correspondence under
 [`NumStability/Source/DrineasMahoney/RandNLA2016/`](NumStability/Source/DrineasMahoney/RandNLA2016/).
-Historical `NumStability.Algorithms.RandNLA` imports remain available as
-compatibility paths. The development covers sampling, matrix concentration,
-low-rank approximation, and least-squares preconditioning.
-
-## Project statistics
-
-The latest generated production snapshot is the accepted
-[`C0007` baseline](docs/architecture/phases/2026-08-repository-reorganization-completion/baselines/C0007-combined.json),
-measured at C0007 code commit `4e26820d1f4989ec4ec77b7113085f593570e11b`. The
-figures below are that accepted snapshot, not a live measurement:
-
-| Metric | Count |
-|---|---:|
-| Production Lean modules | **2,927** |
-| Nonblank Lean source lines | **1,457,465** |
-| Elaborated declarations | **56,913** |
-| Theorem and lemma declarations | **43,179** |
-| Definition declarations | **11,982** |
-| Direct imports | **31,329** (19,558 internal; 11,771 external) |
-| Import cycles | **0** |
-| Classified modules | **2,927 / 2,927 (100%)** |
-| Modules with documentation | **2,927 / 2,927 (100%)** |
-| `sorry` / `admit` / top-level `axiom` or `constant` commands | **0** |
-
-The reviewed I01 wave (R0014/R0015, applied at
-`9fbb1e36bcc85f866893e902cbe206ba468a65b0`) landed after this snapshot and
-added one production module: the live tree contains 2,928 production modules,
-all classified and documented, with 712 import-only forwarding modules over
-2,364 canonical targets. Regenerate the baseline for fresh live figures.
-
-Source, import, tier, and declaration figures come from the generated baseline.
-The placeholder and layout invariants are enforced by
-[`tools/architecture/check_layout.py`](tools/architecture/check_layout.py);
-the accepted checkpoint evidence is recorded in
-[`C0007-gates.md`](docs/architecture/phases/2026-08-repository-reorganization-completion/checkpoints/C0007-gates.md).
+It covers sampling, matrix concentration, low-rank approximation,
+least-squares sketching, and randomized preconditioning. Historical
+`NumStability.Algorithms.RandNLA` imports remain available as compatibility
+paths.
 
 ## Building
 
 Install Git and [elan](https://github.com/leanprover/elan), then clone the
-repository. The project pins Lean `4.29.0-rc3` in
-[`lean-toolchain`](lean-toolchain) and pins Mathlib to an exact revision in
-[`lakefile.toml`](lakefile.toml).
+active repository:
 
 ```bash
+git clone https://github.com/VSCL-x-VERITAS/lean-numerical-stability.git
+cd lean-numerical-stability
 lake exe cache get
 lake build NumStability NumStabilityTest
 lake test
 ```
 
+The project pins Lean `4.29.0-rc3` in [`lean-toolchain`](lean-toolchain) and
+Mathlib revision `e8ea1afc32790ce1d4e1a4e45cc412ba9388716b` in
+[`lakefile.toml`](lakefile.toml).
+
 To build one module, pass its Lean module name to Lake, for example:
 
 ```bash
 lake build NumStability.FloatingPoint.Model
+lake build NumStability.HDP.Scalar.SubGaussian
+lake build NumStability.Source.LeVeque
 ```
 
 ## Key entry points
@@ -186,30 +231,35 @@ Choose the narrowest import that supplies the declarations you need.
 |---|---|
 | `NumStability.Core` | Small reusable foundation for the floating-point model and core error analysis |
 | `NumStability.FloatingPoint` | Reusable floating-point foundations and IEEE-facing utilities |
-| `NumStability.Analysis` | Broad analysis discovery surface; prefer a narrower family import when possible |
-| `NumStability.Algorithms` | Broad historical algorithm surface; prefer a canonical family import when possible |
-| `NumStability.Source` | Canonical umbrella for book- and paper-specific correspondence |
-| `NumStability.Source.Higham` | Higham chapter correspondence and cross-chapter bridges |
+| `NumStability.Analysis` | Broad historical analysis discovery surface; prefer a narrower family import |
+| `NumStability.Algorithms` | Broad historical algorithm discovery surface; prefer a canonical family import |
+| `NumStability.HDP` | High-dimensional-probability semantics, contracts, and signatures |
+| `NumStability.Source` | Complete canonical umbrella for book- and paper-specific correspondence |
+| `NumStability.Source.Higham` | Higham correspondence for Chapters 1–28 and cross-chapter bridges |
+| `NumStability.Source.LeVeque` | LeVeque Chapter 1 correspondence |
+| `NumStability.Source.Vershynin` | Vershynin Chapters 1, 2, and 5 source contracts |
+| `NumStability.Analysis.PartialDifferentialEquations.FiniteVolume.FluxDifference` | Narrow reusable finite-volume update and conservation results |
 | `NumStability.All` | Complete supported library surface |
 | `NumStability` | Historical compatibility entry point forwarding to `NumStability.All` |
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for layer boundaries and the full entry
-point map. Historical imports are documented in
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for API tiers and dependency rules.
+Historical imports and their canonical destinations are documented in
 [`docs/architecture/COMPATIBILITY.md`](docs/architecture/COMPATIBILITY.md).
 
 ## Use as a dependency
 
-Add the latest tagged release to your `lakefile.toml`:
+The inherited `v0.1.0` tag predates the current LeVeque and HDP work. Use the
+tag for the original release surface:
 
 ```toml
 [[require]]
 name = "numStability"
-git = "https://github.com/AlexGeorgantzas/lean-numerical-stability"
+git = "https://github.com/VSCL-x-VERITAS/lean-numerical-stability"
 rev = "v0.1.0"
 ```
 
-Use `rev = "main"` instead if you intentionally want the current development
-branch. A minimal reusable import looks like this:
+Use `rev = "main"` when you intentionally want the current development tree.
+A minimal reusable import is:
 
 ```lean
 import NumStability.FloatingPoint.Model
@@ -220,171 +270,95 @@ open NumStability
 #check FPModel.exactWithUnitRoundoff
 ```
 
-## Project structure
+## Repository layout
 
-The map below emphasizes canonical entry points and stable family boundaries
-rather than every theorem leaf. Paired `Family.lean` and `Family/` paths are
-usually an import umbrella and its implementation subtree. See
-[`ARCHITECTURE.md`](ARCHITECTURE.md) for the authoritative API tiers and
-dependency rules.
+The map emphasizes supported entry points and semantic boundaries rather than
+listing every theorem leaf.
 
 ```text
-NumStability.lean                    historical complete-tree entry point → NumStability.All
+NumStability.lean                         historical complete-tree entry point
 NumStability/
-├── Core.lean                       intentionally small reusable foundation
-├── All.lean                        reusable code, source correspondence, and case studies
-├── FloatingPoint.lean              complete reusable floating-point umbrella
-├── FloatingPoint/
-│   ├── Model.lean                  abstract FPModel and primitive rounding assumptions
-│   ├── OperationLaws.lean          laws for rounded operations
-│   ├── FusedMultiplyAdd/           FMA foundations and dot-product operation counts
-│   ├── IEEE.lean                   IEEE-facing operations umbrella
-│   └── IEEE/
-│       └── NaiveMaximum.lean       value-level maximum and NaN comparison API
-├── Analysis.lean                   broad analysis discovery aggregate, including legacy work
+├── Core.lean                            small reusable foundation
+├── All.lean                             complete supported tree
+├── FloatingPoint.lean                   floating-point umbrella
+├── FloatingPoint/                       model, operation laws, FMA, and IEEE utilities
+├── Analysis.lean                        broad historical analysis aggregate
 ├── Analysis/
-│   ├── Error/
-│   │   ├── Measures/               forward, backward, and relative error measures
-│   │   ├── MatrixProducts/         matrix-product error analysis
-│   │   └── RoundingProducts/       reusable rounding-product bounds
-│   ├── FloatingPointArithmetic/    formats, rounding, special values, and local error laws
-│   ├── Asymptotics/                reusable asymptotic bounds
-│   ├── FirstOrder/                 fixed-precision and asymptotic first-order analysis
-│   ├── Conditioning/               distance-to-singularity and inverse-perturbation theory
-│   ├── Perturbation/               perturbation theory, including least squares
-│   ├── LinearOperators/
-│   │   ├── Jordan/                 Jordan-form support
-│   │   ├── MatrixPowers/           power bounds and semiconvergence
-│   │   ├── NumericalRadius/        numerical-radius inequalities
-│   │   ├── Pseudospectra/          pseudospectral analysis
-│   │   └── Schur/                  real and complex Schur theory
-│   ├── VectorNorms/                duality, interpolation, and attainment
-│   ├── OperatorNorms/              operator-norm definitions and attainment
-│   ├── MatrixNorms/                comparisons, spectral extrema, and invariant norms
-│   ├── SingularValues/             singular-value and Weyl–Mirsky theory
-│   ├── Equidistribution/
-│   │   └── AddCircle.lean          Fourier/Haar orbit-equidistribution API
-│   ├── LeadingDigits/
-│   │   ├── Decimal.lean            decimal leading-digit predicate
-│   │   ├── DecimalPowers.lean      powers, logarithms, and decimal arcs
-│   │   ├── Empirical.lean          finite empirical digit histograms
-│   │   └── LogarithmicDistribution.lean  logarithmic leading-digit law
-│   ├── Probability/
-│   │   ├── Gaussian/               Gaussian probability analysis
-│   │   └── Haar/                   Haar probability and invariant measures
-│   ├── Summation/
-│   │   ├── Signs.lean              sign and absolute-sum identities
-│   │   └── ErrorBounds.lean        summation conditioning and error bounds
-│   ├── Statistics/                 sample-statistics analysis
-│   └── TestMatrices/               reusable structured and random matrix families
-├── Algorithms.lean                 broad historical algorithm aggregate
+│   ├── Error/, Conditioning/, Perturbation/
+│   ├── MatrixNorms/, SingularValues/, Probability/
+│   └── PartialDifferentialEquations/    reusable PDE and finite-volume foundations
+├── Algorithms.lean                      broad historical algorithm aggregate
 ├── Algorithms/
-│   ├── Arithmetic/DotProduct/      sequential, no-guard, and tree dot products
-│   ├── Summation/
-│   │   ├── Recursive/              sequential recursive summation
-│   │   ├── Pairwise/               pairwise summation
-│   │   ├── Compensated/            compensated summation
-│   │   ├── Insertion/              insertion schedules and error layers
-│   │   └── Tree/                   tree-structured summation
-│   ├── LinearSystems/              canonical semantic hierarchy for linear solvers
-│   │   ├── Cholesky/               factorization, solves, and error analysis
-│   │   ├── CramersRule/            reusable Cramer's-rule core
-│   │   ├── GaussJordan/            Gauss–Jordan analysis
-│   │   ├── Iterative/              stationary iterations and semiconvergence
-│   │   ├── IterativeRefinement/    iterative-refinement methods
-│   │   ├── LeastSquares/           QR, normal equations, and refinement
-│   │   ├── LU/                     block LU, Doolittle, and related families
-│   │   ├── QR/                     Givens, Gram–Schmidt, Householder, and solves
-│   │   ├── SymmetricIndefinite/    Aasen, block LDLᵀ, pivoting, and error analysis
-│   │   ├── Triangular/             forward/back substitution and error bounds
-│   │   └── Underdetermined/        minimum-norm and seminormal methods
-│   ├── MatrixEquations/Sylvester/  equations, solvers, perturbation, and conditioning
-│   ├── MatrixInversion/
-│   │   ├── LUFactors/              inversion from LU factors
-│   │   ├── Residuals/              residual-based analysis
-│   │   └── Triangular/             triangular inversion
-│   ├── MatrixPowers/               computed iteration and Jordan-based methods
-│   ├── NormEstimation/
-│   │   ├── OneNorm/                one-norm estimators
-│   │   ├── PNorm/                  p-norm estimators
-│   │   └── TwoNorm/                two-norm estimators
-│   ├── PolynomialEvaluation/       scalar, derivative, and matrix-polynomial bounds
-│   ├── RandomizedLinearAlgebra/
-│   │   ├── Sampling/               randomized sampling primitives
-│   │   ├── Concentration/          concentration inequalities
-│   │   ├── LowRankApproximation/   randomized low-rank methods
-│   │   ├── LeastSquaresSketching/  sketched least-squares methods
-│   │   └── Preconditioning/        randomized preconditioners
-│   └── FastMatMul/                 reusable recurrences plus unsupported historical internals
-├── Source.lean                      canonical source-correspondence entry point
+│   ├── Arithmetic/, Summation/, PolynomialEvaluation/
+│   ├── LinearSystems/, MatrixEquations/, MatrixPowers/
+│   └── RandomizedLinearAlgebra/
+├── HDP.lean                              high-dimensional-probability entry point
+├── HDP/                                  scalar probability, concentration, and old contract paths
+├── Source.lean                           canonical source-correspondence entry point
 ├── Source/
-│   ├── Higham.lean                 Higham source-correspondence umbrella
-│   ├── Higham/
-│   │   ├── Chapter01.lean … Chapter28.lean
-│   │   │                              chapter-level import umbrellas
-│   │   ├── Chapter01/ … Chapter28/ numbered results, algorithms, problems, and corrections
-│   │   ├── CrossChapter.lean       cross-chapter umbrella
-│   │   └── CrossChapter/           explicit bridges between chapters
-│   └── DrineasMahoney/
-│       └── RandNLA2016/             algorithm- and equation-indexed correspondence
-│           ├── Algorithm01/ … Algorithm03/
-│           └── Equation02/, Equation04/ … Equation09/
-├── Higham.lean                      historical wrapper → NumStability.Source.Higham
-├── Higham/                          historical Higham compatibility paths
-└── Upstream/Lindemann/              attributed Mathlib adaptation and backports
+│   ├── Higham/                           Chapters 1–28 and cross-chapter correspondence
+│   ├── LeVeque/                          finite-volume methods, Chapter 1
+│   ├── Vershynin/                        high-dimensional probability, Chapters 1, 2, and 5
+│   └── DrineasMahoney/RandNLA2016/       randomized linear algebra case study
+├── Higham.lean and Higham/               historical Higham compatibility paths
+└── Upstream/Lindemann/                   attributed Mathlib adaptation and backports
 
-NumStabilityTest.lean                complete test-library entry point
+NumStabilityTest.lean                     complete test-library entry point
 NumStabilityTest/
-├── Import/                          entry-point and canonical-import smoke tests
-├── Compatibility/                   forwarding-path regression tests
-├── Reorganization/                  migration and declaration-placement regressions
-└── Worker/                          focused proof-audit and integration suites
+├── Import/
+│   ├── Canonical/                        canonical and entry-point smoke tests
+│   └── Compatibility/                    forwarding-path regression tests
+├── Reorganization/                       migration and declaration-placement tests
+└── Worker/                               focused proof-audit and integration suites
 
-docs/
-├── architecture/
-│   ├── COMPATIBILITY.md             forwarding-path contract
-│   └── baselines/                   generated graph and inventory baselines
-├── source_coverage/                  per-chapter ledgers and PDF-first audits
-├── chapter12/, chapter14/
-├── chapter20/ … chapter28/           detailed proof ledgers for selected chapters
-└── benchmarking/                     benchmark methodology and reports
-
-tools/
-├── architecture/                     layout, provenance, compatibility, and graph checks
-└── benchmark/                        reproducible build-timing runner
-
-examples/LibraryLookup.lean           representative executable #check lookup
-experiments/                          C/Python reproductions of selected source examples
-├── chapter01/
-├── chapter02/
-└── chapter04/
-
-ARCHITECTURE.md                       API-tier and dependency policy
-RENAME_LEDGER.md                      archived package/repository/library identity record
-                                      (module forwarding: docs/architecture/COMPATIBILITY.md)
-lakefile.toml                         Lake package and build configuration
-lean-toolchain                        pinned Lean toolchain
+gates/                                    machine-readable formalization gates and evidence
+ledgers/                                  source/workflow issues, limitations, and inconsistencies
+docs/                                     architecture, source coverage, audits, and benchmarks
+tools/                                    architecture checks and benchmark tooling
+examples/                                 representative Lean lookup examples
+experiments/                              C/Python reproductions of selected source examples
 ```
 
-## Documentation and status
+## Verification and contribution
 
-- [`docs/README.md`](docs/README.md) maps current policy, source audits, and
-  historical evidence.
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) defines layers, dependency direction, and
-  supported entry points.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) explains module placement and required
-  checks.
+For a source-only architecture check, run:
+
+```bash
+python tools/architecture/check_layout.py
+python tools/architecture/check_tiers.py
+python tools/architecture/check_placeholders.py
+python tools/architecture/check_compatibility.py
+python tools/architecture/check_provenance.py
+python tools/architecture/generate_baseline.py --skip-declarations --strict-source --output-dir benchmark-results/architecture --name source-check
+```
+
+CI additionally runs the phase and checker self-tests, builds both Lean
+libraries, runs the literal `lake test` driver, and checks the reviewed warning
+and lint baselines. [`CONTRIBUTING.md`](CONTRIBUTING.md) explains placement,
+compatibility, testing, and licensing requirements. Architecture changes follow
+[`docs/architecture/PROCESS.md`](docs/architecture/PROCESS.md).
+
+## Documentation
+
+- [`docs/README.md`](docs/README.md) maps current policy and retained evidence.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) defines API tiers, dependency direction,
+  and supported entry points.
+- [`docs/architecture/NAMING.md`](docs/architecture/NAMING.md) defines canonical
+  module names and placement.
+- [`docs/architecture/COMPATIBILITY.md`](docs/architecture/COMPATIBILITY.md)
+  records every supported historical import path.
+- [`docs/source_coverage/`](docs/source_coverage/) contains Higham's concise
+  chapter ledgers and PDF-first audits.
 - [`CHANGELOG.md`](CHANGELOG.md) records release-facing changes.
-
-The selected source-audit scope is terminal, but repository organization work
-is still in progress. Checkpoint C0008 is accepted; the
-[active phase registry](docs/architecture/phases/2026-08-repository-reorganization-completion/README.md)
-is the authoritative source for remaining migration work.
 
 ## References
 
 - N. J. Higham, *Accuracy and Stability of Numerical Algorithms*, 2nd ed.,
   SIAM, 2002.
+- R. J. LeVeque, *Finite Volume Methods for Hyperbolic Problems*, Cambridge
+  University Press, 2002.
+- R. Vershynin, *High-Dimensional Probability: An Introduction with
+  Applications in Data Science*, Cambridge University Press.
 - P. Drineas and M. W. Mahoney,
   [“RandNLA: Randomized Numerical Linear Algebra”](https://dl.acm.org/doi/10.1145/2842602),
   *Communications of the ACM* 59(6), 80–90, 2016.
