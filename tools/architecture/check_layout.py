@@ -38,7 +38,7 @@ FULL_LOCATOR_RE = re.compile(
     r"^(?:Theorem|Lemma|Equation|Corollary|Problem|Algorithm|Example|Table)(\d+)(.*)$"
 )
 PLACEHOLDER_RE = re.compile(
-    r"\b(?:sorry|admit)\b|^\s*(?:axiom|constant)\b",
+    r"\b(?:sorry|admit)\b|^\s*(?:axiom|constant)\b(?!\s*[:=])",
     re.MULTILINE,
 )
 PROCESS_WORDS = (

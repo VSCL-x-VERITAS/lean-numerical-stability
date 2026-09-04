@@ -1,6 +1,7 @@
 import NumStability.Algorithms
 import NumStability.Analysis
 import NumStability.FloatingPoint
+import NumStability.HDP
 import NumStability.Source
 
 /-!

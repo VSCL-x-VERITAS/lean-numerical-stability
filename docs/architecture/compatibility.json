@@ -2,8 +2,8 @@
  "ambiguous_match": "fail",
  "counts": {
   "aggregate_target_set": 383,
-  "historical_modules": 712,
-  "single_target": 329
+  "historical_modules": 782,
+  "single_target": 399
  },
  "generated_from": "docs/architecture/COMPATIBILITY.md",
  "paths": [
@@ -13168,6 +13168,26 @@
    "wrapper_shape": "aggregate_target_set"
   },
   {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.Canonical.NumStability_Analysis_LinearOperators_MatrixPowers_Spijker_FiniteDimensionalPowerBounds_Kreiss",
+   "canonical_targets": [
+    "NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.FiniteDimensionalPowerBounds.Kreiss"
+   ],
+   "historical_module": "NumStability.Analysis.LinearOperators.MatrixPowers.Spijker.KreissBounds",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Analysis_LinearOperators_MatrixPowers_Spijker_KreissBounds",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "primary-human",
+    "status": "accepted"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
    "canonical_only_smoke_test": "NumStabilityTest.Reorganization.W06.Canonical.C038",
    "canonical_targets": [
     "NumStability.Analysis.CStarMatrices.Basic.RealMatrixBridge",
@@ -14696,6 +14716,1386 @@
     "status": "accepted"
    },
    "wrapper_shape": "aggregate_target_set"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Corollary05.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hcor_h1_d2_d5",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Exercise02.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hex_h1_d2_d2",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Lemma01.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hlem_h1_d2_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Proposition04.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hprop_h1_d2_d4",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section03.Theorem01.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hthm_h1_d3_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.CauchySchwarz.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hthm_hcauchy_hschwarz",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.JensenInequality.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_01_hthm_hjensen",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Equation12.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_heq_h2_d12",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section02.Exercise10B.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hex_h2_d2_d10b",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section03.Exercise05.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hex_h2_d3_d5",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Exercise01.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hex_h2_d5_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Exercise05A.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hex_h2_d5_d5a",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Exercise09.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hex_h2_d6_d9",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Example08B.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hexample_h2_d5_d8b",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Example08C.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hexample_h2_d5_d8c",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section07.Example13.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hexample_h2_d7_d13",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Lemma08.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hlem_h2_d6_d8",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.ExponentialMarkov.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hlem_hexponential_hmarkov",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.IndependentSumMGF.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hlem_hmgf_hindependent_hsum",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Proposition02.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hprop_h2_d5_d2",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Proposition01.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hprop_h2_d6_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Remark03.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hrem_h2_d5_d3",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section07.Remark09.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hrem_h2_d7_d9",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section02.Theorem06.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hthm_h2_d2_d6",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Theorem02.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hthm_h2_d6_d2",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Theorem03.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hthm_h2_d6_d3",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.PsiTwoNormCharacterizations.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_02_hthm_hpsi2_hnorm_hcharacterizations",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter05.Section01.Exercise13.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_05_hex_h5_d1_d13",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter05.Section01.Exercise14.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_05_hex_h5_d1_d14",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter05.Section02.Exercise11.Signature"
+   ],
+   "historical_module": "NumStability.HDP.ContractSignatures.C_05_hex_h5_d2_d11",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Corollary05.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hcor_h1_d2_d5",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.BernoulliAndBinomial.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hbernoulli_hbinomial",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.CDFAndTail.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hcdf_htail",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.ConvergenceInDistribution.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hconvergence_hin_hdistribution",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.ExpectationAndVariance.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hexpectation_hvariance",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.L2Geometry.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hl2_hgeometry",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.StandardNormal.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hstandard_hnormal",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.StandardDeviationAndCovariance.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hdef_hstdev_hcovariance",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Exercise02.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hex_h1_d2_d2",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Lemma01.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hlem_h1_d2_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section02.Proposition04.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hprop_h1_d2_d4",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.Section03.Theorem01.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hthm_h1_d3_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.CauchySchwarz.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hthm_hcauchy_hschwarz",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter01.JensenInequality.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_01_hthm_hjensen",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section02.Definition01.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hdef_h2_d2_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Definition06.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hdef_h2_d5_d6",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.ErdosRenyiModel.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hdef_herdos_hrenyi",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Equation12.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_heq_h2_d12",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Equation18.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_heq_h2_d18",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section02.Exercise10B.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hex_h2_d2_d10b",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section03.Exercise05.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hex_h2_d3_d5",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Exercise01.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hex_h2_d5_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Example08B.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hexample_h2_d5_d8b",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Example08C.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hexample_h2_d5_d8c",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section07.Example12.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hexample_h2_d7_d12",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section07.Example13.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hexample_h2_d7_d13",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Lemma08.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hlem_h2_d6_d8",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.ExponentialMarkov.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hlem_hexponential_hmarkov",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.IndependentSumMGF.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hlem_hmgf_hindependent_hsum",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Proposition02.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hprop_h2_d5_d2",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Proposition01.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hprop_h2_d6_d1",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section05.Remark03.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hrem_h2_d5_d3",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section02.Theorem06.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hthm_h2_d2_d6",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Theorem02.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hthm_h2_d6_d2",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.Section06.Theorem03.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hthm_h2_d6_d3",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter02.PsiTwoNormCharacterizations.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_02_hthm_hpsi2_hnorm_hcharacterizations",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter05.Section01.Exercise13.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_05_hex_h5_d1_d13",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter05.Section01.Exercise14.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_05_hex_h5_d1_d14",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": null,
+   "canonical_targets": [
+    "NumStability.Source.Vershynin.Chapter05.Section02.Exercise11.Contract"
+   ],
+   "historical_module": "NumStability.HDP.Contracts.C_05_hex_h5_d2_d11",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "97d24e9298a0fb6aa929ca4ef85cc09fc96d5980",
+    "date": "2026-09-01T14:51:52-04:00"
+   },
+   "old_only_smoke_test": null,
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
   },
   {
    "canonical_only_smoke_test": null,

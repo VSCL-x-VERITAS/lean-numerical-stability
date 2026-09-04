@@ -54,6 +54,8 @@ import NumStability.Source.Higham.Chapter08.Problem08.SingleEntrySingularity.Res
 import NumStability.Source.Higham.Chapter08.Problem09.KahanSingularValues.Results.Theorems
 import NumStability.Source.Higham.Chapter08.Section03.TriangularSystems.ComparisonConditioningResults.Theorems
 import NumStability.Source.Higham.Chapter08.Section03.TriangularSystems.InverseNormResults.Theorems
+import NumStability.Source.LeVeque
+import NumStability.Source.Vershynin
 
 /-!
 # NumStability source correspondence

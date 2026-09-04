@@ -575,6 +575,17 @@ import NumStabilityTest.Worker.LsqCh20
 import NumStabilityTest.Worker.QrCh19
 import NumStabilityTest.Reorganization.R09.All
 import NumStabilityTest.Reorganization.R10.All
+import NumStabilityTest.Import.Canonical.Analysis.PartialDifferentialEquations
+import NumStabilityTest.Import.Canonical.Source.LeVeque
+import NumStabilityTest.Import.Canonical.Source.Vershynin.ContractSignatures
+import NumStabilityTest.Import.Canonical.Source.Vershynin.Contracts
+import NumStabilityTest.Import.Compatibility.Source.Vershynin.ContractSignatures
+import NumStabilityTest.Import.Compatibility.Source.Vershynin.Contracts
+import NumStabilityTest.Reorganization.CheckpointSync.Aggregates
+import NumStabilityTest.Reorganization.CheckpointSync.Canonical.NumStability_Analysis_LinearOperators_MatrixPowers_Spijker_FiniteDimensionalPowerBounds_Kreiss
+import NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Analysis_LinearOperators_MatrixPowers_Spijker_KreissBounds
+import NumStabilityTest.Reorganization.W06.MatrixPowersCanonical
+import NumStabilityTest.Reorganization.W06.MatrixPowersCompatibility
 
 /-!
 # NumStability test suite

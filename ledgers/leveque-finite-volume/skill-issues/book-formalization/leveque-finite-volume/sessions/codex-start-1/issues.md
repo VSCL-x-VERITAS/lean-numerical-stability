@@ -1,0 +1,8 @@
+# Issues — session codex-start-1
+
+Record skill, harness, prompt, gate, tool, or agent-process issues encountered in this scope. Use stable IDs; never delete history—mark superseded or closed entries.
+
+| ID | Observed at | Component | Symptom | Evidence | Impact | Status | Owner/next action |
+|---|---|---|---|---|---|---|---|
+| BF-LEV-S01-ISSUE-001 | 2026-08-31T22:59:29Z | provider lifecycle guard | Guard check cannot resolve the Codex-installed skill path to the supplied canonical skill root. | `provider_guards.py check` exited 1: `C:\Users\qed_s\.codex\skills\book-formalization` does not resolve to the collaboration skill directory. | The independent UserPromptSubmit/Stop guard is unavailable; the persisted gate and explicit continuation checks remain authoritative. | open | Host owner: install/link the released skill outside this run; coordinator: keep checking the gate explicitly and do not alter host settings. |
+| BF-LEV-S01-ISSUE-002 | 2026-08-31T22:59:29Z | project lifecycle recorder | Required `started` event was rejected before mutation because release component tree hashes differ on this Windows checkout. | `project_lifecycle.py record --event started ...` exited 1 with all three component tree hashes stale; the onboarding baseline records the same CRLF portability defect. | Chapter work cannot acquire a valid lifecycle event/stage id in this checkout without changing released workflow metadata, which is outside this formalization run. | open | Workflow maintainer: repair portable release hashing and record the start/stage event; coordinator: preserve the failed command as evidence and report the missing stage id. |
