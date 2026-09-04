@@ -2,8 +2,8 @@
  "ambiguous_match": "fail",
  "counts": {
   "aggregate_target_set": 383,
-  "historical_modules": 788,
-  "single_target": 405
+  "historical_modules": 797,
+  "single_target": 414
  },
  "generated_from": "docs/architecture/COMPATIBILITY.md",
  "paths": [
@@ -16498,6 +16498,186 @@
    "review": {
     "reviewer": "primary-human",
     "status": "accepted"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem03_AdjacentPrecisionValues_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.IeeeSingleDoubleGaps",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem03_AdjacentPrecisionValues_IeeeSingleDoubleGaps",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem10_DivisionRoundTrip_ExhaustiveBinary64_Results",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.ExhaustiveBinary64.Results"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.IeeeDoubleAudit",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem10_DivisionRoundTrip_IeeeDoubleAudit",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem12_ReciprocalProduct_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.IeeeDoubleRounding",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem12_ReciprocalProduct_IeeeDoubleRounding",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem13_ReciprocalProductThreshold_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.IeeeDoubleCertificate",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem13_ReciprocalProductThreshold_IeeeDoubleCertificate",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem14_UnitRoundoffProbe_IeeeExamples_Results",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeExamples.Results"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeEvaluation",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem14_UnitRoundoffProbe_IeeeEvaluation",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem25_NonzeroEvaluation_IeeeFiniteSystems_Results",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteSystems.Results"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteInputs",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem25_NonzeroEvaluation_IeeeFiniteInputs",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Problem28_IterativeDivisionTermination_UnderflowAwareConvergence_Results",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.UnderflowAwareConvergence.Results"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.ConvergenceTest",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Problem28_IterativeDivisionTermination_ConvergenceTest",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Section10_ArctangentRange_Counterexample_Results",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.Counterexample.Results"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.CorrectRoundingCounterexample",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Section10_ArctangentRange_CorrectRoundingCounterexample",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "wrapper_shape": "single_target"
+  },
+  {
+   "canonical_only_smoke_test": "NumStabilityTest.Reorganization.R03.Canonical.NumStability_Source_Higham_Chapter02_Section10_Tablemaker_FiniteSeparation_Results_Theorems",
+   "canonical_targets": [
+    "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.FiniteSeparation.Results.Theorems"
+   ],
+   "historical_module": "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.MidpointStability",
+   "import_only": true,
+   "imports_declared": 1,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00"
+   },
+   "old_only_smoke_test": "NumStabilityTest.Reorganization.CheckpointSync.OldOnly.NumStability_Source_Higham_Chapter02_Section10_Tablemaker_HermiteLindemann_MidpointStability",
+   "removal_policy": "no_removal_in_this_migration",
+   "review": {
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
    },
    "wrapper_shape": "single_target"
   },

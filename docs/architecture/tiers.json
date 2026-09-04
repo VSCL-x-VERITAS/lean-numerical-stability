@@ -1,18 +1,18 @@
 {
  "counts": {
   "by_role": {
-   "aggregate": 428,
-   "compatibility": 788,
+   "aggregate": 443,
+   "compatibility": 797,
    "internal": 5,
    "reusable": 593,
    "source": 1355,
    "upstream": 5
   },
-  "exact_rules": 2290,
+  "exact_rules": 2314,
   "exact_rules_with_absent_file": 0,
   "prefix_rules": 27,
   "prefix_rules_deciding_nothing": 1,
-  "production_modules": 3174
+  "production_modules": 3198
  },
  "exact": {
   "NumStability": "aggregate",
@@ -1478,24 +1478,48 @@
   "NumStability.Source.Higham.Chapter01.Section14.CancellationOfRoundingErrors.Algorithm02RoundedCore": "source",
   "NumStability.Source.Higham.Chapter01.Section17": "aggregate",
   "NumStability.Source.Higham.Chapter02": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.IeeeSingleDoubleGaps": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.Results.Theorems": "source",
   "NumStability.Source.Higham.Chapter02.Problem09.DoubleRounding.Counterexample": "aggregate",
   "NumStability.Source.Higham.Chapter02.Problem09.DoubleRounding.Counterexample.Inputs": "source",
   "NumStability.Source.Higham.Chapter02.Problem09.DoubleRounding.Counterexample.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.All": "aggregate",
   "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.ExhaustiveBinary64.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.IeeeDoubleAudit": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem11": "source",
+  "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.IeeeDoubleRounding": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.Results.Theorems": "source",
+  "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.IeeeDoubleCertificate": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.Results.Theorems": "source",
+  "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeEvaluation": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeExamples.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.StandardModelCounterexample": "aggregate",
   "NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.StandardModelCounterexample.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteInputs": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteSystems.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.ConvergenceTest": "compatibility",
   "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.UnderflowAwareConvergence.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.Counterexample": "aggregate",
   "NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.Counterexample.Results": "source",
+  "NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.Counterexample": "aggregate",
   "NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.Counterexample.Results": "source",
   "NumStability.Source.Higham.Chapter02.Section07": "aggregate",
   "NumStability.Source.Higham.Chapter02.Section07.PowerLeadingDigits": "source",
+  "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.CorrectRoundingCounterexample": "compatibility",
   "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.Counterexample.Results": "source",
   "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.FiniteSeparation.Results.Theorems": "source",
+  "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.All": "aggregate",
+  "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.MidpointStability": "compatibility",
   "NumStability.Source.Higham.Chapter02.Section11.AccuracyTests.CodySineResults.Theorems": "source",
   "NumStability.Source.Higham.Chapter03": "aggregate",
   "NumStability.Source.Higham.Chapter03.Problem11.KahanAbsoluteValue.IeeeDoubleTrace.Results": "source",
@@ -31401,6 +31425,50 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.IeeeSingleDoubleGaps",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem03.AdjacentPrecisionValues.IeeeSingleDoubleGaps"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31486,6 +31554,28 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.All"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31504,6 +31594,28 @@
    },
    "role": "source",
    "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.ExhaustiveBinary64.Results"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.IeeeDoubleAudit",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem10.DivisionRoundTrip.IeeeDoubleAudit"
   },
   {
    "exception": null,
@@ -31528,6 +31640,50 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.IeeeDoubleRounding",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.IeeeDoubleRounding"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31546,6 +31702,50 @@
    },
    "role": "source",
    "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem12.ReciprocalProduct.Results.Theorems"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.IeeeDoubleCertificate",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem13.ReciprocalProductThreshold.IeeeDoubleCertificate"
   },
   {
    "exception": null,
@@ -31570,6 +31770,50 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeEvaluation",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeEvaluation"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31588,6 +31832,50 @@
    },
    "role": "source",
    "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem14.UnitRoundoffProbe.IeeeExamples.Results"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.StandardModelCounterexample",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem21.HypotenuseNormalization.StandardModelCounterexample"
   },
   {
    "exception": null,
@@ -31612,6 +31900,50 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteInputs",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteInputs"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31630,6 +31962,50 @@
    },
    "role": "source",
    "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem25.NonzeroEvaluation.IeeeFiniteSystems.Results"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.ConvergenceTest",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Problem28.IterativeDivisionTermination.ConvergenceTest"
   },
   {
    "exception": null,
@@ -31654,6 +32030,50 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.Counterexample",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.Counterexample"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31672,6 +32092,50 @@
    },
    "role": "source",
    "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section06.Discriminant.FusedMultiplyAdd.Counterexample.Results"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.Counterexample",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section06.Discriminant.StandardModel.Counterexample"
   },
   {
    "exception": null,
@@ -31739,6 +32203,50 @@
   },
   {
    "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.CorrectRoundingCounterexample",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section10.ArctangentRange.CorrectRoundingCounterexample"
+  },
+  {
+   "exception": null,
    "extends": "prefix:NumStability.Source",
    "file_present": true,
    "introduction": {
@@ -31778,6 +32286,50 @@
    },
    "role": "source",
    "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section10.Tablemaker.FiniteSeparation.Results.Theorems"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.All",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified aggregate although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Import-only semantic parent that re-exports its children.",
+   "review": {
+    "evidence": "NumStabilityTest.Import.Canonical.HighamChapter02Residual",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "aggregate",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.All"
+  },
+  {
+   "exception": null,
+   "file_present": true,
+   "introduction": {
+    "commit": "329a19732bc48339b242ae9f3f40e121c430b3de",
+    "date": "2026-09-03T18:29:37-04:00",
+    "determined_by": "checkpoint_clean_transplant"
+   },
+   "match_kind": "exact",
+   "module": "NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.MidpointStability",
+   "override_of": "prefix:NumStability.Source",
+   "override_rationale": "This module is classified compatibility although the enclosing prefix rule NumStability.Source defaults to source.",
+   "rationale": "Historical checkpoint path retained as an import-only forwarder under the removal policy.",
+   "review": {
+    "evidence": "NumStabilityTest.Reorganization.CheckpointSync.C3",
+    "review_date": "2026-09-03T18:29:37-04:00",
+    "reviewer": "Codex integration audit",
+    "status": "carried-forward"
+   },
+   "role": "compatibility",
+   "rule_id": "exact:NumStability.Source.Higham.Chapter02.Section10.Tablemaker.HermiteLindemann.MidpointStability"
   },
   {
    "exception": null,
