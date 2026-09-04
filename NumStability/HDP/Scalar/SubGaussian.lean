@@ -2610,7 +2610,7 @@ theorem centeredSubGaussian
             (measure_mono hsubset)
         _ ≤ 2 * Real.exp (-(t / 2) ^ 2 / T ^ 2) := hsource
         _ ≤ 2 * Real.exp (-t ^ 2 / Kc ^ 2) := hsource'
-    
+
   rcases subGaussianFromTail hCenter .squarePoint hKc hTailCenter with
     ⟨K', hK', hK'c, hPoint⟩
   have hGaugeK' :
