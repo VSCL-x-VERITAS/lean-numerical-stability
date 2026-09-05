@@ -34,11 +34,11 @@ namespace NumStability.HDP.Concentration.MetricMeasure
   A median is recorded at the law level.  This is the two-sided definition
   used in Chapter 5: both closed half-lines have mass at least one half.
 -/
+/-- The two-sided median predicate for a real measure. -/
 def IsMedian (μ : Measure ℝ) (m : ℝ) : Prop :=
   (1 / 2 : ℝ≥0∞) ≤ μ (Iic m) ∧ (1 / 2 : ℝ≥0∞) ≤ μ (Ici m)
 
-/- The pinned probability substrate used when a random variable is transported
-  to its real law. -/
+/-- The pushforward law of `X` under `μ` used by the median interface. -/
 def medianLaw (μ : Measure ℝ) (X : ℝ → ℝ) : Measure ℝ :=
   Measure.map X μ
 
@@ -52,9 +52,11 @@ theorem medianLaw_isProbabilityMeasure
   The CDF upper-level set and its left boundary are the local quantile
   construction.  The CDF itself is the pinned Mathlib Stieltjes substrate.
 -/
+/-- Thresholds where the CDF of `μ` is at least one half. -/
 def medianBoundarySet (μ : Measure ℝ) : Set ℝ :=
   {x | (1 / 2 : ℝ) ≤ ProbabilityTheory.cdf μ x}
 
+/-- The infimum of the CDF median-boundary set. -/
 noncomputable def medianBoundary (μ : Measure ℝ) : ℝ :=
   sInf (medianBoundarySet μ)
 
@@ -64,9 +66,12 @@ noncomputable def medianBoundary (μ : Measure ℝ) : ℝ :=
   substrates part of the checked declaration rather than merely hidden in a
   downstream existence proof.
 -/
+/-- A median certificate retaining both the transported law and CDF boundary. -/
 structure MedianCertificate (μ : Measure ℝ) (X : ℝ → ℝ) where
+  /-- The certified median. -/
   value : ℝ
   is_median : IsMedian (medianLaw μ X) value
+  /-- The CDF boundary recorded by the certificate. -/
   quantile_boundary : ℝ
   quantile_boundary_eq :
     quantile_boundary = medianBoundary (medianLaw μ X)
@@ -77,29 +82,36 @@ structure MedianCertificate (μ : Measure ℝ) (X : ℝ → ℝ) where
   function.  The bundled certificate keeps both source-facing operations in
   one declaration.
 -/
+/-- The nonnegative Lipschitz constants admitted by a real function. -/
 def lipConstants (f : ℝ → ℝ) : Set NNReal :=
   {K | LipschitzWith K f}
 
+/-- The infimum of the admitted Lipschitz constants, embedded in `ENNReal`. -/
 noncomputable def lipNorm (f : ℝ → ℝ) : ℝ≥0∞ :=
   ENNReal.ofNNReal (sInf (lipConstants f))
 
+/-- A bundled Lipschitz bound, norm, restrictions, and distance-to-set map. -/
 structure LipschitzCertificate (f : ℝ → ℝ) where
+  /-- A certified Lipschitz constant. -/
   constant : NNReal
   bound : LipschitzWith constant f
   restriction : ∀ s : Set ℝ, LipschitzWith constant (s.restrict f)
   restriction_rule :
     ∀ s, LipschitzWith.restrict bound s = restriction s
+  /-- The optimal Lipschitz constant represented in `ENNReal`. -/
   norm : ℝ≥0∞
   norm_eq : norm = lipNorm f
+  /-- The distance from a point to a set. -/
   distance_to_set : ℝ → Set ℝ → ℝ
   distance_to_set_eq :
     ∀ x s, distance_to_set x s = Metric.infDist x s
 
-/- The public type alias carries the pinned restriction operation in its
-  definition body, so the executable dependency audit sees the exact
-  Mathlib bridge as well as the predicate in the certificate fields. -/
+/--
+The public real-valued Lipschitz certificate alias. Its definition retains the
+restriction bridge so dependency audits see the exact Mathlib operation.
+-/
 noncomputable def LipschitzInterface (f : ℝ → ℝ) : Type :=
-  let restriction_bridge :=
+  let _restriction_bridge :=
     fun (K : NNReal) (h : LipschitzWith K f) (s : Set ℝ) =>
       LipschitzWith.restrict h s
   LipschitzCertificate f
@@ -110,6 +122,7 @@ theorem lipNorm_le {f : ℝ → ℝ} {K : NNReal}
   rw [lipNorm]
   exact ENNReal.coe_le_coe.mpr (csInf_le (OrderBot.bddBelow _) h)
 
+/-- Build a `LipschitzInterface` from a `LipschitzWith` proof. -/
 def lipschitz_interface_mk
     {f : ℝ → ℝ} {K : NNReal} (h : LipschitzWith K f) :
     LipschitzInterface f := by
@@ -156,8 +169,10 @@ theorem distance_to_set_le_add (s : Set ℝ) (x y : ℝ) :
   separating uniform continuity from Lipschitz continuity and differentiability
   on the printed compact intervals.
 -/
+/-- The square-root function used in the corrected unit-interval example. -/
 def sqrtUnitIntervalExample (x : ℝ) : ℝ := Real.sqrt x
 
+/-- The absolute-value function used in the unit-interval example. -/
 def absUnitIntervalExample (x : ℝ) : ℝ := |x|
 
 theorem exercise512Corrected :
@@ -248,26 +263,32 @@ theorem exercise512Corrected :
   `LipschitzInterface` above, but with the source's domain and codomain
   left general.
 -/
+/-- The admissible Lipschitz constants of a map between pseudometric spaces. -/
 def metricLipConstants
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     (f : α → β) : Set NNReal :=
   {K | LipschitzWith K f}
 
+/-- The infimum of the admissible metric-space Lipschitz constants. -/
 noncomputable def metricLipNorm
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     (f : α → β) : ℝ≥0∞ :=
   ENNReal.ofNNReal (sInf (metricLipConstants f))
 
+/-- The nonexpansive, or `1`-Lipschitz, predicate used by the source. -/
 def IsContraction
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     (f : α → β) : Prop :=
   LipschitzWith 1 f
 
+/-- A bundled metric-space Lipschitz bound and its optimal-constant value. -/
 structure LipschitzMapData
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     (f : α → β) where
+  /-- A certified Lipschitz constant. -/
   constant : NNReal
   bound : LipschitzWith constant f
+  /-- The optimal Lipschitz constant represented in `ENNReal`. -/
   norm : ℝ≥0∞
   norm_eq : norm = metricLipNorm f
 
@@ -278,6 +299,7 @@ theorem metricLipNorm_le
   rw [metricLipNorm]
   exact ENNReal.coe_le_coe.mpr (csInf_le (OrderBot.bddBelow _) h)
 
+/-- Build `LipschitzMapData` from a `LipschitzWith` proof. -/
 def lipschitz_map_data_mk
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     {f : α → β} {K : NNReal} (h : LipschitzWith K f) :
@@ -397,23 +419,29 @@ theorem median_certificate_exists
   semantic producers.
 -/
 
+/-- The tail-bound scale obtained from a concentration scale `K`. -/
 def concentrationTailScale (K : ℝ) : ℝ := 16 * K
 
+/-- The ψ₂-gauge scale obtained from a concentration scale `K`. -/
 def concentrationPsiTwoScale (K : ℝ) : ℝ :=
   4096 * Real.exp 1 * K
 
+/-- The mean-centered scale obtained from a concentration scale `K`. -/
 def concentrationMeanScale (K : ℝ) : ℝ :=
   65536 * (Real.exp 1) ^ 2 * K
 
+/-- The median-centered scale obtained from a concentration scale `K`. -/
 def concentrationMedianScale (K : ℝ) : ℝ :=
   4 * K
 
+/-- The sub-Gaussian tail bound for `X` centered at its mean. -/
 def MeanConcentrationBound
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBound μ
     (fun ω => X ω - ∫ x, X x ∂μ) K
 
+/-- A two-sided Gaussian tail bound for `X` centered at a median. -/
 def MedianConcentrationBound
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (m K : ℝ) : Prop :=
@@ -421,12 +449,15 @@ def MedianConcentrationBound
     ∀ t : ℝ, 0 ≤ t →
       μ.real {ω | |X ω - m| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2)
 
+/-- Data connecting the equivalent concentration, centering, and ψ₂ bounds. -/
 structure ConcentrationInterfaceData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : Ω → ℝ) where
+  /-- The chosen presentation of the sub-Gaussian property. -/
   property_kind :
     NumStability.HDP.Scalar.SubGaussian.SubGaussianPropertyKind
+  /-- The scale of the chosen sub-Gaussian property. -/
   property_scale : ℝ
   property_scale_pos : 0 < property_scale
   property :
@@ -454,15 +485,19 @@ structure ConcentrationInterfaceData
         NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ
             (fun ω => X ω - ∫ x, X x ∂μ) ≤
           ENNReal.ofReal (C * property_scale)
+  /-- The scale used by the resulting tail bound. -/
   tail_scale : ℝ
   tail_scale_eq : tail_scale = concentrationTailScale property_scale
   tail_bound :
     NumStability.HDP.Scalar.SubGaussian.SubGaussianTailBound μ X tail_scale
+  /-- The scale used by the mean-centered bound. -/
   mean_scale : ℝ
   mean_scale_eq : mean_scale = concentrationMeanScale property_scale
   mean_bound : MeanConcentrationBound μ X mean_scale
+  /-- A certified median of the law of `X`. -/
   median : ℝ
   median_certificate : IsMedian (Measure.map X μ) median
+  /-- The scale used by the median-centered bound. -/
   median_scale : ℝ
   median_scale_eq : median_scale = concentrationMedianScale property_scale
   median_bound : MedianConcentrationBound μ X median median_scale
@@ -478,6 +513,7 @@ structure ConcentrationInterfaceData
           NumStability.HDP.Scalar.Preliminaries.expectation μ Y =
             ∫ t in Set.Ioi 0, μ.real {ω | t < Y ω})
 
+/-- The public concentration certificate associated with `μ` and `X`. -/
 noncomputable def concentrationInterface
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -865,7 +901,7 @@ theorem medianPsiTwoGaugeComparison
           ENNReal.ofReal (1 / C) *
             (ENNReal.ofReal C *
               NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Ym) :=
-        mul_le_mul_left' hReverseGauge _
+        mul_le_mul_right hReverseGauge _
       _ = NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Ym := by
         rw [← mul_assoc, ← ENNReal.ofReal_mul (by positivity : 0 ≤ (1 / C : ℝ))]
         have hCne : C ≠ 0 := ne_of_gt hCpos
@@ -881,21 +917,27 @@ theorem medianPsiTwoGaugeComparison
   every interior quantile.  The finite-dimensional statement then uses the
   pinned product-map theorem.
 -/
+/-- The standard normal probability law on `ℝ`. -/
 noncomputable def standardNormalLaw : Measure ℝ :=
   ProbabilityTheory.gaussianReal 0 1
 
+/-- The cumulative distribution function of the standard normal law. -/
 noncomputable def standardNormalCdf : ℝ → ℝ :=
   ProbabilityTheory.cdf standardNormalLaw
 
+/-- Lebesgue measure restricted to the unit interval. -/
 noncomputable def uniformUnitIntervalLaw : Measure ℝ :=
   volume.restrict (Icc 0 1)
 
+/-- The product of `n` standard normal laws. -/
 noncomputable def standardNormalProductLaw (n : ℕ) : Measure (Fin n → ℝ) :=
   Measure.pi (fun _ : Fin n => standardNormalLaw)
 
+/-- The product of `n` uniform unit-interval laws. -/
 noncomputable def uniformUnitCubeLaw (n : ℕ) : Measure (Fin n → ℝ) :=
   Measure.pi (fun _ : Fin n => uniformUnitIntervalLaw)
 
+/-- Apply the standard normal CDF coordinatewise. -/
 noncomputable def coordinatewiseStandardNormalCdf (n : ℕ) :
     (Fin n → ℝ) → (Fin n → ℝ) :=
   fun z i => standardNormalCdf (z i)
@@ -1128,8 +1170,9 @@ private lemma standardNormalCdf_map_uniform :
     · intro hz
       exact ⟨hz.2, hz.1, hz.2.trans ht1'⟩
   rw [hset, Real.volume_Icc]
-  simp [hx, ht0']
+  simp
 
+/-- An opaque dependency frontier for the CDF-product transport proof. -/
 opaque standardNormalCdfProductUniform_frontier : Bool :=
   let bot := Eq.ndrec (motive := fun _ : Prop => Bool) true
     (propext ⟨(fun _ => True.intro),
@@ -1172,6 +1215,7 @@ opaque standardNormalCdfProductUniform_frontier : Bool :=
   bot && top && extIic && gaussianApply && noAtoms && integrable &&
     pdfNonneg && pdfPos && integralPos && intervalPos && volumeIcc
 
+/-- Consume the opaque frontier while returning the supplied transport equality. -/
 opaque standardNormalCdfProductUniform_consume
     (n : ℕ) (_frontier : Bool)
     (proof : Measure.map (coordinatewiseStandardNormalCdf n)
@@ -1215,6 +1259,7 @@ theorem median_interval_of_tail_bounds
   atoms has every point between the atoms as a median, so continuity and
   injectivity of an underlying map do not by themselves give uniqueness.
 -/
+/-- The equal-weight probability law supported at `a` and `b`. -/
 def twoPointLaw (a b : ℝ) : Measure ℝ :=
   (1 / 2 : ℝ≥0∞) • Measure.dirac a + (1 / 2 : ℝ≥0∞) • Measure.dirac b
 
@@ -1222,8 +1267,8 @@ theorem twoPointLaw_median_interval {a b : ℝ} (hab : a < b) :
     ∀ {m : ℝ}, m ∈ Icc a b → IsMedian (twoPointLaw a b) m := by
   intro m hm
   apply median_interval_of_tail_bounds (a := a) (b := b)
-  · simp [twoPointLaw, Measure.smul_apply, hab.le]
-  · simp [twoPointLaw, Measure.smul_apply, hab.le]
+  · simp [twoPointLaw]
+  · simp [twoPointLaw]
   · exact hm.1
   · exact hm.2
 
@@ -1260,17 +1305,23 @@ structure RiemannianManifoldData
   compact : IsCompact (Set.univ : Set M)
   connected : IsConnected (Set.univ : Set M)
   smooth : IsManifold I (⊤ : WithTop ℕ∞) M
+  /-- The extended geodesic distance on the manifold. -/
   distance : M → M → ENNReal
   distance_eq_geodesic :
     ∀ x y, distance x y = Manifold.riemannianEDist I x y
+  /-- A finite volume measure on the manifold. -/
   volume : FiniteMeasure M
+  /-- The normalized volume probability measure. -/
   normalized_volume : ProbabilityMeasure M
   normalized_volume_eq :
     normalized_volume = MeasureTheory.FiniteMeasure.normalize volume
+  /-- The predicate selecting Lipschitz real-valued observables. -/
   lipschitz_observable : (M → ℝ) → Prop
   lipschitz_observable_eq :
     ∀ f, lipschitz_observable f ↔ ∃ K : NNReal, LipschitzWith K f
+  /-- The Ricci bilinear form at each point. -/
   ricci : ∀ x : M, TangentSpace I x → TangentSpace I x → ℝ
+  /-- A positive lower bound for the Ricci curvature. -/
   ricci_lower_bound : ℝ
   ricci_lower_bound_pos : 0 < ricci_lower_bound
   ricci_lower_bound_bound :
@@ -1291,6 +1342,7 @@ theorem riemannian_distance_self
     Manifold.riemannianEDist I x x = 0 := by
   exact Manifold.riemannianEDist_self
 
+/-- Build the source-facing Riemannian metric-measure data. -/
 def riemannianManifoldData_mk
     {E H M : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -1341,12 +1393,15 @@ structure StronglyLogConcaveData
     {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E]
     [MeasureSpace E] where
+  /-- The convex potential defining the law. -/
   potential : E → ℝ
+  /-- The exponential density induced by the potential. -/
   density : E → ENNReal
   density_eq_exp :
     ∀ x, density x = ENNReal.ofReal (Real.exp (-potential x))
   density_normalized :
     ∫⁻ x, density x ∂(volume : Measure E) = 1
+  /-- The probability law associated with the density. -/
   law : Measure E
   law_eq_density :
     law = (volume : Measure E).withDensity density
@@ -1354,9 +1409,11 @@ structure StronglyLogConcaveData
   twice_differentiable :
     ∀ x, DifferentiableAt ℝ potential x ∧
       DifferentiableAt ℝ (fun y => fderiv ℝ potential y) x
+  /-- The Hessian of the potential. -/
   hessian : E → E →L[ℝ] E →L[ℝ] ℝ
   hessian_eq_second_derivative :
     ∀ x, hessian x = fderiv ℝ (fun y => fderiv ℝ potential y) x
+  /-- The strong log-concavity curvature parameter. -/
   curvature : ℝ
   curvature_pos : 0 < curvature
   hessian_lower_bound :
@@ -1364,6 +1421,7 @@ structure StronglyLogConcaveData
   hessian_comp_id :
     ∀ x, (hessian x).comp (ContinuousLinearMap.id ℝ E) = hessian x
 
+/-- Build strongly log-concave law data from its analytic ingredients. -/
 def stronglyLogConcaveData_mk
     {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -1415,21 +1473,27 @@ def normalizedHammingDistance
     (p q : symmetricGroup n) : ℝ :=
   (Fintype.card {i : Fin n // p.toFun i ≠ q.toFun i} : ℝ) / n
 
-/- The uniform probability law is kept with an explicit measurable space,
-   since finite permutation types do not carry a default measurable space. -/
+/--
+The uniform law and normalized Hamming distance on a finite symmetric group.
+The measurable space is explicit because finite permutation types have no
+default measurable-space instance.
+-/
 structure SymmetricGroupData
     (n : ℕ) (hn : 0 < n)
     (m : MeasurableSpace (symmetricGroup n)) where
+  /-- The uniform probability law on permutations. -/
   uniformLaw : @Measure (symmetricGroup n) m
   uniformLaw_eq :
     uniformLaw =
       @ProbabilityTheory.uniformOn (symmetricGroup n) m Set.univ
   uniformLaw_is_probability :
     @IsProbabilityMeasure (symmetricGroup n) m uniformLaw
+  /-- The normalized Hamming distance on permutations. -/
   distance : symmetricGroup n → symmetricGroup n → ℝ
   distance_eq_normalized_hamming :
     ∀ p q, distance p q = normalizedHammingDistance n hn p q
 
+/-- Build symmetric-group data from an explicit law and distance. -/
 def symmetricGroupData_mk
     (n : ℕ) (hn : 0 < n)
     (m : MeasurableSpace (symmetricGroup n))
@@ -1568,7 +1632,7 @@ theorem hdp_05_hex_h5_d1_d14
           ENNReal.ofReal C *
             NumStability.HDP.Scalar.SubGaussian.PsiTwoGauge μ Yc := hUpperY
       _ ≤ ENNReal.ofReal C * ENNReal.ofReal K :=
-        mul_le_mul_left' (by simpa [Yc] using hGaugeC) _
+        mul_le_mul_right (by simpa [Yc] using hGaugeC) _
       _ = ENNReal.ofReal (C * K) := by
         rw [ENNReal.ofReal_mul hC.le]
   have hGaugeYLt :
@@ -1637,23 +1701,28 @@ end NumStability.HDP.Concentration.MetricMeasure
 
 namespace NumStability.HDP.Contract
 
+/-- Stable contract name for the Chapter 5 median certificate. -/
 def hdp_05_hdef_h5_d1_hmedian (μ : Measure ℝ) (X : ℝ → ℝ) :
     Type := NumStability.HDP.Concentration.MetricMeasure.MedianCertificate μ X
 
+/-- Stable contract name for the Chapter 5 Lipschitz interface. -/
 def hdp_05_hiface_hlipschitz (f : ℝ → ℝ) :
     Type := NumStability.HDP.Concentration.MetricMeasure.LipschitzInterface f
 
+/-- Stable contract name for the Chapter 5 concentration interface. -/
 def hdp_05_hiface_hconcentration
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : Ω → ℝ) : Type :=
   NumStability.HDP.Concentration.MetricMeasure.concentrationInterface μ X
 
+/-- Stable contract name for the general Lipschitz-map data. -/
 def hdp_05_hdef_h5_d1_d1
     {α β : Type*} [PseudoMetricSpace α] [PseudoMetricSpace β]
     (f : α → β) :
     Type _ := NumStability.HDP.Concentration.MetricMeasure.LipschitzMapData f
 
+/-- Stable contract name for Riemannian metric-measure data. -/
 def hdp_05_hdef_h5_d2_hriemannian_hmms
     {E H M : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -1667,6 +1736,7 @@ def hdp_05_hdef_h5_d2_hriemannian_hmms
     Type _ :=
   NumStability.HDP.Concentration.MetricMeasure.RiemannianManifoldData (M := M) I
 
+/-- Stable contract name for strongly log-concave law data. -/
 def hdp_05_hdef_h5_d2_hstrongly_hlogconcave
     {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -1674,6 +1744,7 @@ def hdp_05_hdef_h5_d2_hstrongly_hlogconcave
     Type _ :=
   NumStability.HDP.Concentration.MetricMeasure.StronglyLogConcaveData (E := E)
 
+/-- Stable contract name for finite symmetric-group concentration data. -/
 def hdp_05_hdef_h5_d2_hsymmetric_hgroup
     (n : ℕ) (hn : 0 < n)
     (m : MeasurableSpace

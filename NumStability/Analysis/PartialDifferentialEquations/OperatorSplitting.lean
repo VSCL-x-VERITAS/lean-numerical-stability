@@ -27,6 +27,7 @@ abbrev FiniteVolumeCellState (Cell Value : Type*) := Cell → Value
 with a chosen sweep order. The order is data: this structure imposes no
 distinguished first direction. -/
 structure CoordinateDirectionFamily (Direction : Type*) where
+  /-- The exhaustive, duplicate-free coordinate directions in sweep order. -/
   directions : List Direction
   directions_nonempty : directions ≠ []
   directions_nodup : directions.Nodup
@@ -67,10 +68,15 @@ a box in those coordinates. Thus the geometry constructors are not merely
 labels. -/
 structure CoordinateFiniteVolumeGrid
     (Cell : Type v) (Point Direction : Type u) [MeasurableSpace Point] where
+  /-- The measurable finite-volume partition underlying the coordinate grid. -/
   partition : FiniteVolumeCellPartition Cell Point
+  /-- The coordinate directions together with their chosen sweep order. -/
   coordinateDirections : CoordinateDirectionFamily Direction
+  /-- The rectangular or logically rectangular coordinate chart. -/
   geometry : CoordinateGridGeometry Point Direction
+  /-- The lower coordinate face of each cell in each direction. -/
   lowerFace : Cell → Direction → ℝ
+  /-- The upper coordinate face of each cell in each direction. -/
   upperFace : Cell → Direction → ℝ
   positive_coordinate_width : ∀ cell direction,
     lowerFace cell direction < upperFace cell direction
@@ -87,6 +93,7 @@ here; no flux formula, limiter, adjacency convention, or accuracy order is
 chosen. -/
 structure OneDimensionalHighResolutionFiniteVolumeSolve
     (Cell Value : Type*) where
+  /-- Advance cell averages through the requested fraction of a full step. -/
   advanceCellAverages :
     ℝ → FiniteVolumeCellState Cell Value → FiniteVolumeCellState Cell Value
   preserves_constant_states : ∀ fraction value,
@@ -95,10 +102,13 @@ structure OneDimensionalHighResolutionFiniteVolumeSolve
 /-- An admissible fractional solve scheduled in one coordinate direction. -/
 structure CoordinateFractionalStep
     (Direction Cell Value : Type*) where
+  /-- The coordinate direction advanced by this fractional step. -/
   direction : Direction
+  /-- The positive fraction of a full time step to advance. -/
   timeFraction : ℝ
   positive_timeFraction : 0 < timeFraction
   timeFraction_le_one : timeFraction ≤ 1
+  /-- The one-dimensional solver applied in the selected direction. -/
   oneDimensionalSolve :
     OneDimensionalHighResolutionFiniteVolumeSolve Cell Value
 
@@ -116,8 +126,10 @@ def CoordinateFractionalStep.advance
 fraction chosen for every coordinate direction. -/
 structure CoordinateHighResolutionMethod
     (Direction Cell Value : Type*) where
+  /-- Select the one-dimensional solver used for each coordinate direction. -/
   solveDirection :
     Direction → OneDimensionalHighResolutionFiniteVolumeSolve Cell Value
+  /-- Select the fraction of a full step taken in each direction. -/
   timeFraction : Direction → ℝ
   positive_timeFraction : ∀ direction, 0 < timeFraction direction
   timeFraction_le_one : ∀ direction, timeFraction direction ≤ 1

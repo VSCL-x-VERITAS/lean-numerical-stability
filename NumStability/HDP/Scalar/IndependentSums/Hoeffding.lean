@@ -46,7 +46,7 @@ theorem rademacherValue_eq_affine (b : Bool) :
     rademacherValue b = 2 * bernoulliIndicator b - 1 := by
   cases b
   · norm_num [rademacherValue, bernoulliIndicator]
-  · norm_num [rademacherValue, bernoulliIndicator] <;> rfl
+  · norm_num [rademacherValue, bernoulliIndicator]; rfl
 
 @[simp]
 theorem rademacherPMF_mass_one : rademacherPMF 1 = 1 / 2 := by
@@ -115,7 +115,7 @@ theorem affineBernoulliIsRademacherIff {p : ℝ≥0} (hp : p ≤ 1) :
       simpa [rademacherPMF, fairBernoulliPMF, PMF.map_apply,
         rademacherValue, PMF.bernoulli_apply, hneq] using h1
     have h1nn : (p : ℝ≥0∞) = ((1 / 2 : ℝ≥0) : ℝ≥0∞) := by
-      convert h1simp using 1 <;> norm_num
+      convert h1simp using 1; norm_num
     exact_mod_cast h1nn
   · intro hp'
     subst p
@@ -123,6 +123,7 @@ theorem affineBernoulliIsRademacherIff {p : ℝ≥0} (hp : p ≤ 1) :
 
 /-- The complete source-facing package for Definition 2.2.1. -/
 structure RademacherModelData where
+  /-- The symmetric two-point probability mass function. -/
   law : PMF ℝ
   mass_one : law 1 = 1 / 2
   mass_neg_one : law (-1) = 1 / 2
@@ -591,7 +592,8 @@ theorem boundedIndependentHoeffding
         Real.exp ((lam * ‖M i - m i‖) ^ 2 / 8) := by
     have hle := (hY_sub i).mgf_le lam
     convert hle using 1 <;>
-      simp [ProbabilityTheory.mgf, Y, b, div_eq_mul_inv] <;> ring
+      simp [ProbabilityTheory.mgf, Y, b, div_eq_mul_inv]
+    ring
   have hmgf_upper (lam : ℝ) :
       (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
         Real.exp (lam ^ 2 * v / 8) := by
@@ -645,12 +647,9 @@ theorem boundedIndependentHoeffdingZero
     {X : ι → Ω → ℝ} {m : ι → ℝ} {t : ℝ}
     (hconst : ∀ i ω, X i ω = m i) (ht : 0 < t) :
     μ.real {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} = 0 := by
-  have hmean : ∀ i, (∫ y, X i y ∂μ) = m i := by
-    intro i
-    simp [hconst i]
   have hevent : {ω | ∑ i, (X i ω - ∫ y, X i y ∂μ) ≥ t} = (∅ : Set Ω) := by
     ext ω
-    simp [hconst, hmean, ht]
+    simp [hconst, ht]
   rw [hevent]
   simp
 

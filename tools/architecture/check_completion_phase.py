@@ -424,6 +424,18 @@ C0005_ACCEPTANCE_NARRATIVE_PATHS = (
     "docs/architecture/phases/README.md",
     f"{DEFAULT_PHASE_DIR.as_posix()}/README.md",
 )
+# The acceptance-control path set above is immutable historical evidence.  The
+# live root README is different: it is the current repository landing page and
+# may be refreshed as the project evolves.  Keep the detailed acceptance
+# chronology enforced in the durable documentation instead of duplicating it
+# forever in the landing page.
+LIVE_ACCEPTANCE_NARRATIVE_PATHS = tuple(
+    path for path in C0005_ACCEPTANCE_NARRATIVE_PATHS if path != "README.md"
+)
+R07_LIVE_NARRATIVE_PATHS = (
+    "docs/architecture/phases/README.md",
+    f"{DEFAULT_PHASE_DIR.as_posix()}/README.md",
+)
 C0005_ACCEPTANCE_CONTROL_PATHS = frozenset(
     {
         *C0005_ACCEPTANCE_NARRATIVE_PATHS,
@@ -10187,20 +10199,17 @@ class CompletionValidator:
                     "frozen until the separate activation-control commit passes Lean CI",
                     "No R07 implementation, delivery, integration, self-acceptance, checkpoint acceptance, or branch retirement is recorded",
                 )
-            for narrative_path in (
-                self.root / "README.md",
-                self.root / "docs/architecture/phases/README.md",
-                self.phase_dir / "README.md",
-            ):
+            for narrative in R07_LIVE_NARRATIVE_PATHS:
+                narrative_path = self.root / narrative
                 try:
-                    narrative = narrative_path.read_text(encoding="utf-8")
+                    narrative_text = narrative_path.read_text(encoding="utf-8")
                 except (OSError, UnicodeError) as error:
                     self.problems.add(
                         self.relative(narrative_path),
                         f"cannot read activation narrative: {error}",
                     )
                     continue
-                normalized_narrative = " ".join(narrative.split())
+                normalized_narrative = " ".join(narrative_text.split())
                 for fragment in narrative_fragments:
                     self.problems.require(
                         fragment in normalized_narrative,
@@ -12844,7 +12853,7 @@ class CompletionValidator:
         )
 
         # Narratives.
-        for narrative in C0006_ACCEPTANCE_NARRATIVE_PATHS:
+        for narrative in LIVE_ACCEPTANCE_NARRATIVE_PATHS:
             narrative_path = self.root / narrative
             try:
                 narrative_text = narrative_path.read_text(encoding="utf-8")
@@ -12964,7 +12973,7 @@ class CompletionValidator:
                 self.problems,
                 context=self.relative(gates_path),
             )
-        for narrative in C0005_ACCEPTANCE_NARRATIVE_PATHS:
+        for narrative in LIVE_ACCEPTANCE_NARRATIVE_PATHS:
             narrative_path = self.root / narrative
             try:
                 narrative_text = narrative_path.read_text(encoding="utf-8")
@@ -22075,9 +22084,16 @@ def run_self_test() -> int:
 
     problems.require(
         len(C0005_ACCEPTANCE_CONTROL_PATHS) == 19
-        and len(C0005_ACCEPTANCE_NARRATIVE_PATHS) == 5,
+        and len(C0005_ACCEPTANCE_NARRATIVE_PATHS) == 5
+        and LIVE_ACCEPTANCE_NARRATIVE_PATHS
+        == C0005_ACCEPTANCE_NARRATIVE_PATHS[1:]
+        and R07_LIVE_NARRATIVE_PATHS
+        == (
+            "docs/architecture/phases/README.md",
+            f"{DEFAULT_PHASE_DIR.as_posix()}/README.md",
+        ),
         "self-test C0005 acceptance path constants",
-        "acceptance-control path or narrative census drifted",
+        "historical acceptance-control paths or live narrative paths drifted",
     )
     commit_shape_positive = Problems()
     validate_c0005_acceptance_commit_shape(

@@ -115,6 +115,7 @@ DEPRECATION_MARKER = "has been deprecated"
 KNOWN_KINDS = (
     DEPRECATION_KIND,
     INTRO_BINDER_KIND,
+    "linter.style.nameCheck",
     "linter.unnecessarySeqFocus",
     "linter.unnecessarySimpa",
     "linter.unreachableTactic",
@@ -128,7 +129,10 @@ KNOWN_KINDS = (
 OWNER_BATCH_CLASSES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("B1", (DEPRECATION_KIND,)),
     ("B2", ("linter.unusedTactic", "linter.unreachableTactic")),
-    ("B3", ("linter.unusedVariables", INTRO_BINDER_KIND)),
+    (
+        "B3",
+        ("linter.style.nameCheck", "linter.unusedVariables", INTRO_BINDER_KIND),
+    ),
     ("B4", ("linter.unnecessarySimpa",)),
     ("B5", ("linter.unnecessarySeqFocus",)),
     ("B6", ("linter.unusedSimpArgs",)),
@@ -143,6 +147,10 @@ KIND_RATIONALE: dict[str, str] = {
     INTRO_BINDER_KIND: (
         "Pre-existing binder list that Lean can spell out; rewriting it touches "
         "proof text without changing the statement."
+    ),
+    "linter.style.nameCheck": (
+        "Pre-existing declaration name rejected by the current style linter; "
+        "renaming may break a public or compatibility-facing API."
     ),
     "linter.unnecessarySeqFocus": (
         "Pre-existing `tac1 <;> tac2` where `(tac1; tac2)` suffices; the rewrite "
@@ -175,6 +183,10 @@ KIND_RECONSIDERATION_TRIGGER: dict[str, str] = {
     ),
     INTRO_BINDER_KIND: (
         "Reconsider when the surrounding proof is next edited for any reason."
+    ),
+    "linter.style.nameCheck": (
+        "Reconsider only with a reviewed compatibility migration for the owning "
+        "declaration."
     ),
     "linter.unnecessarySeqFocus": (
         "Reconsider when the owning module is next edited, or on a toolchain "
@@ -758,7 +770,142 @@ _UPSTREAM_VENDORED = {
     ),
 }
 
+_FROZEN_VERSHYNIN_DIAGNOSTIC = {
+    "disposition": REVIEWED_COMPATIBILITY_EXCEPTION,
+    "rationale": (
+        "Reviewed frozen Vershynin source-signature/contract surface. The reported "
+        "declaration names and hypotheses are part of the preserved source contract "
+        "and historical compatibility API; renaming or removing them would be a "
+        "semantic/API migration, not a CI repair."
+    ),
+    "expiry_release": "next reviewed Vershynin source-contract revision",
+    "reconsideration_trigger": (
+        "Reconsider only when the affected Vershynin signatures/contracts and their "
+        "historical compatibility wrappers are revised together under review."
+    ),
+}
+
+_RETAINED_HDP_WARNING = {
+    "disposition": REVIEWED_DEFERRED_MIGRATION,
+    "rationale": (
+        "The remaining HDP binder is retained in a public or source-facing "
+        "declaration. Removing or renaming it would change the declaration surface "
+        "or source correspondence, so that migration is deferred outside this CI fix."
+    ),
+    "expiry_release": "next reviewed HDP source/API migration",
+    "reconsideration_trigger": (
+        "Reconsider when the owning HDP declaration's signature or source contract "
+        "is next revised under review."
+    ),
+}
+
+_FROZEN_VERSHYNIN_NAMECHECK_PATHS = (
+    "NumStability/Source/Vershynin/Chapter01/CauchySchwarz/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/JensenInequality/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Corollary05/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Exercise02/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Lemma01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Proposition04/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section03/Theorem01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Equation12/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/ExponentialMarkov/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/IndependentSumMGF/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/PsiTwoNormCharacterizations/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter02/PsiTwoNormCharacterizations/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section02/Exercise10B/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section02/Theorem06/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section03/Exercise05/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Example08B/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Example08C/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Exercise01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Exercise05A/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Proposition02/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Remark03/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Exercise09/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Lemma08/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Lemma08/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Proposition01/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Proposition01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Theorem02/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Theorem02/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Theorem03/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Theorem03/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section07/Example12/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section07/Example13/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section07/Remark09/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter05/Section01/Exercise13/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter05/Section01/Exercise13/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter05/Section01/Exercise14/Contract.lean",
+    "NumStability/Source/Vershynin/Chapter05/Section01/Exercise14/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter05/Section02/Exercise11/Signature.lean",
+)
+
+_FROZEN_VERSHYNIN_UNUSED_PATHS = (
+    "NumStability/Source/Vershynin/Chapter01/JensenInequality/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Corollary05/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Exercise02/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Lemma01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section02/Proposition04/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter01/Section03/Theorem01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/ExponentialMarkov/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/PsiTwoNormCharacterizations/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section02/Exercise10B/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section02/Theorem06/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Example08C/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Proposition02/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section05/Remark03/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Lemma08/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Proposition01/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Theorem02/Signature.lean",
+    "NumStability/Source/Vershynin/Chapter02/Section06/Theorem03/Signature.lean",
+)
+
+_FROZEN_VERSHYNIN_WARNING_KEYS = frozenset(
+    {
+        (path, "linter.style.nameCheck")
+        for path in _FROZEN_VERSHYNIN_NAMECHECK_PATHS
+    }
+    | {
+        (path, "linter.unusedVariables")
+        for path in _FROZEN_VERSHYNIN_UNUSED_PATHS
+    }
+)
+
+_RETAINED_HDP_WARNING_KEYS = frozenset(
+    {
+        (
+            "NumStability/HDP/Concentration/MetricMeasure.lean",
+            "linter.unusedVariables",
+        ),
+        (
+            "NumStability/HDP/Scalar/IndependentSums/Chernoff.lean",
+            "linter.unusedVariables",
+        ),
+        (
+            "NumStability/HDP/Scalar/IndependentSums/Hoeffding.lean",
+            "linter.unusedVariables",
+        ),
+        (
+            "NumStability/HDP/Scalar/Preliminaries.lean",
+            "linter.unusedVariables",
+        ),
+        (
+            "NumStability/HDP/Scalar/SubExponential.lean",
+            "linter.unusedVariables",
+        ),
+        (
+            "NumStability/HDP/Scalar/SubGaussian.lean",
+            "linter.unusedVariables",
+        ),
+    }
+)
+
 REVIEWED_DISPOSITIONS: dict[tuple[str, str], dict[str, str]] = {
+    **{
+        key: _FROZEN_VERSHYNIN_DIAGNOSTIC
+        for key in _FROZEN_VERSHYNIN_WARNING_KEYS
+    },
+    **{key: _RETAINED_HDP_WARNING for key in _RETAINED_HDP_WARNING_KEYS},
     (
         "NumStability/Upstream/Lindemann/Basic.lean",
         "linter.unnecessarySeqFocus",
@@ -1494,6 +1641,8 @@ theorem fixture_alpha_two (h : True) : True := by
 
 theorem fixture_alpha_three : True := by
   refine ?_ <;> trivial
+
+def fixture__contract_type : Prop := True
 """
 
 SELF_TEST_BETA = """/-- Fixture beta. -/
@@ -1553,6 +1702,16 @@ def self_test_diagnostics() -> list[tuple[str, int, int, list[str]]]:
             ],
         ),
         (
+            "NumStability/Fixture/Alpha.lean",
+            12,
+            4,
+            [
+                "",
+                "Note: This linter can be disabled with "
+                "`set_option linter.style.nameCheck false`",
+            ],
+        ),
+        (
             "NumStability/Fixture/Beta.lean",
             3,
             2,
@@ -1582,6 +1741,11 @@ def self_test_head(path: str, line: int, column: int) -> str:
         return "unused variable `h`"
     if path.endswith("Alpha.lean") and line == 10:
         return "Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice"
+    if path.endswith("Alpha.lean") and line == 12:
+        return (
+            "The declaration 'fixture__contract_type' contains '__', which does "
+            "not follow the mathlib naming conventions."
+        )
     return "unnecessary `simpa`; use `simp` instead"
 
 

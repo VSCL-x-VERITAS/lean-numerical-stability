@@ -671,6 +671,7 @@ theorem poissonPointMass_isEquivalent_stirling (rate : ℝ≥0) (hrate : 0 < rat
     rw [mul_pow]
   exact (hproduct.congr_left hleft).congr_right hright
 
+/-- The scalar Bernoulli MGF identity and its finite independent-product bound. -/
 structure BernoulliMgfModelData : Prop where
   scalar : ∀ (p : ℝ≥0), (hp : p ≤ 1) → ∀ lam : ℝ,
     ((∫ b : Bool, Real.exp (lam * (if b then 1 else 0)) ∂
@@ -696,7 +697,9 @@ theorem bernoulliMgfModel : BernoulliMgfModelData :=
 
 /-- The source-facing data for `G(n,p)` and its vertex-degree observable. -/
 structure ErdosRenyiModelData (n : ℕ) (p : Set.Icc (0 : ℝ) 1) where
+  /-- The stored measure on graphs. -/
   graphLaw : Measure (SimpleGraph (Fin n))
+  /-- The stored natural-valued observable for each vertex and graph. -/
   degree : Fin n → SimpleGraph (Fin n) → ℕ
 
 /-- The Erdős--Rényi model on `Fin n`, with independent edge indicators. -/
@@ -748,8 +751,7 @@ theorem incidentEdgeCount_eq_degree {V : Type*} [Fintype V]
   classical
   letI : Fintype (G.neighborSet v) := Fintype.ofFinite _
   rw [incidentEdgeCount, potentialIncidentEdges_inter_edgeSet]
-  simpa [Set.ncard_eq_toFinset_card'] using
-    (SimpleGraph.card_incidenceSet_eq_degree G v).symm
+  simp [Set.ncard_eq_toFinset_card']
 
 /-- The canonical Erdős--Rényi law is a probability measure. -/
 instance erdosRenyiModel.isProbabilityMeasure
@@ -780,7 +782,6 @@ theorem binomialMgfExact (n : ℕ) (p : Set.Icc (0 : ℝ) 1) (lam : ℝ) :
   rw [PMF.integral_eq_sum]
   simp only [smul_eq_mul, PMF.binomial_apply]
   rw [Finset.sum_fin_eq_sum_range]
-  simp only [Finset.sum_apply]
   have hpNN : unitInterval.toNNReal p ≤ 1 := by
     change (p : ℝ) ≤ 1
     exact p.2.2
@@ -921,7 +922,9 @@ theorem binomialTwoSidedBound (m : ℕ) (p : Set.Icc (0 : ℝ) 1) {δ : ℝ}
         Real.exp ((Real.exp (-δ / 2) - 1) * mr) := by
     apply le_trans hlower_markov
     apply mul_le_mul_of_nonneg_left _ (Real.exp_nonneg _)
-    convert hlower_mgf using 1 <;> simp [S, mr] <;> ring
+    convert hlower_mgf using 1
+    all_goals simp [S]
+    all_goals ring
   have hupper : μ.real {k | (1 + δ) * mr ≤ S k} ≤
       Real.exp (-(mr * δ ^ 2 / 4)) := by
     rw [show {k | (1 + δ) * mr ≤ S k} = S ⁻¹' Set.Ici ((1 + δ) * mr) by rfl]
@@ -1261,7 +1264,7 @@ theorem erdosRenyiAlmostRegular
     intro v
     dsimp [P, Bad, d]
     convert erdosRenyiDegreeDeviationBound n p v
-      (δ := (1 : ℝ) / 10) (by norm_num) (by norm_num) using 1 <;> ring
+      (δ := (1 : ℝ) / 10) (by norm_num) (by norm_num) using 1; ring
   have hbad_union : P.real (⋃ v, Bad v) ≤
       2 * (n : ℝ) * Real.exp (-d / 400) := by
     calc
@@ -1286,7 +1289,7 @@ theorem erdosRenyiAlmostRegular
       calc
         Real.exp (10 * Real.log (n : ℝ)) =
             Real.exp (Real.log (n : ℝ)) ^ 10 := by
-          convert Real.exp_nat_mul (Real.log (n : ℝ)) 10 using 1 <;> norm_num
+          convert Real.exp_nat_mul (Real.log (n : ℝ)) 10 using 1
         _ = (n : ℝ) ^ 10 := by rw [Real.exp_log hnpos]
     rw [show -10 * Real.log (n : ℝ) = -(10 * Real.log (n : ℝ)) by ring,
       Real.exp_neg, hpow]
@@ -1321,14 +1324,14 @@ theorem erdosRenyiAlmostRegular
     · intro hG hbad
       rcases hbad with ⟨v, hv⟩
       exact (not_le_of_gt (hG v)) (by
-        convert hv using 1 <;> ring)
+        convert hv using 1; ring)
     · intro hG v
       have hnot : ¬ (1 / 10 : ℝ) * d ≤
           |((erdosRenyiModel n p).degree v G : ℝ) - d| := by
         intro hv
         exact hG ⟨v, hv⟩
       exact (lt_of_not_ge (by
-        convert hnot using 1 <;> ring))
+        convert hnot using 1; ring))
   have hUmeas : MeasurableSet (⋃ v, Bad v) := by
     exact MeasurableSet.iUnion hbad_meas
   have hgoodprob : P.real Good ≥ (9 : ℝ) / 10 := by
@@ -1408,7 +1411,7 @@ theorem erdosRenyiSparseMaxDegreeLogBound
     calc
       Real.exp (5 * Real.log (n : ℝ)) =
           Real.exp (Real.log (n : ℝ)) ^ 5 := by
-        convert Real.exp_nat_mul (Real.log (n : ℝ)) 5 using 1 <;> norm_num
+        convert Real.exp_nat_mul (Real.log (n : ℝ)) 5 using 1
       _ = (n : ℝ) ^ 5 := by rw [Real.exp_log hnpos]
   have hexp5 : Real.exp (-5 * Real.log (n : ℝ)) =
       ((n : ℝ) ^ 5)⁻¹ := by
@@ -1564,7 +1567,7 @@ theorem erdosRenyiVerySparseMaxDegreeLogLogBound
     calc
       Real.exp (5 * Real.log (n : ℝ)) =
           Real.exp (Real.log (n : ℝ)) ^ 5 := by
-        convert Real.exp_nat_mul (Real.log (n : ℝ)) 5 using 1 <;> norm_num
+        convert Real.exp_nat_mul (Real.log (n : ℝ)) 5 using 1
       _ = (n : ℝ) ^ 5 := by rw [Real.exp_log hnpos]
   have hexp5 : Real.exp (-5 * L) = ((n : ℝ) ^ 5)⁻¹ := by
     rw [show -5 * L = -(5 * L) by ring, Real.exp_neg, hpow]

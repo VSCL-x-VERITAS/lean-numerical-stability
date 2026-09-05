@@ -31,7 +31,9 @@ namespace NumStability
 cell `i` are genuinely adjacent: the right endpoint of the former is the left
 endpoint of the latter. -/
 structure OneDimensionalFiniteVolumeGrid where
+  /-- The left endpoint of each integer-indexed cell. -/
   cellLeft : ℤ → ℝ
+  /-- The right endpoint of each integer-indexed cell. -/
   cellRight : ℤ → ℝ
   cell_nonempty : ∀ i, cellLeft i < cellRight i
   adjacent : ∀ i, cellRight (i - 1) = cellLeft i
@@ -75,9 +77,12 @@ matrix used by the hyperbolicity condition to the actual derivative of the
 physical flux. -/
 structure OneDimensionalHyperbolicConservationLaw
     (Component : Type*) [Fintype Component] where
+  /-- The physical flux as a function of the conserved state. -/
   physicalFlux : (Component → ℝ) → (Component → ℝ)
+  /-- The Fréchet derivative of the physical flux at each state. -/
   fluxDerivative :
     (Component → ℝ) → ((Component → ℝ) →L[ℝ] (Component → ℝ))
+  /-- The matrix representing the flux derivative in component coordinates. -/
   fluxJacobian : (Component → ℝ) → Matrix Component Component ℝ
   hasFDerivAt_physicalFlux : ∀ state,
     HasFDerivAt physicalFlux (fluxDerivative state) state
@@ -91,7 +96,9 @@ at the jump itself remains immaterial. -/
 structure HyperbolicRiemannProblem
     {Component : Type*} [Fintype Component]
     (_law : OneDimensionalHyperbolicConservationLaw Component) where
+  /-- The constant initial state to the left of the jump. -/
   leftState : Component → ℝ
+  /-- The constant initial state to the right of the jump. -/
   rightState : Component → ℝ
 
 /-- A space-time field solves a hyperbolic Riemann problem when its initial
@@ -112,6 +119,7 @@ structure CertifiedHyperbolicRiemannSolution
     {Component : Type*} [Fintype Component]
     (law : OneDimensionalHyperbolicConservationLaw Component)
     (problem : HyperbolicRiemannProblem law) where
+  /-- The space-time field proposed as the solution of `problem`. -/
   solution : ℝ → ℝ → (Component → ℝ)
   solves : IsHyperbolicRiemannSolution law problem solution
 
@@ -124,10 +132,14 @@ structure RiemannInterfaceFluxMethod
     {Component : Type*} [Fintype Component]
     (law : OneDimensionalHyperbolicConservationLaw Component)
     (Information : Type*) where
+  /-- Solve an ordered Riemann problem and certify the resulting field. -/
   solve : (problem : HyperbolicRiemannProblem law) →
     CertifiedHyperbolicRiemannSolution law problem
+  /-- Extract the method-specific information used to form an interface
+  flux from a certified Riemann solution. -/
   extractInformation : {problem : HyperbolicRiemannProblem law} →
     CertifiedHyperbolicRiemannSolution law problem → Information
+  /-- Convert extracted Riemann information into a numerical flux vector. -/
   numericalFluxFromInformation : Information → (Component → ℝ)
   consistent_on_constant_states : ∀ state,
     numericalFluxFromInformation

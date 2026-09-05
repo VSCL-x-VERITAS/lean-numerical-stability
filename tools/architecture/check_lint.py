@@ -44,7 +44,7 @@ SCHEMA_VERSION = 1
 
 # Bump whenever the normalization or fingerprint rules below change; a baseline
 # written under an older normalization is refused rather than misread.
-NORMALIZATION_VERSION = 1
+NORMALIZATION_VERSION = 2
 
 # Lean source trees whose findings this contract governs.  Anything outside
 # them (Mathlib, Batteries, toolchain sources) is not fingerprinted.
@@ -65,6 +65,13 @@ SOURCE_ROOTS = ("NumStability", "NumStabilityTest")
 #   <abs path>.lean:<line>:<col>: error: <DeclName> <message head>
 #     <indented continuation of the head (pretty-printer wrapping)>
 #   <further message lines at column 0 (structural, not part of the head)>
+#
+# Automatically generated simp lemmas have no source position.  Batteries
+# 4.29 prints those findings in a second form under the current module header:
+#
+#   #check @<DeclName> /- simp can prove this:
+#     <proof and explanatory lines>
+#   <last explanatory line> -/
 #
 # Modules are separated by blank lines; a blank line therefore ends a message.
 
@@ -90,6 +97,9 @@ MODULE_HEAD_RE = re.compile(r"^-- (?P<module>[^\s]+)\s*$")
 FINDING_HEAD_RE = re.compile(
     r"^(?P<path>(?:[A-Za-z]:)?[^:]+?\.lean):(?P<line>\d+):(?P<column>\d+): "
     r"error: (?P<decl>@?\S+)(?: (?P<rest>.*))?$"
+)
+GENERATED_SIMP_NF_HEAD_RE = re.compile(
+    r"^#check\s+@?(?P<decl>\S+)\s+/-\s*(?P<rest>.*)$"
 )
 # Lake progress markers: "✔ [12/34] Built X", "⚠ [12/34] Replayed X".
 LAKE_PROGRESS_RE = re.compile(r"^(?:[^\s\[]{1,3}\s*)?\[\d+/\d+\]")
@@ -233,6 +243,21 @@ _IGNORED_BY_DESIGN = {
         "ignored inputs become meaningful."
     ),
 }
+_SCALAR_ONE_COMPONENT_LAMBDA = {
+    "disposition": REVIEWED_IGNORED_ARGUMENT_BY_DESIGN,
+    "rationale": (
+        "The reported argument is the Fin 1 coordinate binder inside the function "
+        "value returned by scalarAsOneComponentSystem. The unique-coordinate result "
+        "is deliberately constant in that binder; removing it would change the "
+        "definition's one-component system type. Reviewed for the 2026-09-05 CI "
+        "baseline repair."
+    ),
+    "expiry_release": "when the scalar-to-system embedding is next redesigned",
+    "reconsideration_trigger": (
+        "Reconsider if the one-component representation changes or the coordinate "
+        "binder becomes semantically meaningful."
+    ),
+}
 _CONCLUSION_HYPOTHESIS = {
     "disposition": REVIEWED_CONCLUSION_HYPOTHESIS,
     "rationale": (
@@ -248,6 +273,64 @@ _CONCLUSION_HYPOTHESIS = {
         "hypothesis there is a reviewed strengthening."
     ),
 }
+
+_HDP_UNUSED_ARGUMENT_DEFERRED = {
+    "disposition": REVIEWED_DEFERRED_MIGRATION,
+    "rationale": (
+        "The reported hypothesis or instance remains in a public or source-facing "
+        "HDP declaration. Removing it changes the declaration signature and callers "
+        "or source correspondence, so that API migration is deferred."
+    ),
+    "expiry_release": "next reviewed HDP source/API migration",
+    "reconsideration_trigger": (
+        "Reconsider when the owning HDP declaration's signature or source contract "
+        "is next revised under review."
+    ),
+}
+
+_HDP_GENERATED_SIMPNF_DEFERRED = {
+    "disposition": REVIEWED_DEFERRED_MIGRATION,
+    "rationale": (
+        "This simpNF finding names an automatically generated structure injectivity "
+        "declaration with no editable source declaration at the reported position. "
+        "Changing structure generation or simp attributes can alter the generated API "
+        "and simp set, so it is deferred outside this CI repair."
+    ),
+    "expiry_release": "next reviewed HDP structure/simp-set migration",
+    "reconsideration_trigger": (
+        "Reconsider when the owning structure or its generated simp declarations are "
+        "next revised, or when a toolchain change alters the generated theorem."
+    ),
+}
+
+_PRESERVED_PUBLIC_ARGUMENT = {
+    "disposition": REVIEWED_COMPATIBILITY_EXCEPTION,
+    "rationale": (
+        "The reported argument is retained in a public PDE or LeVeque declaration; "
+        "removing it changes the supported declaration signature or the exact "
+        "source-facing theorem statement."
+    ),
+    "expiry_release": "next reviewed PDE/LeVeque API migration",
+    "reconsideration_trigger": (
+        "Reconsider when the owning public declaration and all compatibility/source "
+        "consumers are migrated together under review."
+    ),
+}
+
+_PUBLIC_REDUCIBLE_DEFINITION = {
+    "disposition": REVIEWED_COMPATIBILITY_EXCEPTION,
+    "rationale": (
+        "This public proof-valued declaration is intentionally retained as a `def`. "
+        "Changing it to `theorem` changes reducibility and may break downstream "
+        "definitional-reduction behavior even though its written type is unchanged."
+    ),
+    "expiry_release": "next reviewed breaking API/reducibility migration",
+    "reconsideration_trigger": (
+        "Reconsider only after downstream unfolding and definitional-equality uses of "
+        "the declaration have been audited in a reviewed compatibility migration."
+    ),
+}
+
 _BY_DECL_IGNORED = [
     "NumStability.zeroBlock",
     "NumStability.matMulCounterexampleA",
@@ -269,9 +352,85 @@ _BY_DECL_CONCLUSION = [
     "NumStability.theorem20_7_compactActiveHorizonStepSlack_coeff_bound_nat",
     "NumStability.higham9_14_leadingPrincipalBlock_det_pos_of_symPosDef",
 ]
+
+_HDP_UNUSED_ARGUMENT_DECLARATIONS = (
+    "NumStability.HDP.Concentration.MetricMeasure.hdp_05_hex_h5_d1_d14",
+    "NumStability.HDP.Concentration.MetricMeasure.integral_abs_le_two_mul_of_psiTwoAdmissible",
+    "NumStability.HDP.Concentration.MetricMeasure.normalizedHammingDistance",
+    "NumStability.HDP.Concentration.MetricMeasure.riemannian_distance_self",
+    "NumStability.HDP.Concentration.MetricMeasure.twoPointLaw_median_interval",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.erdosRenyiSparseMaxDegreeLogBound",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.incidentEdgeCount",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonAddLaw",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.poissonBinomialChernoffZeroCase",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.potentialIncidentEdges_inter_edgeSet",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.binomialRandom_graphStarExactCardEvent_probability",
+    "NumStability.HDP.Scalar.IndependentSums.Chernoff.binomialRandom_graphStarExactCardEvent_probability_real",
+    "NumStability.HDP.Scalar.IndependentSums.Hoeffding.hoeffdingOptimization",
+    "NumStability.HDP.Scalar.IndependentSums.Hoeffding.majorityVoteHoeffding",
+    "NumStability.HDP.Scalar.IndependentSums.Hoeffding.mgfIndependentSum",
+    "NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherHoeffdingZero",
+    "NumStability.HDP.Scalar.IndependentSums.Hoeffding.rademacherWeightedMGFLe",
+    "NumStability.HDP.Scalar.LimitTheorems.independentVarianceSum",
+    "NumStability.HDP.Scalar.Preliminaries.chebyshevEventBound",
+    "NumStability.HDP.Scalar.Preliminaries.exercise122CorrectedSignedTailFormula",
+    "NumStability.HDP.Scalar.Preliminaries.indicatorFunction",
+    "NumStability.HDP.Scalar.Preliminaries.layerCakeExpectationExtended",
+    "NumStability.HDP.Scalar.Preliminaries.layerCakeExpectationFinite",
+    "NumStability.HDP.Scalar.Preliminaries.markovIndicatorBound",
+    "NumStability.HDP.Scalar.Preliminaries.markovInequalityExtended",
+    "NumStability.HDP.Scalar.Preliminaries.momentTailFormula",
+    "NumStability.HDP.Scalar.SubExponential.mgfRemainder_lintegral_le",
+    "NumStability.HDP.Scalar.SubExponential.mgfToMoment",
+    "NumStability.HDP.Scalar.SubExponential.subWeibullMomentInterpretation",
+    "NumStability.HDP.Scalar.SubGaussian.independentGaussianSumLaw",
+    "NumStability.HDP.Scalar.SubGaussian.lpExtrapolation",
+    "NumStability.HDP.Scalar.SubGaussian.psiTwoAdmissible_of_gauge_zero",
+    "NumStability.HDP.Scalar.SubGaussian.psiTwoGauge_finite_iff",
+    "NumStability.HDP.Scalar.SubGaussian.squareMGFGlobalTailZero",
+    "NumStability.HDP.Scalar.SubGaussian.squareMGFToMGF",
+)
+
+_HDP_GENERATED_SIMPNF_DECLARATIONS = (
+    "NumStability.HDP.Scalar.Preliminaries.ExpectationVarianceModelData.mk.injEq",
+    "NumStability.HDP.Scalar.Preliminaries.L2GeometryModelData.mk.injEq",
+)
+
+_PRESERVED_PUBLIC_ARGUMENT_DECLARATIONS = (
+    "NumStability.IsConservationLawSolutionAt",
+    "NumStability.IsQuasilinearConservationLawSolutionAt",
+    "NumStability.leveque01_advectionWaveIdentity",
+    "NumStability.leveque01_equation06_acousticsMatrixForm",
+)
+
+_PUBLIC_REDUCIBLE_DEF_DECLARATIONS = (
+    "NumStability.HDP.Scalar.Preliminaries.holderModel",
+    "NumStability.HDP.Contract.hdp_01_hdef_hindicator",
+    "NumStability.HDP.Scalar.SubGaussian.subGaussianTailThreshold_rescale",
+    "NumStability.HDP.Scalar.SubGaussian.subGaussianSquarePointThreshold_rescale",
+)
+
 REVIEWED_DISPOSITIONS_BY_DECLARATION: dict[tuple[str, str], dict[str, Any]] = {
     **{("unusedArguments", d): _IGNORED_BY_DESIGN for d in _BY_DECL_IGNORED},
+    ("unusedArguments", "NumStability.scalarAsOneComponentSystem"):
+        _SCALAR_ONE_COMPONENT_LAMBDA,
     **{("unusedArguments", d): _CONCLUSION_HYPOTHESIS for d in _BY_DECL_CONCLUSION},
+    **{
+        ("unusedArguments", d): _HDP_UNUSED_ARGUMENT_DEFERRED
+        for d in _HDP_UNUSED_ARGUMENT_DECLARATIONS
+    },
+    **{
+        ("simpNF", d): _HDP_GENERATED_SIMPNF_DEFERRED
+        for d in _HDP_GENERATED_SIMPNF_DECLARATIONS
+    },
+    **{
+        ("unusedArguments", d): _PRESERVED_PUBLIC_ARGUMENT
+        for d in _PRESERVED_PUBLIC_ARGUMENT_DECLARATIONS
+    },
+    **{
+        ("defLemma", d): _PUBLIC_REDUCIBLE_DEFINITION
+        for d in _PUBLIC_REDUCIBLE_DEF_DECLARATIONS
+    },
 }
 # Reviewed dispositions keyed by (linter, path). Applied at record construction
 # so they survive regeneration from a bare log, not only a carry from a previous
@@ -296,7 +455,176 @@ _UNTYPED_PROOF_DEF = {
         "census as a reviewed reduction."
     ),
 }
+
+_FROZEN_VERSHYNIN_LINT = {
+    "disposition": REVIEWED_COMPATIBILITY_EXCEPTION,
+    "rationale": (
+        "Reviewed frozen Vershynin source-signature/contract surface. Changing the "
+        "declaration keyword or authored documentation here would revise the frozen "
+        "source contract and historical compatibility API, outside this CI repair."
+    ),
+    "expiry_release": "next reviewed Vershynin source-contract revision",
+    "reconsideration_trigger": (
+        "Reconsider only when the affected Vershynin contract/signature and its "
+        "historical compatibility path are revised together under review."
+    ),
+}
+
+_FROZEN_VERSHYNIN_LINT_KEYS = frozenset(
+    {
+        (
+            "defLemma",
+            "NumStability/Source/Vershynin/Chapter01/"
+            "StandardDeviationAndCovariance/Contract.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/CauchySchwarz/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/JensenInequality/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/L2Geometry/Contract.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/Section02/Corollary05/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/Section02/Exercise02/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/Section02/Lemma01/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/Section02/Proposition04/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/Section03/Theorem01/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter01/"
+            "StandardDeviationAndCovariance/Contract.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Equation12/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/ExponentialMarkov/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/IndependentSumMGF/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/PsiTwoNormCharacterizations/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section02/Exercise10B/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section02/Theorem06/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section03/Exercise05/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section05/Example08B/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section05/Example08C/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section05/Exercise01/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section05/Exercise05A/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section05/Proposition02/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section05/Remark03/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section06/Exercise09/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section06/Lemma08/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section06/Proposition01/"
+            "Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section06/Theorem02/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section06/Theorem03/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section07/Example12/Contract.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section07/Example13/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter02/Section07/Remark09/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter05/Section01/Exercise13/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter05/Section01/Exercise14/Signature.lean",
+        ),
+        (
+            "docBlame",
+            "NumStability/Source/Vershynin/Chapter05/Section02/Exercise11/Signature.lean",
+        ),
+    }
+)
+
 REVIEWED_DISPOSITIONS: dict[tuple[str, str], dict[str, Any]] = {
+    **{
+        key: _FROZEN_VERSHYNIN_LINT
+        for key in _FROZEN_VERSHYNIN_LINT_KEYS
+    },
     ("defLemma", "NumStability/Source/Higham/Chapter11/Section02/Aasen.lean"): _UNTYPED_PROOF_DEF,
     ("defLemma", "NumStability/Source/Higham/Chapter11/Section01/Tridiagonal.lean"): _UNTYPED_PROOF_DEF,
     ("defLemma", "NumStability/Source/Higham/Chapter11/Section01/PartialPivoting.lean"): _UNTYPED_PROOF_DEF,
@@ -522,8 +850,12 @@ def is_record_boundary(line: str) -> bool:
     return (
         not line.strip()
         or bool(FINDING_HEAD_RE.match(line))
+        or bool(GENERATED_SIMP_NF_HEAD_RE.match(line))
         or bool(MODULE_HEAD_RE.match(line))
         or bool(LINTER_HEAD_RE.match(line))
+        or bool(MODULES_RE.match(line))
+        or bool(SUMMARY_RE.match(line))
+        or bool(ALL_PASSED_RE.match(line))
         or bool(LAKE_PROGRESS_RE.match(line))
     )
 
@@ -622,6 +954,48 @@ def read_log(path: Path) -> LogCapture:
                 )
                 continue
             capture.findings.append(item)
+            continue
+        generated_simp = GENERATED_SIMP_NF_HEAD_RE.match(line)
+        if generated_simp:
+            if linter != "simpNF":
+                capture.unclassified.append(
+                    (number, line, "generated simp finding outside the simpNF section")
+                )
+                continue
+            if module is None:
+                capture.unclassified.append(
+                    (number, line, "generated simp finding has no module header")
+                )
+                continue
+            message_lines = [generated_simp.group("rest")]
+            closed = bool(NOTE_END_RE.search(line))
+            while index < len(lines) and not closed:
+                continuation = lines[index]
+                if is_record_boundary(continuation):
+                    break
+                index += 1
+                message_lines.append(continuation)
+                closed = bool(NOTE_END_RE.search(continuation))
+            if not closed:
+                capture.unclassified.append(
+                    (number, line, "unterminated generated simp finding")
+                )
+                continue
+            message_lines[-1] = NOTE_END_RE.sub("", message_lines[-1]).rstrip()
+            source_path = module.replace(".", "/") + ".lean"
+            if not governed(source_path):
+                continue
+            capture.findings.append(
+                Finding(
+                    linter=linter,
+                    path=source_path,
+                    line=0,
+                    column=0,
+                    declaration=generated_simp.group("decl").lstrip("@"),
+                    message_head=normalize_message(message_lines[0]),
+                    message=normalize_message(" ".join(message_lines)),
+                )
+            )
             continue
         module_head = MODULE_HEAD_RE.match(line)
         if module_head and linter is not None:
@@ -1185,6 +1559,19 @@ def self_test_findings() -> list[SelfTestEntry]:
             ],
         ),
         (
+            "simpNF",
+            "NumStability\\Fixture\\Alpha.lean",
+            0,
+            0,
+            "@NumStability.Fixture.Data.mk.injEq",
+            [
+                "simp can prove this:",
+                "  by simp only [*, and_self]",
+                "One of the lemmas above could be a duplicate.",
+                "If that's not the case try reordering lemmas or adding @[priority].",
+            ],
+        ),
+        (
             "unusedArguments",
             "NumStability\\Fixture\\Alpha.lean",
             39,
@@ -1228,10 +1615,15 @@ def render_self_test_log(entries: Sequence[SelfTestEntry], *, total: int | None 
             first = False
             out.append(f"-- {module_name(path.replace(chr(92), '/'))}")
             for _, _, line, column, decl, message in group:
-                out.append(
-                    f"{SELF_TEST_WORKSPACE}{path}:{line}:{column}: error: {decl} {message[0]}"
-                )
-                out.extend(message[1:])
+                if line == 0 and column == 0:
+                    out.append(f"#check {decl} /- {message[0]}")
+                    out.extend(message[1:-1])
+                    out.append(message[-1] + " -/")
+                else:
+                    out.append(
+                        f"{SELF_TEST_WORKSPACE}{path}:{line}:{column}: error: {decl} {message[0]}"
+                    )
+                    out.extend(message[1:])
     out.append("")
     return "\r\n".join(out).encode("utf-8")
 
@@ -1309,6 +1701,14 @@ def run_self_test() -> int:
         ):
             print("self-test failure: simpNF head did not stop at the structural line", file=sys.stderr)
             return 1
+        generated_simp = by_decl["NumStability.Fixture.Data.mk.injEq"]
+        if (
+            generated_simp["path"] != "NumStability/Fixture/Alpha.lean"
+            or generated_simp["evidence"]["line"] != 0
+            or generated_simp["message_head"] != "simp can prove this:"
+        ):
+            print("self-test failure: generated simpNF finding was not reconstructed", file=sys.stderr)
+            return 1
         if any(record["path"].count("\\") for record in records) or not all(
             record["path"].startswith("NumStability/") for record in records
         ):
@@ -1320,7 +1720,7 @@ def run_self_test() -> int:
         if document["ceilings"]["by_linter"] != {
             "defLemma": 2,
             "docBlame": 1,
-            "simpNF": 1,
+            "simpNF": 2,
             "unusedArguments": 1,
         }:
             print("self-test failure: per-linter ceilings are wrong", file=sys.stderr)
@@ -1346,6 +1746,79 @@ def run_self_test() -> int:
         def restore() -> None:
             baseline_path.write_text(pristine, encoding="utf-8", newline="\n")
             log_path.write_bytes(render_self_test_log(entries))
+
+        generated_prefix = [
+            "Running linter on specified modules: [NumStability]",
+            "-- Found 1 error in 2 declarations (plus 1 automatically generated one) "
+            "in NumStability with 16 linters",
+        ]
+        generated_cases = [
+            (
+                "generated simpNF outside section",
+                generated_prefix
+                + [
+                    "/- The `docBlame` linter reports:",
+                    "FIXTURE NOTE. -/",
+                    "-- NumStability.Fixture.Alpha",
+                    "#check @NumStability.Fixture.Data.mk.injEq /- simp can prove this: -/",
+                ],
+                "generated simp finding outside the simpNF section",
+                [],
+            ),
+            (
+                "generated simpNF without module",
+                generated_prefix
+                + [
+                    "/- The `simpNF` linter reports:",
+                    "FIXTURE NOTE. -/",
+                    "#check @NumStability.Fixture.Data.mk.injEq /- simp can prove this: -/",
+                ],
+                "generated simp finding has no module header",
+                [],
+            ),
+            (
+                "unterminated generated simpNF at EOF",
+                generated_prefix
+                + [
+                    "/- The `simpNF` linter reports:",
+                    "FIXTURE NOTE. -/",
+                    "-- NumStability.Fixture.Alpha",
+                    "#check @NumStability.Fixture.Data.mk.injEq /- simp can prove this:",
+                    "  by simp only [*, and_self]",
+                ],
+                "unterminated generated simp finding",
+                [],
+            ),
+            (
+                "unterminated generated simpNF before boundary",
+                generated_prefix
+                + [
+                    "/- The `simpNF` linter reports:",
+                    "FIXTURE NOTE. -/",
+                    "-- NumStability.Fixture.Alpha",
+                    "#check @NumStability.Fixture.Data.mk.injEq /- simp can prove this:",
+                    "-- NumStability.Fixture.Beta",
+                    "#check @NumStability.Fixture.Other.mk.injEq /- simp can prove this:",
+                    "  by simp only [*, and_self] -/",
+                ],
+                "unterminated generated simp finding",
+                ["NumStability.Fixture.Other.mk.injEq"],
+            ),
+        ]
+        for label, raw_lines, expected_reason, expected_declarations in generated_cases:
+            log_path.write_text("\n".join(raw_lines), encoding="utf-8", newline="\n")
+            malformed_capture = read_log(log_path)
+            reasons = [reason for _, _, reason in malformed_capture.unclassified]
+            declarations = [finding.declaration for finding in malformed_capture.findings]
+            if expected_reason not in reasons or declarations != expected_declarations:
+                print(
+                    f"self-test failure: {label} was not isolated at its boundary: "
+                    f"reasons={reasons!r}, declarations={declarations!r}",
+                    file=sys.stderr,
+                )
+                return 1
+            cases.append(label)
+        restore()
 
         # New fingerprint in a file with no reviewed allowance.
         extra = entries + [

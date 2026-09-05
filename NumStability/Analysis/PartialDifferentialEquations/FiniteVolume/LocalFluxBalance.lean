@@ -35,10 +35,13 @@ structure FiniteVolumeInterfaceMesh
     [TopologicalSpace Point]
     extends FiniteVolumeCellPartition Cell Point where
   interfaces_nonempty : Nonempty Interface
+  /-- The cell designated as the left side of each oriented interface. -/
   leftCell : Interface → Cell
+  /-- The cell designated as the right side of each oriented interface. -/
   rightCell : Interface → Cell
   leftCell_ne_rightCell : ∀ interface,
     leftCell interface ≠ rightCell interface
+  /-- The physical point at which each interface is located. -/
   interfacePoint : Interface → Point
   interfacePoint_mem_domain : ∀ interface,
     interfacePoint interface ∈ domain

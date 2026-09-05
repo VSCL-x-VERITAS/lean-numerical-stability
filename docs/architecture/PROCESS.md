@@ -14,14 +14,20 @@ implementation it carried landed on `main` as
 
 CI runs on every push to `main` and on every pull request
 (`.github/workflows/lean_action_ci.yml`): the Python tooling compile pass,
-the four checker self-tests, `check_phase.py --all-phases`,
+the architecture and diagnostic checker self-tests, `check_phase.py --all-phases`,
 `check_completion_phase.py`, `check_layout.py`, `check_compatibility.py`,
+`check_tiers.py`, `check_placeholders.py --completion`,
 `check_provenance.py`, `generate_baseline.py --skip-declarations
 --strict-source`, `lake build NumStability NumStabilityTest`, the literal
-`lake test` test-driver step, and `check_warnings.py --check` against
-`docs/architecture/warnings.json`.
+`lake test` test-driver step, `check_warnings.py --check` against
+`docs/architecture/warnings.json`, and `check_lint.py --check` against
+`docs/architecture/lint.json`.
 
-Before every push, the same sequence runs locally, plus `lake test`.
+After a successful build and test, the warning and lint contracts are evaluated
+independently and a final enforcement step fails the job if either contract
+fails. This keeps one diagnostic failure from hiding the other.
+
+Before every push, the same sequence is rehearsed locally.
 
 The warning contract is a ratchet in both directions. `warnings.json` is the
 authoritative census of every enabled diagnostic and every reviewed

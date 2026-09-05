@@ -51,8 +51,11 @@ noncomputable def upperTail {Ω : Type*} [MeasurableSpace Ω]
 structure CDFTailModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) where
+  /-- The stored real measure. -/
   distribution : Measure ℝ
+  /-- The stored extended-real-valued CDF candidate. -/
   cdf : ℝ → ENNReal
+  /-- The stored extended-real-valued upper-tail candidate. -/
   upperTail : ℝ → ENNReal
 
 /-- Package the distribution, CDF, and upper-tail definitions for `X`. -/
@@ -116,7 +119,7 @@ def expectation {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
   ∫ ω, X ω ∂μ
 
-/- The source notation `1_E`, represented as the real-valued indicator. -/
+/-- The source notation `1_E`, represented as the real-valued indicator. -/
 def indicatorFunction {Ω : Type*} [MeasurableSpace Ω]
     (E : Set Ω) : Ω → ℝ :=
   Set.indicator E (fun _ => 1)
@@ -143,16 +146,21 @@ def absoluteMoment
   ∫⁻ ω, ENNReal.ofReal (Real.rpow |X ω| p) ∂μ
 
 /-! The representative and quotient-level `Lᵖ` interface. -/
+/-- Representative norms, membership, and quotient data for an `Lᵖ` space. -/
 structure LpNormSpaceModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ENNReal) where
+  /-- The extended `Lᵖ` norm on representatives. -/
   representativeNorm : (Ω → ℝ) → ENNReal
   representativeNorm_eq : ∀ X, representativeNorm X = eLpNorm X p μ
+  /-- The `MemLp` predicate on representatives. -/
   representativeMember : (Ω → ℝ) → Prop
   representativeMember_iff : ∀ X, representativeMember X ↔ MemLp X p μ
+  /-- The Mathlib `Lᵖ` quotient carrier. -/
   quotient : AddSubgroup (Ω →ₘ[μ] ℝ)
   quotient_eq : quotient = MeasureTheory.Lp ℝ p μ
 
+/-- Construct the canonical `Lᵖ` representative-and-quotient model. -/
 def lpNormSpaceModel
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ENNReal) : LpNormSpaceModelData μ p :=
@@ -209,10 +217,13 @@ structure MGFModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) where
   measurable : AEMeasurable X μ
+  /-- The extended-real moment generating function. -/
   extended : ℝ → ENNReal
   extended_eq : ∀ t, extended t = mgf μ X t
+  /-- The parameters where the extended MGF is finite. -/
   domain : Set ℝ
   domain_eq : domain = mgfDomain μ X
+  /-- The real-valued MGF on its integrability domain. -/
   real : ℝ → ℝ
   real_eq : ∀ t, real t = realMgf μ X t
   real_domain : ∀ t, t ∈ domain → HasExponentialIntegrability μ X t
@@ -226,14 +237,17 @@ theorem no_real_square_root_neg_one :
 structure MomentModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) where
+  /-- The sequence of raw natural moments. -/
   raw : ℕ → ℝ
   raw_eq : ∀ n, raw n = rawMoment μ X n
+  /-- The extended-real absolute moments. -/
   absolute : ℝ → ENNReal
   absolute_eq : ∀ p, absolute p = absoluteMoment μ X p
   finite_raw : ∀ n, HasFiniteRawMoment μ X n
   finite_absolute : ∀ p, 0 < p → HasFiniteAbsoluteMoment μ X p
   source_obstruction : ¬ ∃ y : ℝ, y ^ 2 = -1
 
+/-- Build the corrected raw/absolute moment interface. -/
 def momentModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ)
@@ -285,10 +299,12 @@ def variance {Ω : Type*} [MeasurableSpace Ω]
   chapter's Bochner-expectation convention; quotient-space identification is
   delegated to Mathlib's `MeasureTheory.Lp`.
 -/
+/-- The representative-level real `L²` inner product. -/
 def l2InnerProduct {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X Y : Ω → ℝ) : ℝ :=
   expectation μ (fun ω => X ω * Y ω)
 
+/-- The representative-level real `L²` norm. -/
 noncomputable def l2Norm {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ :=
   Real.sqrt (expectation μ (fun ω => (X ω) ^ 2))
@@ -318,16 +334,21 @@ theorem stdevCovarianceIdentities
   · rfl
   · rfl
 
+/-- The inner product and norms of two representatives in real `L²`. -/
 structure L2GeometryModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X Y : Ω → ℝ) where
+  /-- The `L²` inner product of `X` and `Y`. -/
   inner_product : ℝ
   inner_product_eq : inner_product = l2InnerProduct μ X Y
+  /-- The `L²` norm of `X`. -/
   x_norm : ℝ
   x_norm_eq : x_norm = l2Norm μ X
+  /-- The `L²` norm of `Y`. -/
   y_norm : ℝ
   y_norm_eq : y_norm = l2Norm μ Y
 
+/-- Construct the representative-level real `L²` geometry model. -/
 def l2GeometryModel
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X Y : Ω → ℝ) :
@@ -358,7 +379,7 @@ theorem variance_eq_centered_expectation
 
 /-! The pointwise layer-cake identity used in the proof of Lemma 1.2.1. -/
 theorem layerCakePointwise {x : ℝ} (hx : 0 ≤ x) :
-    x = (∫ t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
+    x = (∫ _t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
       ENNReal.ofReal x =
         ∫⁻ t in Set.Ioi 0,
           (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume := by
@@ -398,7 +419,9 @@ theorem layerCakeExpectationFinite
     (hNonneg : ∀ ω, 0 ≤ X ω) (hInt : Integrable X μ) :
     expectation μ X =
       ∫ t in Set.Ioi 0, μ.real {ω | t < X ω} := by
-  exact hInt.integral_eq_integral_meas_lt
+  have hInt' : Integrable X μ :=
+    ⟨hX.aestronglyMeasurable, hInt.hasFiniteIntegral⟩
+  exact hInt'.integral_eq_integral_meas_lt
     (Filter.Eventually.of_forall hNonneg)
 
 theorem layerCakeExpectation
@@ -442,15 +465,17 @@ theorem exercise122CorrectedSignedTailFormula
     ∫ ω, X ω ∂μ =
       (∫ t in Set.Ioi 0, μ.real {a | t < X a}) -
         (∫ t in Set.Iio 0, μ.real {a | X a < t}) := by
+  have hInt' : Integrable X μ :=
+    ⟨hX.aestronglyMeasurable, hInt.hasFiniteIntegral⟩
   have hintpos : Integrable (fun ω => max (X ω) 0) μ := by
-    have h' := hInt.real_toNNReal
+    have h' := hInt'.real_toNNReal
     convert h' using 1
   have hintneg : Integrable (fun ω => max (-X ω) 0) μ := by
-    have h' := hInt.neg.real_toNNReal
+    have h' := hInt'.neg.real_toNNReal
     convert h' using 1
   have hfinitepos := hintpos.integral_eq_integral_meas_lt
     (Filter.Eventually.of_forall (fun ω => le_max_right (X ω) 0))
-  rw [integral_eq_integral_pos_part_sub_integral_neg_part hInt]
+  rw [integral_eq_integral_pos_part_sub_integral_neg_part hInt']
   have hpos_eq : (fun ω => (Real.toNNReal (X ω) : ℝ)) =
       (fun ω => max (X ω) 0) := by
     funext ω
@@ -688,10 +713,10 @@ lemma not_integrable_cauchy_neg :
       have hmult : 1 ≤ (2 * (-x) * (-x)) / ((-x) ^ 2 + 1) := by
         apply (le_div_iff₀ (by positivity : 0 < (-x) ^ 2 + 1)).2
         nlinarith [sq_nonneg (x + 1)]
-      convert hmult using 1 <;> ring
+      convert hmult using 1; ring
     calc
       (-x)⁻¹ ≤ 2 * (-x) / (x ^ 2 + 1) := by
-        convert hbasic using 1 <;> ring
+        convert hbasic using 1; ring
       _ = 2 * Real.pi * (-(x) * (Real.pi⁻¹ * (x ^ 2 + 1)⁻¹)) := by
         field_simp [Real.pi_ne_zero, ne_of_lt hx0]
   have hpos : IntegrableOn (fun x : ℝ => x⁻¹) (Set.Ioi 1) volume := by
@@ -1050,7 +1075,7 @@ theorem holderEndpointOneTop
         (by
           simpa using
             (eLpNorm_le_eLpNorm_mul_eLpNorm_top 1 hX.1 Y (fun x y => x * y) 1
-              (.of_forall fun _ => by simp [enorm_eq_nnnorm])))
+              (.of_forall fun _ => by simp)))
     _ = (eLpNorm X 1 μ).toReal * (eLpNorm Y (⊤ : ENNReal) μ).toReal := by
       simp only [ENNReal.toReal_mul]
 
@@ -1062,6 +1087,7 @@ theorem holderEndpointTopOne
       (eLpNorm X (⊤ : ENNReal) μ).toReal * (eLpNorm Y 1 μ).toReal := by
   simpa [mul_comm] using holderEndpointOneTop (μ := μ) (X := Y) (Y := X) hY hX
 
+/-- The interior and endpoint forms of Hölder's inequality. -/
 structure HolderModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X Y : Ω → ℝ) where
@@ -1077,6 +1103,7 @@ structure HolderModelData
     ‖expectation μ (fun ω => X ω * Y ω)‖ ≤
       (eLpNorm X (⊤ : ENNReal) μ).toReal * (eLpNorm Y 1 μ).toReal
 
+/-- Package the proved forms of Hölder's inequality. -/
 def holderModel
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X Y : Ω → ℝ) : HolderModelData μ X Y :=
@@ -1206,6 +1233,7 @@ theorem twoPointLpTriangleFailure :
     _ = 1 := ENNReal.inv_two_add_inv_two
 
 /-! The `p ≥ 1` branch of the source-facing Banach-space statement. -/
+/-- Banach-space data for the `Lᵖ` quotient when `p ≥ 1`. -/
 structure LpQuotientBanachModelData
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (p : ENNReal)
     [Fact (1 ≤ p)] : Prop where
@@ -1230,7 +1258,9 @@ structure ExpectationVarianceModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : Ω → ℝ) (hX : Integrable X μ) where
+  /-- The expectation of `X`. -/
   mean : ℝ
+  /-- The variance of `X`. -/
   variance : ℝ
   mean_eq : mean = expectation μ X
   variance_eq : variance = Preliminaries.variance μ X
@@ -1253,6 +1283,7 @@ end NumStability.HDP.Scalar.Preliminaries
 
 namespace NumStability.HDP.Contract
 
+/-- Stable contract name for the indicator expectation identity. -/
 def hdp_01_hdef_hindicator
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (E : Set Ω) (hE : MeasurableSet E) :
@@ -1260,18 +1291,21 @@ def hdp_01_hdef_hindicator
         (NumStability.HDP.Scalar.Preliminaries.indicatorFunction E) = μ.real E :=
   NumStability.HDP.Scalar.Preliminaries.indicatorExpectation μ E hE
 
+/-- Stable contract name for the corrected moment interface. -/
 def hdp_01_hdef_hmoments
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) :
   Type :=
   NumStability.HDP.Scalar.Preliminaries.MomentModelData μ X
 
+/-- Stable contract name for the extended and real MGF interface. -/
 def hdp_01_hdef_hmgf
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) :
     Type :=
   NumStability.HDP.Scalar.Preliminaries.MGFModelData μ X
 
+/-- Stable contract name for the representative-and-quotient `Lᵖ` model. -/
 def hdp_01_hdef_hlp_hnorm_hspace
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ENNReal) :
@@ -1311,7 +1345,7 @@ theorem hdp_01_hthm_hjensen
   NumStability.HDP.Scalar.Preliminaries.jensenIntegral hφ hX hφX
 
 theorem hdp_01_hlem_hlayer_hcake_hpointwise {x : ℝ} (hx : 0 ≤ x) :
-    x = (∫ t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
+    x = (∫ _t in Set.Ioc 0 x, (1 : ℝ) ∂volume) ∧
       ENNReal.ofReal x =
         ∫⁻ t in Set.Ioi 0,
           (Set.Iio x).indicator (fun _ => (1 : ENNReal)) t ∂volume :=

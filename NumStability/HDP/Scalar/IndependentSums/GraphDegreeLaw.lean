@@ -20,6 +20,7 @@ open scoped BigOperators ENNReal NNReal
 
 namespace NumStability.HDP.Scalar.IndependentSums.Chernoff
 
+/-- The unordered pairs formed by `v` and the vertices in `S`. -/
 def graphStarEdgeFinset {V : Type*} (v : V) (S : Finset V) : Finset (Sym2 V) :=
   S.map (Sym2.mkEmbedding v)
 
@@ -27,6 +28,7 @@ def graphStarEdgeFinset {V : Type*} (v : V) (S : Finset V) : Finset (Sym2 V) :=
     (graphStarEdgeFinset v S).card = S.card := by
   simp [graphStarEdgeFinset]
 
+/-- Subsets whose membership agrees with `T` on the finite coordinate set `E`. -/
 def setBernoulliFinsetExactEvent {ι : Type*} (E T : Finset ι) : Set (Set ι) :=
   {s | ∀ e ∈ E, (e ∈ s ↔ e ∈ T)}
 
@@ -114,6 +116,7 @@ lemma setBernoulliFinsetExactEvent_probability
   · intro e _he
     by_cases heT : e ∈ T <;> simp [heT]
 
+/-- Graphs whose adjacency to `v` agrees with membership in `T` on `S`. -/
 def graphStarExactEvent {V : Type*} (v : V) (S T : Finset V) : Set (SimpleGraph V) :=
   {G | ∀ w ∈ S, (G.Adj v w ↔ w ∈ T)}
 
@@ -127,6 +130,7 @@ lemma graphStarEdgeFinset_subset_diag_compl {V : Type*} {v : V} {S : Finset V}
   intro hvw
   exact hvS (by simpa [hvw] using hw)
 
+/-- Graphs whose edge membership on `E` agrees exactly with `T`. -/
 def graphEdgesExactFinsetEvent {V : Type*} (E T : Finset (Sym2 V)) :
     Set (SimpleGraph V) :=
   {G | ∀ e ∈ E, (e ∈ G.edgeSet ↔ e ∈ T)}
@@ -237,6 +241,7 @@ lemma measurableSet_graphStarExactEvent
   rw [graphStarExactEvent_eq_graphEdgesExactFinsetEvent hvS]
   exact measurableSet_graphEdgesExactFinsetEvent _ _
 
+/-- Graphs in which `v` has exactly `k` neighbors in `S`. -/
 def graphStarExactCardEvent {V : Type*} (v : V) (S : Finset V) (k : ℕ) :
     Set (SimpleGraph V) :=
   ⋃ T ∈ S.powersetCard k, graphStarExactEvent v S T
@@ -366,9 +371,11 @@ lemma binomialRandom_graphStarExactCardEvent_probability
           (unitInterval.toNNReal (unitInterval.symm p) : ℝ≥0∞) ^ (S.card - k) := by
       ring
 
+/-- The `Set.ncard` of the neighbor set of `v`, hence zero when that set is infinite. -/
 def graphDegree {V : Type*} (v : V) (G : SimpleGraph V) : ℕ :=
   (G.neighborSet v).ncard
 
+/-- The degree of `v` written as a finite sum of adjacency indicators. -/
 noncomputable def graphDegreeSum {V : Type*} [Fintype V] (v : V) (G : SimpleGraph V) : ℕ := by
   classical
   exact ∑ w : V, if G.Adj v w then 1 else 0
@@ -414,11 +421,11 @@ lemma graphStarExactCardEvent_eq_preimage_graphDegree
       constructor
       · intro hw
         have hwS : w ∈ (Finset.univ.erase v : Set V) := by
-          simp only [Finset.mem_coe, Finset.mem_erase, Finset.mem_univ, true_and]
+          simp only [Finset.mem_coe, Finset.mem_erase, Finset.mem_univ]
           exact ⟨by
             intro hwv
             subst w
-            simpa using hw, trivial⟩
+            simp at hw, trivial⟩
         exact (hGT w hwS).1 (by simpa using hw)
       · intro hwT
         have hwS : w ∈ (Finset.univ.erase v : Set V) := hTsub (by simpa using hwT)
@@ -435,7 +442,7 @@ lemma graphStarExactCardEvent_eq_preimage_graphDegree
       have hwv : w ≠ v := by
         intro hwv
         subst w
-        simpa using hwN
+        simp at hwN
       simp [hwv]
     have hTcard : T.card = k := by
       calc
@@ -463,6 +470,7 @@ lemma graphStarExactCardEvent_eq_preimage_graphDegreeSum
   ext G
   simp [graphDegreeSum_eq_graphDegree]
 
+/-- The natural-valued pushforward of the binomial law with `n - 1` trials. -/
 noncomputable def graphBinomialLaw (n : ℕ) (p : Set.Icc (0 : ℝ) 1) : Measure ℕ :=
   ((PMF.binomial (unitInterval.toNNReal p)
       (by change (p : ℝ) ≤ 1; exact p.2.2) (n - 1)).map
@@ -513,7 +521,7 @@ theorem graphDegreeSum_map_apply {n : ℕ} (p : Set.Icc (0 : ℝ) 1) (v : Fin n)
             congrArg (fun x : ℝ≥0 => (x : ℝ≥0∞)) hq.symm
           _ = 1 - (unitInterval.toNNReal p : ℝ≥0∞) := by
             rfl
-      simp [PMF.binomial_apply, Finset.card_erase_of_mem, hk, hqE]
+      simp [PMF.binomial_apply, Finset.card_erase_of_mem, hqE]
       ring
     · intro b _hb hbk
       by_cases h : k = (b : ℕ)

@@ -23,7 +23,9 @@ chosen spatial domain.  Geometry-specific shape conditions are intentionally
 left to downstream grid structures. -/
 structure FiniteVolumeCellPartition (Cell Point : Type*)
     [MeasurableSpace Point] where
+  /-- The spatial region covered by the modeled partition. -/
   domain : Set Point
+  /-- The measurable spatial region assigned to each cell. -/
   cellRegion : Cell → Set Point
   cells_nonempty : Nonempty Cell
   measurable_cell : ∀ cell, MeasurableSet (cellRegion cell)
@@ -38,6 +40,7 @@ assigned effective property distinct from the underlying spatial parameter
 field without postulating an unconstrained conversion or suitability
 predicate. -/
 structure CellAveragedMaterialProperty (Parameter : Type*) where
+  /-- The effective material parameter assigned after cell averaging. -/
   averagedParameter : Parameter
 
 /-- A model-indexed rule for averaging material parameters over finite-volume
@@ -48,6 +51,8 @@ fields are reproduced on positive finite-volume cells. -/
 structure CellMaterialAveragingRule
     (Model Cell Point Parameter : Type*) [MeasurableSpace Point]
     (cellRegion : Cell → Set Point) where
+  /-- Compute an effective parameter from a model, measure, cell, and
+  spatially varying parameter field. -/
   averageParameter :
     Model → Measure Point → Cell → (Point → Parameter) → Parameter
   local_congr : ∀ model volumeMeasure cell field₁ field₂,

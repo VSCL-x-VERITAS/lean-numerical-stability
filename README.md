@@ -13,7 +13,7 @@ source-correspondence modules for results from books and papers.
 > **Active development repository:**
 > [`VSCL-x-VERITAS/lean-numerical-stability`](https://github.com/VSCL-x-VERITAS/lean-numerical-stability).
 > The [`AlexGeorgantzas` repository](https://github.com/AlexGeorgantzas/lean-numerical-stability)
-> is the upstream project history; new development, branches, and issues for
+> is the upstream project history; new development, branches, and pull requests for
 > this continuation should target the VSCL-x-VERITAS repository.
 
 The principal source developments currently cover:
@@ -34,15 +34,15 @@ faithfully.
 
 ## Current repository status
 
-The source-only figures below were generated on 2026-09-04 from the integrated
-code tree at `1ff124d06a9a127bd956edf40280c4d7c6436737` with the repository-owned
-strict baseline generator. This README-only update does not change the Lean
-source tree.
+The source-only figures below were regenerated on 2026-09-04 from the
+production Lean tree in this revision with the repository-owned strict
+baseline generator. Its normalized source-tree SHA-256 is
+`31e824f6aef9084ac5c2585c1b417ad5a7e488dc158a894751177bbefca66821`.
 
 | Metric | Current result |
 |---|---:|
 | Production Lean modules | **3,198** |
-| Nonblank Lean source lines | **1,474,872** |
+| Nonblank Lean source lines | **1,475,097** |
 | Direct imports | **31,987** (20,049 internal; 11,938 external) |
 | Import cycles / unresolved project imports | **0 / 0** |
 | Classified modules | **3,198 / 3,198 (100%)** |
@@ -72,20 +72,21 @@ and [`architecture process`](docs/architecture/PROCESS.md) for the distinction.
 
 ### CI status
 
-The current source graph passes the layout, tier, placeholder, compatibility,
-provenance, and strict source-baseline checks. The exact `main` run for
-`1ff124d06` passed that architecture stage and then reached the workflow's
-180-minute limit during the full build. The three immediately preceding
-checkpoint runs completed the full `NumStability NumStabilityTest` build and
-`lake test`, but stopped at the warning ratchet: the captured tree emits 248
-diagnostics across 52 files, versus 12 reviewed fingerprints in
-[`warnings.json`](docs/architecture/warnings.json). The remaining 236
-fingerprints include 38 `linter.style.nameCheck` diagnostics. The reviewed
-warning baseline has not been expanded automatically, and the lint-baseline
-step remains pending behind that gate.
+The badge above is the authoritative live status of `main`. On every push to
+`main`, every pull request, and manual dispatch, Lean CI validates the recorded
+architecture phases, completion state, layout, tiers, placeholder and axiom
+policy, compatibility, provenance, and strict source graph. It then builds
+`NumStability` and `NumStabilityTest`, runs `lake test`, and enforces the
+reviewed warning and lint baselines.
 
-The badge above reflects the live GitHub Actions state. A green build should
-not be inferred from the absence of `sorry` or from a passing structural scan.
+The workflow has a 360-minute job ceiling to accommodate cold-cache builds.
+Warning and lint checks run independently so one diagnostic failure cannot
+hide the other. When the diagnostic stage is reached, the raw build and lint
+logs are retained as a 14-day workflow artifact, and a final enforcement step
+fails if either ratchet fails.
+
+A green badge means the exact `main` commit passed the complete workflow;
+passing only the structural checks or having no `sorry` is insufficient.
 
 ## Floating-point model
 
@@ -165,7 +166,7 @@ Riemann-interface adapters, and operator splitting.
 
 The 30-module LeVeque source surface begins at
 [`NumStability.Source.LeVeque`](NumStability/Source/LeVeque.lean); its
-[`Chapter01` subtree](NumStability/Source/LeVeque/) connects those foundations
+[`Chapter01` subtree](NumStability/Source/LeVeque/Chapter01/) connects those foundations
 to Chapter 1 equations and constructions. The machine-readable
 [`Chapter 1 gate`](gates/leveque-finite-volume/chapter-01.json) and its
 [`audit artifacts`](gates/leveque-finite-volume/artifacts/) record source
@@ -324,6 +325,8 @@ experiments/                              C/Python reproductions of selected sou
 For a source-only architecture check, run:
 
 ```bash
+python tools/architecture/check_phase.py --all-phases
+python tools/architecture/check_completion_phase.py
 python tools/architecture/check_layout.py
 python tools/architecture/check_tiers.py
 python tools/architecture/check_placeholders.py
@@ -332,11 +335,13 @@ python tools/architecture/check_provenance.py
 python tools/architecture/generate_baseline.py --skip-declarations --strict-source --output-dir benchmark-results/architecture --name source-check
 ```
 
-CI additionally runs the phase and checker self-tests, builds both Lean
-libraries, runs the literal `lake test` driver, and checks the reviewed warning
-and lint baselines. [`CONTRIBUTING.md`](CONTRIBUTING.md) explains placement,
-compatibility, testing, and licensing requirements. Architecture changes follow
-[`docs/architecture/PROCESS.md`](docs/architecture/PROCESS.md).
+CI additionally compiles its Python tooling, runs the architecture and
+diagnostic checker self-tests, builds both Lean libraries, runs the literal
+`lake test` driver, and checks the reviewed warning and lint baselines. Those
+baselines are review records and must not be regenerated merely to silence new
+findings. [`CONTRIBUTING.md`](CONTRIBUTING.md) explains placement,
+compatibility, testing, and licensing requirements. Architecture changes
+follow [`docs/architecture/PROCESS.md`](docs/architecture/PROCESS.md).
 
 ## Documentation
 

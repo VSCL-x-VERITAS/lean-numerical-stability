@@ -140,8 +140,7 @@ theorem standardNormalLaw_pdf :
     ProbabilityTheory.gaussianPDFReal 0 1 =
       fun x : ℝ => (Real.sqrt (2 * Real.pi))⁻¹ * Real.exp (-(x ^ 2) / 2) := by
   funext x
-  simp only [ProbabilityTheory.gaussianPDFReal, NNReal.coe_one, sub_zero,
-    one_mul, Nat.cast_ofNat]
+  simp only [ProbabilityTheory.gaussianPDFReal, NNReal.coe_one, sub_zero]
   congr 1
   · congr 1
     ring
@@ -280,11 +279,13 @@ theorem bernoulliTrialWeight_sum_eq_one
         exact add_tsub_cancel_of_le hp
       simp [hsub]
 
+/-- The product Bernoulli PMF on Boolean vectors indexed by `Fin N`. -/
 def bernoulliTrialVectorPMF
     (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) : PMF (Fin N → Bool) :=
   PMF.ofFintype (bernoulliTrialWeight p N)
     (bernoulliTrialWeight_sum_eq_one p hp N)
 
+/-- The number of true coordinates in a Boolean trial vector. -/
 def bernoulliSuccessCount (N : ℕ) (f : Fin N → Bool) : ℕ :=
   (Finset.univ.filter fun i => f i).card
 
@@ -443,7 +444,9 @@ theorem bernoulliSumPMF_eq_binomialNatPMF
 
 /-- The source-facing Bernoulli/binomial package, including its defining facts. -/
 structure BernoulliBinomialModelData (p : ℝ≥0) (hp : p ≤ 1) (N : ℕ) where
+  /-- The stored natural-valued Bernoulli PMF. -/
   bernoulli : PMF ℕ
+  /-- The stored `N`-trial binomial PMF. -/
   binomial : PMF ℕ
   mean : ∫ x : ℝ, x ∂(bernoulliRealPMF p hp).toMeasure = p.toReal
   variance :

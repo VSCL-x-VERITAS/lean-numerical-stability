@@ -30,6 +30,7 @@ def IsConstantCoefficientLinearSystemSolutionAt
 constant-coefficient linear system at every point. -/
 structure ConstantCoefficientLinearSystemSolution
     {ι : Type*} [Fintype ι] (coefficient : Matrix ι ι ℝ) where
+  /-- The component-valued state as a function of space and time. -/
   state : ℝ → ℝ → (ι → ℝ)
   satisfies : ∀ x t,
     IsConstantCoefficientLinearSystemSolutionAt state coefficient x t

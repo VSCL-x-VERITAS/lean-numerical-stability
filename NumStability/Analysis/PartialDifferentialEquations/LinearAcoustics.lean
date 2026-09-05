@@ -33,7 +33,9 @@ def IsLinearAcousticsSolutionAt
 acoustics equations for fixed material coefficients. -/
 structure LinearAcousticsSolution (bulkModulus density : ℝ) where
   density_ne_zero : density ≠ 0
+  /-- The pressure field as a function of space and time. -/
   pressure : ℝ → ℝ → ℝ
+  /-- The particle-velocity field as a function of space and time. -/
   velocity : ℝ → ℝ → ℝ
   satisfies : ∀ x t,
     IsLinearAcousticsSolutionAt pressure velocity bulkModulus density x t

@@ -34,6 +34,7 @@ namespace NumStability.HDP.Scalar.SubExponential
 
 /-- A convex, nondecreasing function with the defining Orlicz properties. -/
 structure OrliczFunction where
+  /-- The underlying real function. -/
   toFun : ℝ → ℝ
   nonnegative : ∀ x, 0 ≤ x → 0 ≤ toFun x
   convexOn_nonneg : ConvexOn ℝ (Set.Ici 0) toFun
@@ -57,43 +58,54 @@ theorem OrliczFunction.tendsto_scale_separation
   exact ψ.tendsto_atTop.comp hscale
 
 /-! The Luxemburg/Orlicz gauge and its a.e. quotient-level space. -/
+/-- The Orlicz integral of a representative at scale `t`. -/
 def orliczIntegral {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : ENNReal :=
   ∫⁻ ω, ENNReal.ofReal (ψ (|X ω| / t.toReal)) ∂μ
 
+/-- Admissibility of a scale for the Luxemburg gauge. -/
 def orliczAdmissible {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : Prop :=
   t ≠ 0 ∧ t ≠ ∞ ∧ orliczIntegral ψ μ X t ≤ 1
 
+/-- The extended Luxemburg gauge associated with `ψ` and `μ`. -/
 noncomputable def orliczGauge {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
   sInf {t : ℝ≥0∞ | orliczAdmissible ψ μ X t}
 
+/-- The predicate that a representative has finite Orlicz gauge. -/
 def orliczMember {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) (X : Ω → ℝ) : Prop :=
   orliczGauge ψ μ X < ∞
 
+/-- Strongly measurable representatives with finite Orlicz gauge. -/
 def orliczRepresentative {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) :=
   {X : Ω → ℝ // AEStronglyMeasurable X μ ∧ orliczMember ψ μ X}
 
+/-- Almost-everywhere equality on Orlicz representatives. -/
 def orliczAESetoid {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) : Setoid (orliczRepresentative ψ μ) where
   r X Y := X.1 =ᵐ[μ] Y.1
   iseqv := ⟨fun _ => Filter.Eventually.of_forall (fun _ => rfl),
     fun h => h.symm, fun h₁ h₂ => h₁.trans h₂⟩
 
+/-- The almost-everywhere quotient of Orlicz representatives. -/
 def orliczSpace {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) :=
   Quotient (orliczAESetoid ψ μ)
 
+/-- The representative gauge and quotient carrier of an Orlicz norm space. -/
 structure OrliczNormSpaceModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) where
+  /-- The Luxemburg gauge on representatives. -/
   representativeGauge : (Ω → ℝ) → ℝ≥0∞
   representativeGauge_eq : ∀ X, representativeGauge X = orliczGauge ψ μ X
+  /-- The finite-gauge membership predicate on representatives. -/
   representativeMember : (Ω → ℝ) → Prop
   representativeMember_iff : ∀ X, representativeMember X ↔ orliczMember ψ μ X
+  /-- The quotient by almost-everywhere equality. -/
   quotient : Type _
   quotient_eq : quotient = orliczSpace ψ μ
   admissible_smul_iff :
@@ -152,6 +164,7 @@ lemma orliczIntegral_mono
     · exact div_nonneg (abs_nonneg _) htpos.le
     · exact div_le_div_of_nonneg_right (hXY ω) htpos.le)
 
+/-- Construct the canonical Orlicz norm-space model. -/
 def orliczNormSpaceModel
     {Ω : Type*} [MeasurableSpace Ω]
     (ψ : OrliczFunction) (μ : Measure Ω) : OrliczNormSpaceModelData ψ μ :=
@@ -168,7 +181,7 @@ def orliczNormSpaceModel
 
 /-! The moment-to-MGF implication from Proposition 2.7.1. -/
 
-/- The root-free integral form of the source's `‖X‖ₚ ≤ K p` hypothesis.  The
+/-- The root-free integral form of the source's `‖X‖ₚ ≤ K p` hypothesis.  The
 real-parameter formulation keeps the statement faithful to the printed
 proposition; the proof below specializes it to the integer moments appearing
 in the exponential series. -/
@@ -179,6 +192,7 @@ def LpMomentGrowth {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       Integrable (fun ω => |X ω| ^ p) μ ∧
         (∫ ω, |X ω| ^ p ∂μ) ≤ (K * p) ^ p
 
+/-- The `n`th nonnegative term in the absolute-MGF power series. -/
 def absMGFTerm {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) : ENNReal :=
   ENNReal.ofReal (((|lam| * |X ω|) ^ n) / (n.factorial : ℝ))
 
@@ -348,7 +362,7 @@ lemma exp_abs_integrable
   have hAbs : AEMeasurable (fun ω => |X ω|) μ := by
     apply (hg.norm.aemeasurable.congr ?_)
     filter_upwards [hXg] with ω hω
-    simpa [Real.norm_eq_abs, hω]
+    simp [Real.norm_eq_abs, hω]
   have hmeas : AEMeasurable (fun ω => Real.exp (|lam| * |X ω|)) μ := by
     fun_prop
   have hfinite :
@@ -367,6 +381,7 @@ lemma exp_abs_integrable
   simpa [q, mul_assoc] using
     (ENNReal.ofReal_le_ofReal_iff (Real.exp_nonneg _)).mp hbound
 
+/-- The `n`th term in the centered absolute-MGF remainder series. -/
 def mgfRemainderTerm {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) : ENNReal :=
   ENNReal.ofReal (((|lam| * |X ω|) ^ (n + 2)) / ((n + 2).factorial : ℝ))
 
@@ -500,6 +515,7 @@ lemma exp_le_centered_remainder (y : ℝ) :
     rw [abs_of_nonpos hy]
     linarith
 
+/-- The pointwise remainder after the constant and linear MGF terms. -/
 def mgfRemainder {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (ω : Ω) : ℝ :=
   Real.exp (|lam| * |X ω|) - 1 - |lam| * |X ω|
 
@@ -601,6 +617,7 @@ theorem momentToMGF
           ring
 
 /-! The endpoint MGF hypothesis used for the reverse implication. -/
+/-- Two endpoint exponential-moment bounds at scale `K`. -/
 def TwoSidedMGFBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → ℝ) (K C : ℝ) : Prop :=
   AEMeasurable X μ ∧
@@ -731,16 +748,19 @@ theorem mgfToMoment
 
 /-! Exercise 2.7.2: the four equivalent absolute-value interfaces. -/
 
+/-- The two-sided sub-exponential tail-bound presentation. -/
 def SubExponentialTailBound {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
     ∀ t : ℝ, 0 ≤ t →
       μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t / K)
 
+/-- The moment-growth presentation of a sub-exponential bound. -/
 def SubExponentialMomentBound {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧ LpMomentGrowth μ X K
 
+/-- The local absolute-MGF presentation of a sub-exponential bound. -/
 def SubExponentialAbsoluteMGFLocal {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
@@ -748,18 +768,21 @@ def SubExponentialAbsoluteMGFLocal {Ω : Type*} [MeasurableSpace Ω]
       Integrable (fun ω => Real.exp (lam * |X ω|)) μ ∧
         (∫ ω, Real.exp (lam * |X ω|) ∂μ) ≤ Real.exp (K * lam)
 
+/-- The one-point absolute-MGF presentation of a sub-exponential bound. -/
 def SubExponentialOnePointMGF {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
     Integrable (fun ω => Real.exp (|X ω| / K)) μ ∧
       (∫ ω, Real.exp (|X ω| / K) ∂μ) ≤ 2
 
+/-- The four equivalent presentations of the sub-exponential property. -/
 inductive SubExponentialPropertyKind
   | tail
   | moment
   | absoluteMGF
   | onePoint
 
+/-- Interpret a sub-exponential presentation at a specified scale. -/
 def SubExponentialProperty {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) :
     SubExponentialPropertyKind → ℝ → Prop
@@ -804,7 +827,7 @@ private theorem subExponentialTailToMoment
     apply MeasureTheory.setLIntegral_mono
     · fun_prop
     · intro t ht
-      exact mul_le_mul_right' (hTail' t (le_of_lt (Set.mem_Ioi.mp ht))) _
+      exact mul_le_mul_left (hTail' t (le_of_lt (Set.mem_Ioi.mp ht))) _
   have hInt : IntegrableOn
       (fun t : ℝ => t ^ (p - 1) * Real.exp (-(K⁻¹) * t)) (Set.Ioi 0) := by
     simpa only [Real.rpow_one] using (integrableOn_rpow_mul_exp_neg_mul_rpow
@@ -846,8 +869,8 @@ private theorem subExponentialTailToMoment
     rw [hfun]
     have hGamma' := hGamma
     rw [show p - 1 + 1 = p by ring] at hGamma'
-    simp only [div_one, one_div, mul_one] at hGamma'
-    convert hGamma' using 1 <;> norm_num <;> ring
+    simp only [div_one, mul_one] at hGamma'
+    convert hGamma' using 1
   have hGammaBound : Real.Gamma p ≤ 4 * p ^ p :=
     NumStability.HDP.Scalar.SubGaussian.gammaUpperBound (by linarith)
   have hupperEval :
@@ -932,10 +955,10 @@ private theorem subExponentialTailToMoment
       _ ≤ ENNReal.ofReal p *
           (∫⁻ t in Set.Ioi 0,
             ENNReal.ofReal (2 * Real.exp (-t / K)) *
-              ENNReal.ofReal (t ^ (p - 1))) := mul_le_mul_left' hupper _
+              ENNReal.ofReal (t ^ (p - 1))) := mul_le_mul_right hupper _
       _ ≤ ENNReal.ofReal p * ENNReal.ofReal
           (2 * (K⁻¹) ^ (-p) * Real.Gamma p) :=
-            mul_le_mul_left' hupperEval _
+            mul_le_mul_right hupperEval _
       _ ≤ ENNReal.ofReal ((8 * Real.exp 1 * K * p) ^ p) := hcalc
   have hfinite :
       NumStability.HDP.Scalar.Preliminaries.absoluteMoment μ X p < (⊤ : ENNReal) :=
@@ -1084,7 +1107,7 @@ private theorem subExponentialToTail
       have hPoint := subExponentialAbsoluteMGFToOnePoint hLocal
       have hTail := subExponentialOnePointToTail hPoint
       refine ⟨8 * Real.exp 1 * K, by positivity, le_rfl, ?_⟩
-      convert hTail using 1 <;> ring
+      convert hTail using 1; ring
   | absoluteMGF =>
       have hPoint := subExponentialAbsoluteMGFToOnePoint hProp
       have hTail := subExponentialOnePointToTail hPoint
@@ -1092,7 +1115,7 @@ private theorem subExponentialToTail
       · have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
         have hscale : (2 : ℝ) ≤ 8 * Real.exp 1 := by nlinarith
         exact mul_le_mul_of_nonneg_right hscale hK.le
-      · convert hTail using 1 <;> ring
+      · convert hTail using 1
   | onePoint =>
       have hTail := subExponentialOnePointToTail hProp
       refine ⟨K, hK, ?_, hTail⟩
@@ -1137,7 +1160,9 @@ private theorem subExponentialFromTail
         have he : (1 : ℝ) ≤ Real.exp 1 := Real.one_le_exp (by norm_num)
         exact mul_le_mul_of_nonneg_right (by nlinarith [he]) hT.le
       · change SubExponentialAbsoluteMGFLocal μ X K
-        convert hLocal using 1 <;> dsimp [K] <;> ring
+        convert hLocal using 1
+        all_goals dsimp [K]
+        all_goals ring
   | onePoint =>
       let K := 64 * (Real.exp 1) ^ 2 * T
       have hMom := subExponentialTailToMoment hTail
@@ -1145,7 +1170,9 @@ private theorem subExponentialFromTail
       have hPoint := subExponentialAbsoluteMGFToOnePoint hLocal
       refine ⟨K, by dsimp [K]; positivity, le_rfl, ?_⟩
       change SubExponentialOnePointMGF μ X K
-      convert hPoint using 1 <;> dsimp [K] <;> ring
+      convert hPoint using 1
+      all_goals dsimp [K]
+      all_goals ring
 
 /-! Reusable four-way characterization for Exercise 2.7.2. -/
 theorem subExponentialCharacterization
@@ -1197,8 +1224,10 @@ order.  This representation deliberately does not assert a linear MGF norm
 when `α ≤ 1`.
 -/
 
+/-- The presentation index reused for fixed-power sub-Weibull properties. -/
 abbrev SubWeibullPropertyKind := SubExponentialPropertyKind
 
+/-- A sub-exponential property of the transformed variable `|X| ^ α`. -/
 def SubWeibullProperty {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (α : ℝ) :
     SubWeibullPropertyKind → ℝ → Prop
@@ -1243,22 +1272,23 @@ theorem subWeibullCharacterization
     (subExponentialCharacterization (μ := μ) (X := Y))
   refine ⟨C, hC, ?_⟩
   intro i j Ki hKi hProp
-  rcases hProp with ⟨hα', hSub⟩
+  rcases hProp with ⟨_hα', hSub⟩
   rcases hCharacterization i j hKi hSub with ⟨Kj, hKj, hKjbound, hResult⟩
-  exact ⟨Kj, hKj, hKjbound, ⟨hα', by simpa [Y] using hResult⟩⟩
+  exact ⟨Kj, hKj, hKjbound, ⟨hα, by simpa [Y] using hResult⟩⟩
 
 /-! Remark 2.7.9: a bounded centered unit-variance witness and the domain of the
 rate-one exponential MGF.  The symmetric two-point law makes the local Taylor
 calculation exact, while the exponential-law calculation is kept in extended
 measure form through its density. -/
 
+/-- The symmetric two-point law used in Remark 2.7.9. -/
 def remark279Law : Measure ℝ :=
   (1 / 2 : ENNReal) • Measure.dirac (-1) +
     (1 / 2 : ENNReal) • Measure.dirac 1
 
 lemma remark279Law_probability : IsProbabilityMeasure remark279Law := by
   apply isProbabilityMeasure_iff.mpr
-  simp [remark279Law, ENNReal.div_eq_inv_mul]
+  simp [remark279Law]
   calc
     (2 : ENNReal)⁻¹ + 2⁻¹ = (2 : ENNReal)⁻¹ + (2 : ENNReal)⁻¹ * 1 := by
       ring
@@ -1275,10 +1305,10 @@ lemma remark279Law_integral (f : ℝ → ℝ) :
     norm_num
   · apply Integrable.smul_measure
     · exact integrable_dirac (by simp)
-    · simp [ENNReal.div_eq_inv_mul]
+    · simp
   · apply Integrable.smul_measure
     · exact integrable_dirac (by simp)
-    · simp [ENNReal.div_eq_inv_mul]
+    · simp
 
 lemma remark279_mean :
     (∫ x, x ∂remark279Law) = 0 := by
@@ -1310,8 +1340,9 @@ lemma cosh_local_taylor :
     · funext x
       simp [taylorWithinEval, taylorWithin, taylorCoeffWithin,
         Finset.sum_range_succ, hc0, hc1, hc2,
-        div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] <;>
-        ring_nf <;> simp
+        div_eq_mul_inv, mul_comm]
+      all_goals ring_nf
+      all_goals simp
     · rw [nhdsWithin_univ]
   · simp
 
@@ -1432,7 +1463,7 @@ lemma remark279_exp_mgf_not_integrable {lam : ℝ} (hl : 1 ≤ lam) :
     · filter_upwards [self_mem_ae_restrict measurableSet_Ioi] with x hx
       rw [Real.norm_eq_abs, abs_one]
       exact Real.one_le_exp (mul_nonneg (sub_nonneg.mpr hl) (le_of_lt hx))
-  exact not_integrableOn_Ioi_rpow 0 (by simpa using hconst)
+  simp at hconst
 
 theorem remark279_contract :
     NumStability.HDP.Contract.hdp_02_hrem_h2_d7_d9__contract_type := by
@@ -1496,7 +1527,7 @@ lemma powerOrliczIntegral_eq
           (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) * c ∂μ) * c⁻¹ ≤
             ∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ := by
         simpa [mul_assoc, ENNReal.mul_inv_cancel hc0 hcTop] using h
-      have h'' := (ENNReal.mul_le_mul_right hc0 hcTop).2 h'
+      have h'' := (ENNReal.mul_le_mul_iff_left hc0 hcTop).2 h'
       simpa [mul_assoc, ENNReal.inv_mul_cancel hc0 hcTop] using h''
     · exact lintegral_mul_const_le c _
   rw [hscale]
@@ -1504,7 +1535,7 @@ lemma powerOrliczIntegral_eq
   rw [mul_comm (eLpNorm X (p : ℝ≥0∞) μ) t⁻¹]
   rw [← ENNReal.div_eq_inv_mul]
   rw [ENNReal.div_rpow_of_nonneg _ _ hpR0]
-  have hLp := eLpNorm_eq_lintegral_rpow_enorm hpE0 hpETop (f := X) (μ := μ)
+  have hLp := eLpNorm_eq_lintegral_rpow_enorm_toReal hpE0 hpETop (f := X) (μ := μ)
   have hLp' : eLpNorm X (p : ℝ≥0∞) μ =
       (∫⁻ a, ‖X a‖ₑ ^ (p : ℝ) ∂μ) ^ (p : ℝ)⁻¹ := by
     simpa [one_div] using hLp
@@ -1558,7 +1589,7 @@ theorem powerOrliczGauge_eq_eLpNorm
       refine ⟨ht0, htTop, ?_⟩
       rw [powerOrliczIntegral_eq ψ μ X p hp hψ ht0 htTop]
       have hLzero : eLpNorm X (p : ℝ≥0∞) μ = 0 := by simpa [L] using hL0
-      simp [hLzero, ht0, hpR]
+      simp [hLzero, hpR]
     · have hL0' : L ≠ 0 := hL0
       have hL0'' : eLpNorm X (p : ℝ≥0∞) μ ≠ 0 := by simpa [L] using hL0'
       have hLtop' : eLpNorm X (p : ℝ≥0∞) μ ≠ ∞ := by simpa [L] using hLtop
@@ -1599,6 +1630,7 @@ theorem powerOrliczCoincidence :
 source ψ₂ gauge.  The two admissibility predicates differ only by the
 probability-measure contribution of the subtracted constant `1`. -/
 
+/-- The Orlicz function `exp (x²) - 1` underlying the ψ₂ gauge. -/
 noncomputable def psiTwoOrliczFunction : OrliczFunction :=
   { toFun := fun x => Real.exp (x ^ 2) - 1
     nonnegative := by
@@ -1788,7 +1820,7 @@ namespace NumStability.HDP.Contract
 def hdp_02_hdef_horlicz_hfunction : Type :=
   NumStability.HDP.Scalar.SubExponential.OrliczFunction
 
-/-! Stable source-facing alias for the Luxemburg/Orlicz norm-space model. -/
+/-- Stable source-facing alias for the Luxemburg/Orlicz norm-space model. -/
 def hdp_02_hdef_horlicz_hnorm_hspace
     {Ω : Type*} [MeasurableSpace Ω]
     (ψ : NumStability.HDP.Scalar.SubExponential.OrliczFunction)

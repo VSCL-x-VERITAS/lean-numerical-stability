@@ -138,11 +138,18 @@ this specialization.
 
 /-- Compatibility data for the natural-indexed flux-difference API. -/
 structure Leveque01FiniteVolumeFluxUpdateData (E : Type*) where
+  /-- The old cell-average state indexed by natural-numbered cells. -/
   cellAverages : ℕ → E
+  /-- The physical conservation-law flux at each natural-numbered edge. -/
   physicalEdgeFlux : ℕ → E
+  /-- Compute an edge flux from the complete natural-indexed cell state. -/
   numericalFluxFromCellAverages : (ℕ → E) → ℕ → E
+  /-- The relation certifying that a numerical edge flux approximates its
+  physical counterpart. -/
   isPhysicalFluxApproximation : E → E → Prop
+  /-- The positive scaling applied to the numerical flux difference. -/
   fluxScale : ℝ
+  /-- The cell-average state after the flux-difference update. -/
   updatedCellAverages : ℕ → E
 
 /-- Compatibility predicate for the earlier natural-indexed specialization. -/

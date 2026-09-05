@@ -358,7 +358,6 @@ theorem standardNormalLpNorm (p : ℝ) (hp : 1 ≤ p) :
           ∫ x : ℝ in Set.Ioi 0, x ^ p * Real.exp (-(1 / 2) * x ^ 2) := by
             apply setIntegral_congr_fun measurableSet_Ioi
             intro x hx
-            congr 3
             dsimp
             rw [show -x ^ 2 / 2 = -(1 / 2) * x ^ 2 by ring]
             have hx2 : x ^ (2 : ℝ) = x ^ (2 : ℕ) := by
@@ -485,7 +484,6 @@ theorem standardNormalLpNormGrowth :
       have hCroot : ((2 * Real.exp 1) ^ p) ^ (1 / p) =
           2 * Real.exp 1 := by
         rw [← Real.rpow_mul (by positivity : (0 : ℝ) ≤ 2 * Real.exp 1)]
-        congr 1
         field_simp
         simp
       rw [hCroot] at hBroot
@@ -587,7 +585,6 @@ theorem gammaUpperBound {x : ℝ} (hx : 1 / 2 ≤ x) :
             linarith
           _ = Real.Gamma ((n : ℝ) + 1) := by
             rw [← add_mul]
-            congr 1
             ring
       rw [Real.Gamma_nat_eq_factorial n] at hgamma
       have hfac : (n.factorial : ℝ) ≤ (n : ℝ) ^ n := by
@@ -605,7 +602,7 @@ theorem gammaUpperBound {x : ℝ} (hx : 1 / 2 ≤ x) :
           _ ≤ x ^ x := hexp
       nlinarith
 
-/- The root-free integral form of the usual `Lᵖ` moment-growth hypothesis. -/
+/-- The root-free integral form of the usual `Lᵖ` moment-growth hypothesis. -/
 def LpMomentGrowth {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → ℝ) (K : ℝ) : Prop :=
   AEMeasurable X μ ∧
@@ -635,7 +632,7 @@ theorem tailToAbsoluteMoment
     apply MeasureTheory.setLIntegral_mono
     · fun_prop
     · intro t ht
-      exact mul_le_mul_right' (hTail t (le_of_lt (Set.mem_Ioi.mp ht))) _
+      exact mul_le_mul_left (hTail t (le_of_lt (Set.mem_Ioi.mp ht))) _
   have hInt : IntegrableOn
       (fun t : ℝ => t ^ (p - 1) * Real.exp (-(K⁻¹ ^ 2) * t ^ 2)) (Set.Ioi 0) := by
     apply integrableOn_rpow_mul_exp_neg_mul_sq
@@ -769,10 +766,10 @@ theorem tailToAbsoluteMoment
           (∫⁻ t in Set.Ioi 0,
             ENNReal.ofReal (2 * Real.exp (-t ^ 2 / K ^ 2)) *
               ENNReal.ofReal (t ^ (p - 1))) :=
-      mul_le_mul_left' hupper _
+      mul_le_mul_right hupper _
     _ ≤ ENNReal.ofReal p * ENNReal.ofReal
           (2 * ((K⁻¹ ^ 2) ^ (-p / 2) * (1 / 2) * Real.Gamma (p / 2))) :=
-      mul_le_mul_left' hupperEval _
+      mul_le_mul_right hupperEval _
     _ ≤ ENNReal.ofReal ((8 * Real.exp 1 * K * Real.sqrt p) ^ p) := hcalc
 
 theorem tailToLpMomentGrowth
@@ -830,12 +827,14 @@ theorem tailToLpMomentGrowth
 
 /-! The moment-to-square-MGF implication from Proposition 2.5.2. -/
 
+/-- Bounds every positive even absolute moment at a sub-Gaussian scale. -/
 def EvenMomentBound {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → ℝ) (K : ℝ) : Prop :=
   ∀ n : ℕ, 1 ≤ n →
     Integrable (fun ω => |X ω| ^ (2 * n)) μ ∧
       (∫ ω, |X ω| ^ (2 * n) ∂μ) ≤ K ^ (2 * n) * (2 * n : ℝ) ^ n
 
+/-- The `n`th nonnegative term in the square-MGF power series. -/
 def squareMGFTerm {Ω : Type*} (X : Ω → ℝ) (lam : ℝ) (n : ℕ) (ω : Ω) : ENNReal :=
   ENNReal.ofReal (((lam ^ 2 * X ω ^ 2) ^ n) / (n.factorial : ℝ))
 
@@ -1132,7 +1131,7 @@ lemma exp_le_add_exp_sq (x : ℝ) :
           Real.exp (x ^ 2 / 2) ^ 2 =
               Real.exp (x ^ 2 / 2) * Real.exp (x ^ 2 / 2) := by ring
           _ = Real.exp (x ^ 2 / 2 + x ^ 2 / 2) := by rw [Real.exp_add]
-          _ = Real.exp (x ^ 2) := by congr 1 <;> ring
+          _ = Real.exp (x ^ 2) := by congr 1; ring
       rw [← hexp]
       nlinarith
     linarith [hmain, hsq]
@@ -1142,6 +1141,7 @@ lemma exp_le_abs_add_exp_sq (x : ℝ) :
   exact (exp_le_add_exp_sq x).trans (by
     simpa [add_comm] using add_le_add_right (le_abs_self x) (Real.exp (x ^ 2)))
 
+/-- A local exponential-square moment bound on the unit parameter window. -/
 def SquareMGFLocal {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → ℝ) (C : ℝ) : Prop :=
   AEMeasurable X μ ∧
@@ -1186,7 +1186,7 @@ theorem squareMGFToMGF
     have hmono := MeasureTheory.integral_mono_ae hInt hsum
       (Filter.Eventually.of_forall (fun ω => by
         have hpoint := exp_le_add_exp_sq (lam * X ω)
-        convert hpoint using 1 <;> ring))
+        convert hpoint using 1; ring))
     calc
       (∫ ω, Real.exp (lam * X ω) ∂μ) ≤
           ∫ ω, lam * X ω + Real.exp (lam ^ 2 * X ω ^ 2) ∂μ := hmono
@@ -1271,6 +1271,7 @@ theorem squareMGFToTail
     simpa [Y] using (hX.pow_const 2).div_const (K ^ 2) |>.exp
   have hY_nonneg : ∀ᵐ ω ∂μ, 0 ≤ Y ω :=
     Filter.Eventually.of_forall (fun ω => le_of_lt (Real.exp_pos _))
+  have hKsq : 0 ≤ K ^ 2 := (sq_pos_of_pos hK).le
   have hmarkov :=
     NumStability.HDP.Scalar.Preliminaries.markovInequalityFinite
       hY hY_nonneg hMGF.1 (Real.exp_pos (t ^ 2 / K ^ 2))
@@ -1279,7 +1280,7 @@ theorem squareMGFToTail
     intro ω hω
     change Real.exp (t ^ 2 / K ^ 2) ≤ Real.exp (X ω ^ 2 / K ^ 2)
     apply (Real.exp_le_exp).2
-    apply (div_le_div_of_nonneg_right _ (sq_nonneg K))
+    apply (div_le_div_of_nonneg_right _ hKsq)
     have habs : |t| ≤ |X ω| := by simpa [abs_of_nonneg ht] using hω
     exact (sq_le_sq).mpr habs
   have hmono {A B : Set Ω} (hAB : A ⊆ B) :
@@ -1536,9 +1537,11 @@ theorem mgfBoundForcesMeanZero
 inequality between the centered and uncentered `ψ₂` gauges.  The gauge below
 is the exact Orlicz gauge for a two-point law, written after evaluating its
 finite expectation. -/
+/-- Admissibility of a ψ₂ scale for a two-point law. -/
 def twoPointPsiTwoAdmissible (a b q t : ℝ) : Prop :=
   0 < t ∧ (1 - q) * Real.exp ((a / t) ^ 2) + q * Real.exp ((b / t) ^ 2) ≤ 2
 
+/-- The infimum of admissible ψ₂ scales for a two-point law. -/
 def twoPointPsiTwoNorm (a b q : ℝ) : ℝ :=
   sInf {t : ℝ | twoPointPsiTwoAdmissible a b q t}
 
@@ -1559,10 +1562,12 @@ lemma twoPointPsiTwoNorm_ge_of_lower {a b q r : ℝ}
   intro t ht
   exact hLower t ht
 
+/-- The asymmetric two-point probability law used in Exercise 2.6.9. -/
 def exercise269Law : Measure ℝ :=
   (999 / 1000 : ENNReal) • Measure.dirac (-1) +
     (1 / 1000 : ENNReal) • Measure.dirac 4
 
+/-- The mean of `exercise269Law`. -/
 def exercise269Mean : ℝ :=
   (999 / 1000 : ℝ) * (-1) + (1 / 1000 : ℝ) * 4
 
@@ -1588,7 +1593,7 @@ lemma exercise269Law_integral (f : ℝ → ℝ) :
     · apply ENNReal.mul_ne_top <;> simp
   · apply Integrable.smul_measure
     · exact integrable_dirac (by simp)
-    · simp [ENNReal.div_eq_inv_mul]
+    · simp
 
 lemma exercise269_raw_nonempty :
     Set.Nonempty {t : ℝ | twoPointPsiTwoAdmissible (-1) 4 (1 / 1000) t} := by
@@ -1597,10 +1602,10 @@ lemma exercise269_raw_nonempty :
   · norm_num
   have h₁ : Real.exp ((-1 / 10 : ℝ) ^ 2) ≤ 1 / (1 - (1 / 100 : ℝ)) := by
     convert Real.exp_bound_div_one_sub_of_interval (x := (1 / 100 : ℝ)) (by norm_num)
-      (by norm_num) using 1 <;> norm_num
+      (by norm_num) using 1; norm_num
   have h₂ : Real.exp ((4 / 10 : ℝ) ^ 2) ≤ 1 / (1 - (16 / 100 : ℝ)) := by
     convert Real.exp_bound_div_one_sub_of_interval (x := (16 / 100 : ℝ)) (by norm_num)
-      (by norm_num) using 1 <;> norm_num
+      (by norm_num) using 1; norm_num
   calc
     (1 - (1 / 1000 : ℝ)) * Real.exp ((-1 / 10 : ℝ) ^ 2) +
         (1 / 1000 : ℝ) * Real.exp ((4 / 10 : ℝ) ^ 2) ≤
@@ -1618,11 +1623,11 @@ lemma exercise269_centered_nonempty :
   have h₁ : Real.exp ((-1 / 200 / 10 : ℝ) ^ 2) ≤
       1 / (1 - (1 / 4000000 : ℝ)) := by
     convert Real.exp_bound_div_one_sub_of_interval (x := (1 / 4000000 : ℝ)) (by norm_num)
-      (by norm_num) using 1 <;> norm_num
+      (by norm_num) using 1; norm_num
   have h₂ : Real.exp ((999 / 200 / 10 : ℝ) ^ 2) ≤
       1 / (1 - (998001 / 4000000 : ℝ)) := by
     convert Real.exp_bound_div_one_sub_of_interval (x := (998001 / 4000000 : ℝ))
-      (by norm_num) (by norm_num) using 1 <;> norm_num
+      (by norm_num) (by norm_num) using 1; norm_num
   calc
     (1 - (1 / 1000 : ℝ)) * Real.exp ((-1 / 200 / 10 : ℝ) ^ 2) +
         (1 / 1000 : ℝ) * Real.exp ((999 / 200 / 10 : ℝ) ^ 2) ≤
@@ -1659,7 +1664,7 @@ lemma exercise269_raw_admissible :
   norm_num only [one_div, sub_eq_add_neg]
   convert (show (999 / 1000 : ℝ) * Real.exp (9 / 25) +
       (1 / 1000 : ℝ) * Real.exp (144 / 25) ≤ 2 by
-    nlinarith [hsmall, hlarge]) using 1 <;> norm_num
+    nlinarith [hsmall, hlarge]) using 1
 
 lemma exercise269_centered_lower :
     ∀ t, twoPointPsiTwoAdmissible (-1 / 200) (999 / 200) (1 / 1000) t →
@@ -1738,7 +1743,7 @@ theorem lpExtrapolation
     convert hf0 using 1 <;> norm_num
   have hg : MemLp (fun ω => |Z ω| ^ (3 / 2 : ℝ)) 2 μ := by
     rw [hq] at hg0
-    convert hg0 using 1 <;> norm_num
+    convert hg0 using 1; norm_num
   have hc := integral_mul_le_Lp_mul_Lq_of_nonneg
     (μ := μ) (p := (2 : ℝ)) (q := (2 : ℝ))
     (f := fun ω => |Z ω| ^ (1 / 2 : ℝ))
@@ -1854,16 +1859,19 @@ theorem independentGaussianSumLaw {ι Ω : Type*} [Fintype ι] [MeasurableSpace 
       simp
 
 /-! Parameterized five-way interface for Proposition 2.5.2. -/
+/-- The two-sided sub-Gaussian tail-bound presentation. -/
 def SubGaussianTailBound {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
     ∀ t : ℝ, 0 ≤ t →
       μ.real {ω | |X ω| ≥ t} ≤ 2 * Real.exp (-t ^ 2 / K ^ 2)
 
+/-- The moment-growth presentation of a sub-Gaussian bound. -/
 def SubGaussianMomentBound {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧ LpMomentGrowth μ X K
 
+/-- The square-MGF presentation on a scale-dependent parameter window. -/
 def SubGaussianSquareWindow {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
@@ -1872,6 +1880,7 @@ def SubGaussianSquareWindow {Ω : Type*} [MeasurableSpace Ω]
         (∫ ω, Real.exp (lam ^ 2 * X ω ^ 2) ∂μ) ≤
           Real.exp (K ^ 2 * lam ^ 2)
 
+/-- The one-point exponential-square presentation of a sub-Gaussian bound. -/
 def SubGaussianSquarePoint {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
@@ -1884,18 +1893,21 @@ Remark 2.5.3 says that the printed threshold `2` can be replaced by any fixed
 `A > 1`, at the cost of changing the scale by a constant depending only on
 `A`.  These predicates expose that threshold so the rescaling statement can be
 checked directly rather than being hidden in prose. -/
+/-- A sub-Gaussian tail bound with an explicit leading threshold. -/
 def SubGaussianTailBoundWithThreshold {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K A : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
     ∀ t : ℝ, 0 ≤ t →
       μ.real {ω | |X ω| ≥ t} ≤ A * Real.exp (-t ^ 2 / K ^ 2)
 
+/-- A one-point exponential-square bound with an explicit threshold. -/
 def SubGaussianSquarePointWithThreshold {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K A : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧
     Integrable (fun ω => Real.exp (X ω ^ 2 / K ^ 2)) μ ∧
       (∫ ω, Real.exp (X ω ^ 2 / K ^ 2) ∂μ) ≤ A
 
+/-- Rescale a tail bound from one threshold greater than one to another. -/
 def subGaussianTailThreshold_rescale
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -1987,6 +1999,7 @@ def subGaussianTailThreshold_rescale
         _ = B * Real.exp (-t ^ 2 / K' ^ 2) := by
           rw [hTargetExponent, show u = t ^ 2 / K ^ 2 by rfl]
 
+/-- Rescale a square-point bound between thresholds greater than one. -/
 def subGaussianSquarePointThreshold_rescale
     {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ]
@@ -2000,7 +2013,7 @@ def subGaussianSquarePointThreshold_rescale
   by_cases hAB : A ≤ B
   · refine ⟨K, hK, hInt, hBound.trans hAB⟩
   · have hBA : B < A := lt_of_not_ge hAB
-    have hA1 : 0 < A - 1 := by linarith
+    have hA1 : 0 < A - 1 := sub_pos.mpr hA
     have hB1 : 0 < B - 1 := by linarith
     let c : ℝ := (B - 1) / (A - 1)
     have hc : 0 < c := div_pos hB1 hA1
@@ -2091,6 +2104,7 @@ theorem subGaussianThresholdRemark
         ⟨K', hK', hInt', hBound'⟩
       exact ⟨K', hK', hPoint.1, hK', hInt', hBound'⟩
 
+/-- The centered linear-MGF presentation of a sub-Gaussian bound. -/
 def SubGaussianLinearMGF {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (K : ℝ) : Prop :=
   Measurable X ∧ 0 < K ∧ Integrable X μ ∧
@@ -2099,6 +2113,7 @@ def SubGaussianLinearMGF {Ω : Type*} [MeasurableSpace Ω]
         Integrable (fun ω => Real.exp (lam * X ω)) μ ∧
           (∫ ω, Real.exp (lam * X ω) ∂μ) ≤ Real.exp (K ^ 2 * lam ^ 2)
 
+/-- The five equivalent presentations of the sub-Gaussian property. -/
 inductive SubGaussianPropertyKind
   | tail
   | moment
@@ -2106,6 +2121,7 @@ inductive SubGaussianPropertyKind
   | squarePoint
   | linearMGF
 
+/-- Interpret a sub-Gaussian presentation at a specified scale. -/
 def SubGaussianProperty {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) :
     SubGaussianPropertyKind → ℝ → Prop
@@ -2279,7 +2295,7 @@ private theorem subGaussianLinearToTail
   refine ⟨hLinear.1, ?_, ?_⟩
   · nlinarith [hLinear.2.1]
   · intro t ht
-    convert mgfToTail hLinear.1 hLinear.2.1 hLinear.2.2.2.2 ht using 1 <;> ring
+    convert mgfToTail hLinear.1 hLinear.2.1 hLinear.2.2.2.2 ht using 1; ring
 
 private theorem subGaussianToTail
     {Ω : Type*} [MeasurableSpace Ω]
@@ -2294,7 +2310,7 @@ private theorem subGaussianToTail
       have hPoint := subGaussianSquareWindowToPoint (by positivity) hSq
       have hTail := subGaussianSquarePointToTail hPoint
       refine ⟨16 * K, by positivity, le_rfl, ?_⟩
-      convert hTail using 1 <;> ring
+      convert hTail using 1; ring
   | squareWindow =>
       have hPoint := subGaussianSquareWindowToPoint hK hProp
       have hTail := subGaussianSquarePointToTail hPoint
@@ -2343,7 +2359,9 @@ private theorem subGaussianFromTail
         have he : 0 ≤ Real.exp 1 * T := by positivity
         have hbound := mul_le_mul_of_nonneg_right h he
         simpa [K, mul_assoc] using hbound
-      · convert hSq using 1 <;> simp [SubGaussianProperty, K] <;> ring
+      · convert hSq using 1
+        all_goals simp [K]
+        all_goals ring
   | squarePoint =>
       let K := 128 * Real.exp 1 * T
       have hMom := subGaussianTailToMoment hTail
@@ -2352,7 +2370,9 @@ private theorem subGaussianFromTail
       have hPoint := subGaussianSquareWindowToPoint (by
         positivity) hSq
       refine ⟨K, by dsimp [K]; positivity, le_rfl, ?_⟩
-      convert hPoint using 1 <;> simp [SubGaussianProperty, K] <;> ring
+      convert hPoint using 1
+      all_goals simp [K]
+      all_goals ring
   | linearMGF =>
       let K₀ := 64 * Real.exp 1 * T
       let K := 2 * K₀
@@ -2364,7 +2384,9 @@ private theorem subGaussianFromTail
       refine ⟨K, by dsimp [K, K₀]; positivity, ?_, ?_⟩
       · dsimp [K, K₀]
         exact le_of_eq (by ring)
-      · convert hLinear using 1 <;> simp [SubGaussianProperty, K, K₀] <;> ring
+      · convert hLinear using 1
+        all_goals simp [K, K₀]
+        all_goals ring
 
 /-! Stable compositional form of Proposition 2.5.2. -/
 theorem subGaussianCharacterization
@@ -2394,12 +2416,14 @@ theorem subGaussianCharacterization
       nlinarith
 
 /-! The extended `ψ₂` gauge from Definition 2.5.6. -/
+/-- Admissibility of an extended-real scale in the ψ₂ gauge. -/
 def PsiTwoAdmissible {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) (t : ℝ≥0∞) : Prop :=
   Measurable X ∧ t ≠ 0 ∧ t ≠ ∞ ∧
     Integrable (fun ω => Real.exp (X ω ^ 2 / t.toReal ^ 2)) μ ∧
       (∫ ω, Real.exp (X ω ^ 2 / t.toReal ^ 2) ∂μ) ≤ 2
 
+/-- The extended ψ₂ gauge of a measurable real-valued function. -/
 noncomputable def PsiTwoGauge {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : Ω → ℝ) : ℝ≥0∞ :=
   sInf {t : ℝ≥0∞ | PsiTwoAdmissible μ X t}
@@ -2420,8 +2444,7 @@ theorem psiTwoGauge_finite_iff
     · have hEmpty : {t : ℝ≥0∞ | PsiTwoAdmissible μ X t} = ∅ :=
         Set.not_nonempty_iff_eq_empty.mp hNonempty
       rw [PsiTwoGauge, hEmpty] at hGauge
-      have : False := by simpa using hGauge
-      exact this.elim
+      simp at hGauge
   · rintro ⟨K, hK, hPoint⟩
     have ht0 : ENNReal.ofReal K ≠ 0 := (ENNReal.ofReal_ne_zero_iff).2 hK
     have htTop : ENNReal.ofReal K ≠ ∞ := ENNReal.ofReal_ne_top
@@ -2735,7 +2758,7 @@ theorem independentCenteredSubGaussianTail
     ⟨_, _, hS, _⟩
   have hTail := subGaussianLinearToTail hS
   have hBound := hTail.2.2 t ht
-  convert hBound using 1 <;>
+  convert hBound using 1;
     norm_num [S, E, mul_pow, Real.sq_sqrt hE.le]
 
 /-! The weighted linear-form version of Theorem 2.6.3.  As in the preceding
@@ -2786,8 +2809,9 @@ theorem independentWeightedCenteredSubGaussianTail
     have h := hIndepY.integrable_exp_mul_sum
       hY_meas (s := Finset.univ)
       (fun i hi => by
-        convert ((hX i).2.2.2.2 (lam * a i)).1 using 1 <;>
-          simp [Y] <;> ring)
+        convert ((hX i).2.2.2.2 (lam * a i)).1 using 1
+        all_goals simp [Y]
+        all_goals ring)
     simpa [S] using h
   have hS_mgf (lam : ℝ) :
       (∫ ω, Real.exp (lam * S ω) ∂μ) ≤
@@ -2809,8 +2833,9 @@ theorem independentWeightedCenteredSubGaussianTail
       NumStability.HDP.Scalar.IndependentSums.Hoeffding.mgfIndependentSum
         (μ := μ) (X := Y) lam (fun _ => (1 : ℝ)) hIndepY
         (fun i => by
-          convert ((hX i).2.2.2.2 (lam * a i)).1 using 1 <;>
-            simp [Y] <;> ring)
+          convert ((hX i).2.2.2.2 (lam * a i)).1 using 1
+          all_goals simp [Y]
+          all_goals ring)
     calc
       (∫ ω, Real.exp (lam * S ω) ∂μ) =
           ∏ i, ∫ ω, Real.exp (lam * (1 * Y i ω)) ∂μ := by
@@ -3058,8 +3083,8 @@ theorem psiTwoGauge_zero
     have hr0 : r ≠ 0 := ne_of_gt hr
     have hAd : PsiTwoAdmissible μ (fun _ : Ω => (0 : ℝ)) r := by
       refine ⟨measurable_const, hr0, hrTop, ?_, ?_⟩
-      · simpa using (integrable_const (1 : ℝ) : Integrable (fun _ : Ω => (1 : ℝ)) μ)
-      · simpa using (show (1 : ℝ) ≤ 2 by norm_num)
+      · simp
+      · simp
     exact sInf_le hAd
   · exact bot_le
 
@@ -3135,9 +3160,9 @@ lemma psiTwoAdmissible_of_gauge_zero
     exact ENNReal.ofReal_pos.mpr hK
   unfold PsiTwoGauge at hlt
   rcases (sInf_lt_iff.mp hlt) with ⟨s, hs, hsK⟩
-  apply psiTwoAdmissible_mono hs hsK.le
-  · exact (ENNReal.ofReal_ne_zero_iff).2 hK
-  · exact ENNReal.ofReal_ne_top
+  have hMono := psiTwoAdmissible_mono hs hsK.le
+    ((ENNReal.ofReal_ne_zero_iff).2 hK) ENNReal.ofReal_ne_top
+  exact ⟨hX, hMono.2⟩
 
 theorem psiTwoGauge_eq_zero_iff_ae_eq_zero
     {Ω : Type*} [MeasurableSpace Ω]
@@ -3192,6 +3217,7 @@ theorem psiTwoGauge_eq_zero_iff_ae_eq_zero
 /-! The exact a.e.-quotient carrier for Exercise 2.5.7.  The carrier is a
 submodule of measurable finite-gauge representatives; quotienting by its
 null submodule makes the definiteness statement literal. -/
+/-- The submodule of measurable representatives with finite ψ₂ gauge. -/
 def psiTwoMemberSubmodule
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] : Submodule ℝ (Ω → ℝ) where
@@ -3218,6 +3244,7 @@ def psiTwoMemberSubmodule
       psiTwoGauge_smul_of_ne_zero hc]
       exact ENNReal.mul_lt_top ENNReal.ofReal_lt_top hX.2
 
+/-- The submodule of representatives that vanish almost everywhere. -/
 def psiTwoNullSubmodule
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] :
@@ -3241,6 +3268,7 @@ def psiTwoNullSubmodule
     filter_upwards [hX] with ω hω
     simp [hω]
 
+/-- The a.e.-quotient of finite-ψ₂ representatives. -/
 def psiTwoSpace
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] :=
@@ -3258,6 +3286,7 @@ instance psiTwoSpace.instModule
   unfold psiTwoSpace
   exact Submodule.Quotient.module (psiTwoNullSubmodule μ)
 
+/-- The ψ₂ gauge induced on the a.e.-quotient. -/
 noncomputable def psiTwoQuotientGauge
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] : psiTwoSpace μ → ℝ≥0∞ :=
@@ -3274,6 +3303,7 @@ noncomputable def psiTwoQuotientGauge
         linarith
       exact psiTwoGauge_ae_congr X.2.1 Y.2.1 hXY')
 
+/-- The real-valued ψ₂ norm on the a.e.-quotient. -/
 noncomputable def psiTwoQuotientNorm
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] : psiTwoSpace μ → ℝ :=
@@ -3384,9 +3414,11 @@ lemma psiTwoQuotientNorm_smul
         · simp [ENNReal.toReal_ofReal (abs_nonneg c)]
     _ = |c| * psiTwoQuotientNorm μ (Submodule.Quotient.mk X) := by rfl
 
+/-- Norm axioms for the ψ₂ quotient model. -/
 structure PsiTwoNormQuotientModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] where
+  /-- The norm assigned to quotient classes. -/
   norm : psiTwoSpace μ → ℝ
   norm_nonneg : ∀ x, 0 ≤ norm x
   norm_zero : norm 0 = 0
@@ -3394,6 +3426,7 @@ structure PsiTwoNormQuotientModelData
   norm_add_le : ∀ x y, norm (x + y) ≤ norm x + norm y
   norm_smul : ∀ (c : ℝ) x, norm (c • x) = |c| * norm x
 
+/-- The ψ₂ quotient model equipped with its induced norm. -/
 noncomputable def psiTwoNormQuotientModelData
     {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] :
@@ -3436,7 +3469,9 @@ theorem gaussianPsiTwoGauge_finite :
   have hstdInt :
       Integrable (fun x : ℝ => Real.exp (x ^ 2 / (2 : ℝ) ^ 2))
         (gaussianReal 0 1) := by
-    convert hstd.1 using 1 <;> funext x <;> field_simp
+    convert hstd.1 using 1
+    all_goals funext x
+    all_goals field_simp
   have hstdIntegral :
       (∫ x : ℝ, Real.exp (x ^ 2 / (2 : ℝ) ^ 2) ∂(gaussianReal 0 1)) =
         (Real.sqrt (1 - 2 * (1 / 2 : ℝ) ^ 2))⁻¹ := by
@@ -3472,10 +3507,7 @@ theorem gaussianPsiTwoGauge_finite :
           (integrable_dirac (f := fun x : ℝ => Real.exp (x ^ 2))
             (a := (0 : ℝ)) (by simp))
       · rw [hgauss]
-        simpa [id_eq] using
-          (show (∫ x : ℝ, Real.exp (x ^ 2) ∂Measure.dirac (0 : ℝ)) ≤ 2 by
-            rw [integral_dirac]
-            norm_num)
+        simp [id_eq]
     · have hσpos : 0 < σ := lt_of_le_of_ne hσ (Ne.symm hzero)
       let v : ℝ≥0 := ⟨σ ^ 2, sq_nonneg σ⟩
       have hLaw : HasLaw (fun x : ℝ => σ * x) (gaussianReal 0 v)
@@ -3573,6 +3605,7 @@ theorem essentiallyBoundedPsiTwoGauge
   simpa [K] using hInf
 
 /-! Example 2.5.8(b): the exact gauge of the symmetric two-point law. -/
+/-- The equal-weight law on `{-1, 1}` used in the ψ₂ example. -/
 noncomputable def rademacherPsiTwoLaw : Measure ℝ :=
   (1 / 2 : ENNReal) • Measure.dirac (-1) +
     (1 / 2 : ENNReal) • Measure.dirac 1
@@ -3580,7 +3613,7 @@ noncomputable def rademacherPsiTwoLaw : Measure ℝ :=
 lemma rademacherPsiTwoLaw_probability :
     IsProbabilityMeasure rademacherPsiTwoLaw := by
   apply isProbabilityMeasure_iff.mpr
-  simp [rademacherPsiTwoLaw, ENNReal.div_eq_inv_mul]
+  simp [rademacherPsiTwoLaw]
   calc
     (2 : ENNReal)⁻¹ + 2⁻¹ = (2 : ENNReal)⁻¹ + (2 : ENNReal)⁻¹ * 1 := by ring
     _ = (2 : ENNReal)⁻¹ * (1 + 1) := by ring
@@ -3596,10 +3629,10 @@ lemma rademacherPsiTwoLaw_integral (f : ℝ → ℝ) :
     norm_num
   · apply Integrable.smul_measure
     · exact integrable_dirac (by simp)
-    · simp [ENNReal.div_eq_inv_mul]
+    · simp
   · apply Integrable.smul_measure
     · exact integrable_dirac (by simp)
-    · simp [ENNReal.div_eq_inv_mul]
+    · simp
 
 lemma rademacherPsiTwoGauge_admissible_iff {t : ℝ≥0∞} :
     PsiTwoAdmissible rademacherPsiTwoLaw id t ↔
@@ -3631,10 +3664,10 @@ lemma rademacherPsiTwoGauge_admissible_iff {t : ℝ≥0∞} :
     · apply Integrable.add_measure
       · apply Integrable.smul_measure
         · exact integrable_dirac (by simp)
-        · simp [rademacherPsiTwoLaw, ENNReal.div_eq_inv_mul]
+        · simp
       · apply Integrable.smul_measure
         · exact integrable_dirac (by simp)
-        · simp [rademacherPsiTwoLaw, ENNReal.div_eq_inv_mul]
+        · simp
     · rw [rademacherPsiTwoLaw_integral]
       have hneg : Real.exp (id (-1 : ℝ) ^ 2 / t.toReal ^ 2) =
           Real.exp (1 / t.toReal ^ 2) := by
